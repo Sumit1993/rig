@@ -62,11 +62,11 @@ Bare PR comments, org members only. The body is read only by workflow `contains(
 |---|---|
 | `@claude review` | Verify when unresolved `claude[bot]` threads exist, else incremental review. Lifts either pause |
 | `@claude full review` | From scratch, dedup off for that run. The fix for a green round that posted nothing, and the only way past a verify round |
-| `@claude review --model opus` | Incremental on `claude-opus-5` for that run only. `@claude review --model sonnet` picks `claude-sonnet-5` back |
+| `@claude review --model opus` | Incremental on `claude-opus-5-5` for that run only. `@claude review --model sonnet` picks `claude-sonnet-5-5` back |
 | `@claude pause` | Stops automatic rounds; later heads report `paused by request at <sha>`. Any admitted summon lifts it (#189 ruling) |
 | `@claude resume` | Lifts an explicit pause. Not the remedy for an auto-pause, which is `@claude review` |
 
-Neither pause is a stop; a push or a reply carries it forward. The operator's stop is `review.admission: off` or the `claude_review_skip` label (§3, admission). `default_model` is `claude-sonnet-5`; the `--model` override is an allowlist matched whole and never combines with full review.
+Neither pause is a stop; a push or a reply carries it forward. The operator's stop is `review.admission: off` or the `claude_review_skip` label (§3, admission). `default_model` is `claude-sonnet-5-5`; a repo's `review.default_model` may still pin `claude-sonnet-5` or `claude-opus-5`. The `--model` override is an allowlist matched whole and never combines with full review. A review round runs at `--effort <review.level>` (medium or high); a verify round is pinned at medium.
 
 - One summon per round. Batch fixes, push, then summon once. Summons queue behind in-flight rounds; pushes supersede queued runs.
 
