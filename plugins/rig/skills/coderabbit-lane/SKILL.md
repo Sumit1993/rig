@@ -1,6 +1,6 @@
 ---
 name: coderabbit-lane
-description: "CodeRabbit review lane mechanics: the hourly CodeRabbit routine that admits PRs to review, the per-developer hourly slot shared across repos, when a hand summon is worth it, trigger syntax, in-thread replies with cr-reply.sh, thread resolution. Load when requesting or answering CodeRabbit."
+description: "CodeRabbit review lane mechanics: the hourly CodeRabbit routine that admits PRs to review, the per-developer hourly slot shared across repos, when a hand summon is worth it, trigger syntax, in-thread replies with cr-reply.sh, thread resolution. Load when a coderabbitai[bot] thread, an @coderabbitai summon, or a CodeRabbit review that never arrived is in front of you."
 metadata:
   version: "4.0.0"
 ---

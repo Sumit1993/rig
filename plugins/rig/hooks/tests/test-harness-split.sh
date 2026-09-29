@@ -27,8 +27,8 @@ else
 fi
 
 # Codex: codex-tagged skills, the five Bash PreToolUse gate hooks, and the three ported in
-# #141b (subagent-no-stall, delegate-check, outside-view-nudge) cross.
-CODEX_ALLOWED_HOOKS="gh-body-no-scratch.sh gh-body-stamp.sh issue-create-nudge.sh no-broad-agy-kill.sh release-docs-gate.sh delegate-check.sh outside-view-nudge.sh subagent-no-stall.sh"
+# #141b (delegate-check, outside-view-nudge) cross.
+CODEX_ALLOWED_HOOKS="gh-body-no-scratch.sh gh-body-stamp.sh issue-create-nudge.sh no-broad-agy-kill.sh release-docs-gate.sh delegate-check.sh outside-view-nudge.sh"
 bash "$ROOT/dotfiles/build-codex-plugin.sh" "$T/codex" >/dev/null
 check ".codex-plugin/plugin.json valid, named rig" 'jq -e ".name == \"rig\"" "$T/codex/.codex-plugin/plugin.json" >/dev/null'
 check "no agents cross to codex" '[ ! -e "$T/codex/agents" ]'
@@ -39,8 +39,8 @@ check "every copied codex hook is in the allow list and nothing else" \
   '[ "$codex_hooks" = "$(tr " " "\n" <<<"$CODEX_ALLOWED_HOOKS" | sort)" ]'
 
 # #141b widens this from Bash-only to the events and matchers the four ported hooks need.
-check "codex hooks.json has only PreToolUse and SubagentStop entries" \
-  'jq -e "(.hooks | keys | sort) == [\"PreToolUse\", \"SubagentStop\"]" "$T/codex/hooks/hooks.json" >/dev/null'
+check "codex hooks.json has only PreToolUse entries" \
+  'jq -e "(.hooks | keys | sort) == [\"PreToolUse\"]" "$T/codex/hooks/hooks.json" >/dev/null'
 check "codex PreToolUse matchers are restricted to Bash, Edit|Write|NotebookEdit, Agent" \
   'jq -e "(.hooks.PreToolUse | all(.matcher == \"Bash\" or .matcher == \"Edit|Write|NotebookEdit\" or .matcher == \"Agent\"))" "$T/codex/hooks/hooks.json" >/dev/null'
 
