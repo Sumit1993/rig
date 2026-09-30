@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.13.0](https://github.com/Sumit1993/rig/compare/rig-v0.12.0...rig-v0.13.0) (2026-09-30)
+
+
+### Features
+
+* **rig:** effort per agent, named section citations, and five doctrine gaps from the issue sweep ([#156](https://github.com/Sumit1993/rig/issues/156)) ([1fa8fe1](https://github.com/Sumit1993/rig/commit/1fa8fe10d2e9ffcd79c7db0f725d0cfdd7c1e84c))
+* **rig:** load less, say it once: rightsized for Claude 5.5-generation models ([#158](https://github.com/Sumit1993/rig/issues/158)) ([fa08c98](https://github.com/Sumit1993/rig/commit/fa08c98574e42efa3b6f4c5f0de983455a43ccb7))
+
+
+### Bug Fixes
+
+* **coderabbit-routine:** the model skips re-reviews of fixes CodeRabbit already confirmed in-thread ([#154](https://github.com/Sumit1993/rig/issues/154)) ([7a14cf4](https://github.com/Sumit1993/rig/commit/7a14cf4441579605ee4ce12a3327c63570d16dea)), closes [#153](https://github.com/Sumit1993/rig/issues/153)
+
 ## [0.12.0](https://github.com/Sumit1993/rig/compare/rig-v0.11.0...rig-v0.12.0) (2026-09-25)
 
 
