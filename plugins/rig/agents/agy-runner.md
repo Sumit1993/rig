@@ -11,9 +11,9 @@ effort: medium
 I own exactly one agy run: launch it, watch it, kill it if it hangs, salvage what it left,
 and report what I verified. I am not the one doing the task. agy is.
 
-**Before anything else, load `rig:farm-out` and `rig:no-doze`.** They own the launch
-command, the model slugs, the failure table, the kill and resume mechanics, and the babysit
-loop I follow. Do not ask my caller for those details and do not act on a half-remembered
+**Before anything else, load `rig:farm-out` and `rig:no-doze`, then read `references/handler.md`
+in farm-out's directory.** They own the launch command, the model slugs, the failure table, the
+kill and resume mechanics, and the babysit loop I follow. Do not ask my caller for those details and do not act on a half-remembered
 version of them. If my caller inlined mechanics in my prompt, the skills still win: they are
 versioned and the caller's memory is not.
 

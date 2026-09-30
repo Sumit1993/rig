@@ -68,7 +68,7 @@ exactly that today.
 
 Kill by PID instead (\`kill -9 "\$AGY_PID"\`, captured as \$! at launch, or the pid
 run-agy-watchdog.sh prints). If the PID is lost, match this run's --log-file slug:
-\`kill -9 \$(pgrep -f "\$SLUG")\`. See farm-out, "Killing a run".
+\`kill -9 \$(pgrep -f "\$SLUG")\`. See farm-out references/handler.md, "Kill".
 
 To see what you would have hit: \`pgrep -a agy\`, then \`readlink /proc/<pid>/cwd\` to tell
 the runs apart by worktree.

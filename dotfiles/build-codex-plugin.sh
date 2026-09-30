@@ -7,7 +7,7 @@ OUT="${1:?usage: build-codex-plugin.sh <out-dir>}"
 
 ALLOWED_HOOKS=(
   gh-body-stamp.sh gh-body-no-scratch.sh issue-create-nudge.sh no-broad-agy-kill.sh release-docs-gate.sh
-  subagent-no-stall.sh delegate-check.sh outside-view-nudge.sh
+  delegate-check.sh outside-view-nudge.sh
 )
 # Every hook is in exactly one list; a new hook fails the build until someone rules on it (#141).
 CLAUDE_ONLY=(
@@ -16,7 +16,6 @@ CLAUDE_ONLY=(
   "review-debt.sh: SessionStart event Codex lacks"
   "limit-log.sh: StopFailure and Notification, events Codex lacks"
   "pr-created.sh: Claude watcher tools" "reap-watchers.sh: Claude watcher tools"
-  "vendored-skill-nudge.sh: the Claude Skill tool"
   "agent-prompt-nudge.sh: Claude prompt conventions"
   "ai-context-write-nudge.sh: Claude session context layout"
   "draft-posted-nudge.sh: post-tool cleanup in Claude sessions"
@@ -50,7 +49,7 @@ for h in "${ALLOWED_HOOKS[@]}"; do
 done
 cp "$SRC/hooks/lib/gh-command.sh" "$SRC/hooks/lib/report-guard.sh" "$OUT/hooks/lib/"
 
-hook_re='gh-body-stamp\.sh|gh-body-no-scratch\.sh|issue-create-nudge\.sh|no-broad-agy-kill\.sh|release-docs-gate\.sh|subagent-no-stall\.sh|delegate-check\.sh|outside-view-nudge\.sh'
+hook_re='gh-body-stamp\.sh|gh-body-no-scratch\.sh|issue-create-nudge\.sh|no-broad-agy-kill\.sh|release-docs-gate\.sh|delegate-check\.sh|outside-view-nudge\.sh'
 # Codex has no AskUserQuestion or EnterPlanMode, so outside-view-nudge crosses on Agent only (#141).
 jq --arg re "$hook_re" '
   {
@@ -60,8 +59,7 @@ jq --arg re "$hook_re" '
         | select(.matcher == "Bash" or .matcher == "Edit|Write|NotebookEdit" or .matcher == "Agent" or .matcher == "AskUserQuestion|EnterPlanMode|Agent")
         | select(.hooks[0].command | test($re))
         | if .matcher == "AskUserQuestion|EnterPlanMode|Agent" then .matcher = "Agent" else . end
-      ],
-      SubagentStop: [(.hooks.SubagentStop // [])[] | select(.hooks[0].command | test($re))]
+      ]
     }
   }' "$SRC/hooks/hooks.json" > "$OUT/hooks/hooks.json"
 

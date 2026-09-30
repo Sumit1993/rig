@@ -72,16 +72,6 @@
         ]
       },
       {
-        "matcher": "Skill",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/vendored-skill-nudge.sh\"",
-            "timeout": 5
-          }
-        ]
-      },
-      {
         "matcher": "AskUserQuestion|EnterPlanMode|Agent",
         "hooks": [
           {
@@ -158,17 +148,6 @@
             "type": "command",
             "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/agent-prompt-nudge.sh\"",
             "timeout": 5
-          }
-        ]
-      }
-    ],
-    "SubagentStop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/subagent-no-stall.sh\"",
-            "timeout": 10
           }
         ]
       }

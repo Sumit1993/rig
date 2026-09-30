@@ -26,8 +26,8 @@ token=$(grep -oE '(^|[;&|[:space:]])CR_SUMMON_OK=[^[:space:];&|]+' <<<"$cmd" | t
 cat >&2 <<MSG
 Blocked by rig/guard/summon-gate: the hourly CodeRabbit routine summons reviews, not sessions (Sumit1993/rig#150).
 CodeRabbit allows one review per developer per hour across every repo, so a hand summon takes the routine's slot.
-Instead: fix, push once, reply in every thread with cr-reply.sh, and stop; the routine re-reviews a PR whose
-CodeRabbit threads all carry a reply. Never use \`full review\` as a retry: the "does not re-review already reviewed
+Instead: fix, push once, reply in every thread with cr-reply.sh, then re-read isResolved a few minutes later:
+CodeRabbit resolves a fixed thread from the reply itself, with no re-review (prismalens PR #160). Never use \`full review\` as a retry: the "does not re-review already reviewed
 commits" line is a footer on every reply. If the operator asks for a summon on this PR, record it on the same
 command: CR_SUMMON_OK=${pr:-<pr>} gh pr comment ${pr:-<pr>} --body \$'@coderabbitai review\n\n<!-- summoned-by: session -->'${token:+ (the token names $token)}
 MSG

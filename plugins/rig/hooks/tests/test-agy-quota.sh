@@ -180,7 +180,7 @@ check "the usage line names the new verb" '[ "$c8_rc" -eq 2 ] && [ "$c8_match" -
 echo "-- 9. The skill and the agent definition route a dry Gemini the same way"
 SKILL_FILE="$SRC/SKILL.md"
 RUNNER_FILE="$(cd "$SRC/../../agents" && pwd)/agy-runner.md"
-HANDLER=$(sed -n '/## Handler babysit loop/,$p' "$SKILL_FILE")
+HANDLER=$(sed -n '/## Handler babysit loop/,$p' "$SRC/references/handler.md")
 c9_skill_pro=0
 printf '%s' "$HANDLER" | grep -q 'share a pool' && c9_skill_pro=1
 c9_skill_self=0
@@ -206,7 +206,7 @@ c10_sidecar_quota=$(jq -r '.quota_exhausted // false' "$TMPDIR/out_rel.json.meta
 check "a relative watchdog invocation still records" '[ "$c10_chk_rc" -eq 1 ] && [ "$c10_sidecar_quota" = "true" ]'
 
 echo "-- 11. The dispatch path names where dry work goes"
-PREFLIGHT=$(sed -n '/## Before dispatching/,/^## Launch/p' "$SKILL_FILE")
+PREFLIGHT=$(sed -n '/## Gotchas/,/^## Launch/p' "$SKILL_FILE")
 c11_sonnet=0
 printf '%s' "$PREFLIGHT" | grep -q 'model: sonnet' && c11_sonnet=1
 c11_direct=0

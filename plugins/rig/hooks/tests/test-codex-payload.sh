@@ -84,16 +84,5 @@ else
 fi
 rm -rf "$OUTVIEW_STATE"
 
-# subagent-no-stall.sh: SubagentStop requires valid JSON on stdout when it exits 0.
-check_stdin "subagent-no-stall.sh blocks a standing-by last_assistant_message" subagent-no-stall.sh 2 \
-  "$FIXTURES/subagentstop-stall.json"
-out=$("$HOOKS_DIR/subagent-no-stall.sh" < "$FIXTURES/subagentstop-clean.json" 2>/dev/null)
-rc=$?
-if [ "$rc" -eq 0 ] && jq -e . >/dev/null 2>&1 <<<"$out"; then
-  echo "PASS: subagent-no-stall.sh prints valid JSON on a clean last_assistant_message"
-else
-  echo "FAIL: subagent-no-stall.sh clean case (rc=$rc, out=$out)"; fails=$((fails + 1))
-fi
-
 [ "$fails" -eq 0 ] && echo && echo "all codex-payload hook tests passed"
 exit "$fails"
