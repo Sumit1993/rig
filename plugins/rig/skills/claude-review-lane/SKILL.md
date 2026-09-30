@@ -45,7 +45,8 @@ No liveness comment means the PR was never admitted; a watcher waiting for one w
 Open `claude[bot]` threads against a comment claiming nothing was posted means the comment is stale, not the review. Cross-check threads before believing a negative verdict:
 
 ```bash
-gh api graphql -F owner='{owner}' -F repo='{repo}' -F pr=<pr> -f query='query($owner:String!,$repo:String!,$pr:Int!){repository(owner:$owner,name:$repo){pullRequest(number:$pr){reviewThreads(first:100){nodes{isResolved comments(first:1){nodes{author{login}}}}}}}}' \
+PR=123  # the PR number
+gh api graphql --paginate -F owner='{owner}' -F repo='{repo}' -F pr="$PR" -f query='query($owner:String!,$repo:String!,$pr:Int!,$endCursor:String){repository(owner:$owner,name:$repo){pullRequest(number:$pr){reviewThreads(first:100,after:$endCursor){pageInfo{hasNextPage endCursor} nodes{isResolved comments(first:1){nodes{author{login}}}}}}}}' \
   --jq '.data.repository.pullRequest.reviewThreads.nodes[] | select(.isResolved|not) | .comments.nodes[0].author.login' | sort | uniq -c
 ```
 A positive verdict needs no cross-check; nothing fabricates posted output.
@@ -76,7 +77,7 @@ A verify round re-judges the unresolved `claude[bot]` threads instead of re-revi
 
 ### The order that works
 
-Fix, push, reply to every thread, wait for the push's automatic round to finish, then summon `@claude review` once. Any other order costs a round.
+Fix, push, then reply to every thread. The reply queues a verify round behind the push's automatic round (comment events never cancel in progress), so wait for both; a summon on top costs a round.
 
 - A push after replying supersedes the queued verify (`verify-superseded`; summon after your last push). `verify-cancelled` has no recorded cause and is not a tool denial.
 - N replies give one round, not N; each reply evicts the pending slot.

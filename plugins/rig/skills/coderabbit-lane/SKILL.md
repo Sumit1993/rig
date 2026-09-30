@@ -69,7 +69,7 @@ Replies go in-thread, to satisfy `required_review_thread_resolution`:
 
 ## 6. Thread resolution
 
-- A fixed thread needs no re-review. CodeRabbit reads the in-thread "Fixed in <sha>" reply, checks the fix and resolves the thread itself within minutes, outside the hourly review quota. So push the fixes, reply in every thread, and a few minutes later re-read `isResolved`: act on whatever is still open (CodeRabbit's follow-up in that thread says why). Never summon a review to get threads resolved.
+- A fixed thread needs no re-review. CodeRabbit reads the in-thread "Fixed in <sha>" reply, checks the fix and resolves the thread itself (prismalens PR #160). So push the fixes, reply in every thread, and a few minutes later re-read `isResolved`: act on whatever is still open (CodeRabbit's follow-up in that thread says why). Never summon a review to get threads resolved.
 - Bare top-level `@coderabbitai resolve` blanket-resolves every thread with zero validation. The operator's call only, for rounds made entirely of declined or deferred findings whose dispositions are already recorded.
 - A PR merges only with every review thread resolved by the reviewer that opened it. The session never resolves a CodeRabbit thread to clear a merge.
 - Declining or deferring: CodeRabbit self-resolves only when code changed, so a declined or deferred finding goes to the operator, who resolves it under three rules. State the disposition (accepted-and-deferred with landing target, or rejected with reasons; "noted" is not a disposition). Wait about 60 seconds for the counter-reply so follow-up issue offers are not dropped. Reference tracking issues by number.
