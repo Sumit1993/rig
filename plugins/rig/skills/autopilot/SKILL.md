@@ -31,7 +31,7 @@ Respect the window. Never start a lane that cannot finish and be verified in the
 
 ## 1. The session and its lanes keep to their own worktrees
 
-`AGENTS.md` §Worktrees is the rule. The main checkout and its stack belong to the session; a lane that "restores" its branch takes the run down. A lane gets an absolute worktree path and stops and reports if it is missing.
+`AGENTS.md` §Worktrees is the rule. The main checkout and its stack belong to the session; a lane that "restores" its branch takes the run down. A lane gets an absolute worktree path and stops and reports if it is missing. The stash stack is shared by every worktree, so never a bare `git stash`: set work aside with a WIP commit.
 
 Every dispatch prompt names the absolute worktree path, the exact verify commands the lane runs itself, the report format (findings, evidence, SHAs, blockers, no prose), the stop conditions ("abort and report rather than improvise" on any conflict, frozen path, or gate still red after N minutes), what the lane may not do (merge, close, bypass, edit a frozen path), the stall rule (§3), and the early-stop rule: status notes go in the same message as the next tool call, and it stops only when nothing can move without the operator.
 
