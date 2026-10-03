@@ -58,7 +58,7 @@ AGY_PID=$!            # agy itself, no subshell in between
 - Stdout holds one object written at the end, so a healthy run looks frozen. Watch `$ACTIVITY`.
 - `--model` takes a slug from `agy models`. No `--effort` with an effort-suffixed slug. `--print-timeout` is a Go duration (`40m`); bare `2400` exits 2.
 - The sidecar `$OUT.meta.json` exists because agy's envelope omits the model.
-- `run-agy-watchdog.sh` in this directory wraps the launch, reaps hangs and records quota walls through `agy-quota.sh record-from-envelope`. `agy-quota.sh live` reads both groups' quota at zero tokens (#133 - Every seat sees its quotas).
+- `run-agy-watchdog.sh` in this directory wraps the launch (positional arguments, `references/handler.md` step 1), reaps hangs and records quota walls through `agy-quota.sh record-from-envelope`. `agy-quota.sh live` reads both groups' quota at zero tokens (#133 - Every seat sees its quotas).
 
 ## Models inside agy
 

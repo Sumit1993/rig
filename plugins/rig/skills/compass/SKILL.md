@@ -26,7 +26,7 @@ Never create, rename or delete a label or a milestone. If the vocabulary lacks s
 
 ## Step 0: review debt
 
-Reviews land hours after a PR is marked ready, long after its session ended (`Sumit1993/rig#150`). Findings on the operator's open PRs come before any new pick. The SessionStart hook prints them as `Review debt in <repo>: ...`; without the hook:
+Reviews land hours after a PR is marked ready, long after its session ended (`Sumit1993/rig#150`). Findings on the operator's open PRs in this repo come before any new pick. Debt is per repo: other repos' debt waits for a session there, and none here is reported as none, never widened. The SessionStart hook prints them as `Review debt in <repo>: ...`; without the hook:
 
 ```
 repo=$(gh repo view --json nameWithOwner -q .nameWithOwner)

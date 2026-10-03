@@ -27,6 +27,8 @@ check "PR URL target with token allowed" 0 "CR_SUMMON_OK=213 gh pr comment https
 check "PR URL target without token blocked" 2 "gh pr comment https://github.com/o/r/pull/213 --body '@coderabbitai review'"
 check "compound second target blocked" 2 "CR_SUMMON_OK=213 gh pr comment 213 --body '@coderabbitai review'; gh pr comment 214 --body '@coderabbitai review'"
 check "compound targetless post blocked" 2 "CR_SUMMON_OK=213 gh pr comment 213 --body '@coderabbitai review'; gh pr comment --body '@coderabbitai review'"
+check "prose naming CodeRabbit then a comment allowed" 0 "$(printf 'cat > d.md <<EOF\nthe hourly CodeRabbit review queue\nEOF\ngh issue comment 160 --body-file d.md')"
+check "@coderabbit handle still blocked" 2 "gh pr comment 213 --body '@coderabbit review'"
 check "junk input exits 0" 0 ""
 printf 'not json' | "$HOOK" >/dev/null 2>&1 && pass "non-JSON stdin exits 0" || fail "non-JSON stdin"
 
