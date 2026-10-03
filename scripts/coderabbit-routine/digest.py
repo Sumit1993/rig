@@ -209,10 +209,18 @@ def last_review_on_closed(repo):
     return max(ats) if ats else None
 
 
+def safe_pr_facts(repo, pr):
+    # One unreadable PR must not drop its whole repo (#159, prismalens#776).
+    try:
+        return pr_facts(repo, pr)
+    except RuntimeError as e:
+        return {"repo": repo, "number": pr["number"], "title": pr["title"], "error": str(e)}
+
+
 def repo_digest(repo):
     try:
         prs = gh(f"repos/{repo}/pulls?state=open&per_page=100", paginate=True)
-        facts = {"pull_requests": [pr_facts(repo, pr) for pr in prs], "closed_last_review_at": last_review_on_closed(repo)}
+        facts = {"pull_requests": [safe_pr_facts(repo, pr) for pr in prs], "closed_last_review_at": last_review_on_closed(repo)}
     except RuntimeError as e:
         facts = {"error": str(e)}
     return repo, facts

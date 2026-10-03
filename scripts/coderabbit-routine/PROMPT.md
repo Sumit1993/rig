@@ -2,7 +2,18 @@
 
 Each hourly run asks CodeRabbit to review at most one of the operator's pull requests. CodeRabbit gives the operator one review per hour across every repo. The routine never merges: merging belongs to a local session, when the operator asks for it (`compass`). The rules came over from the Actions queue that was removed in prismalens/gh-workflows#217. That queue matched CodeRabbit's wording in code (prismalens/gh-workflows#216), so here the model reads CodeRabbit's replies instead.
 
-Never edit code, push, merge, sleep, wait or send notifications. Post nothing except the single summon described below. If `digest.py` or `act.py` fails, report the error and stop; the scripts are fixed in a local session, never in this run.
+Never edit code, push, merge, sleep or wait. Post nothing except the single summon described below and the Slack summary.
+
+## Slack summary
+
+Every run ends by posting its summary to Slack, so the operator can follow the queue from one channel: `python3 notify.py /tmp/digest.json '<action>'`. `<action>` is one line in plain words: the summon posted (repo#number, new or re-review), or why none (the budget rule that held, and when the slot reopens), plus each PR skipped as a re-review and why. `notify.py` adds the errors, the replies owed, the PRs reviewed with nothing owed, and the queue, all computed from the digest.
+
+- If `digest.py` fails, still run `notify.py` with the error's first line as `<action>`, then stop.
+- A pull request with an `error` in the digest is never a candidate; read everything else as usual.
+- If `act.py` fails, put its error in `<action>`.
+- If `notify.py` fails, put its error and the summary it printed in the report.
+
+The scripts are fixed in a local session, never in this run.
 
 ## 1. Read the digest
 
@@ -21,7 +32,6 @@ A pull request is a candidate when all of these hold:
 
 - It is not `docs_only`.
 - CodeRabbit has not reviewed `head`. `coderabbit_reviewed_head: true` counts. So does a CodeRabbit comment saying it finished a review that covers `head`. A rate-limit notice, a "review skipped" or "paused" note, or an acknowledgement does not.
-- `head_age_min` is at least 20.
 - No summon is pending. A summon is pending when `last_summon.after_head` is true and `first_coderabbit_reply_after_summon` is null, or is anything other than a rate-limit notice or a misparse ("initiate chat"). Every reply to a summon ends with the note that CodeRabbit "does not re-review already reviewed commits". That note is boilerplate, not a refusal.
 
 A candidate is a **re-review** if CodeRabbit reviewed an earlier commit. It qualifies only when `coderabbit_threads_without_operator_reply` is 0; otherwise its fixes are still pending. Any other candidate is **new**.
@@ -30,9 +40,9 @@ A re-review also has to buy something. Every review of a fix commit finds a smal
 
 Pick re-reviews first, ordered by the oldest `head_committed_at`. Then pick new ones, ordered by the oldest `created_at`. Summon the pick with `python3 act.py <repo> <n> '@coderabbitai review'`. `act.py` adds the hidden `summoned-by` marker. Never post `full review`: it spends the same slot to re-read commits that were already reviewed.
 
-## 4. Report
+## 4. Post the summary, then report
 
-Report in under 10 lines:
+Run `notify.py` (§Slack summary). Then report in under 10 lines:
 - what the previous summon got, and who posted it (`last_summon.by`)
 - the summon posted, or why none
 - how many pull requests are waiting, per repo
