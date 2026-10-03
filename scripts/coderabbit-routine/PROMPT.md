@@ -2,7 +2,16 @@
 
 Each hourly run asks CodeRabbit to review at most one of the operator's pull requests. CodeRabbit gives the operator one review per hour across every repo. The routine never merges: merging belongs to a local session, when the operator asks for it (`compass`). The rules came over from the Actions queue that was removed in prismalens/gh-workflows#217. That queue matched CodeRabbit's wording in code (prismalens/gh-workflows#216), so here the model reads CodeRabbit's replies instead.
 
-Never edit code, push, merge, sleep, wait or send notifications. Post nothing except the single summon described below. If `digest.py` or `act.py` fails, report the error and stop; the scripts are fixed in a local session, never in this run.
+Never edit code, push, merge, sleep or wait. Post nothing except the single summon described below and the failure alert.
+
+## Failure alert
+
+A failure is invisible outside this run, so it goes to Slack (Sumit1993/rig#164). Run `python3 alert.py 'CodeRabbit routine: <what failed, which repo or PR, the error's first line>'` once per run when any of these happens:
+- `digest.py` fails. Alert, then stop.
+- The digest has an `error` on a repo or on a pull request. Alert, then go on: a pull request with an `error` is never a candidate, and everything else is read as usual.
+- `act.py` fails. Alert, then stop.
+
+If `alert.py` fails too, put its error in the report. The scripts are fixed in a local session, never in this run.
 
 ## 1. Read the digest
 
