@@ -108,13 +108,15 @@ done <<< "$urls"
 
 # GitHub links only the first number after a closing keyword; "Closes #1, #2" leaves #2 open.
 # Compare what the body names against closingIssuesReferences. Story: gh-workflows #140, #155.
+# Only the list right after a keyword counts, and only for a PR this call wrote (prismalens#776 false positives).
 closes_note=""
-while read -r url; do
+case "$cmd" in *"gh pr create"*|*"gh pr edit"*|"") body_written=1 ;; *) body_written=0 ;; esac
+[ "$body_written" = "1" ] && while read -r url; do
   [ -z "$url" ] && continue
   grep -qxF "$url" <<<"$fresh_urls" || continue
   repo=${url#https://github.com/}; repo=${repo%%/pull/*}; num=${url##*/}
   pv=$(gh pr view "$num" -R "$repo" --json body,closingIssuesReferences 2>/dev/null) || continue
-  named=$(jq -r '[.body // "" | match("(?i)\\b(close[sd]?|fix(e[sd])?|resolve[sd]?)\\b[^\\n]*"; "g").string | match("#[0-9]+"; "g").string] | unique | length' <<<"$pv" 2>/dev/null)
+  named=$(jq -r '[.body // "" | match("(?i)\\b(close[sd]?|fix(e[sd])?|resolve[sd]?):?\\s+#[0-9]+(\\s*(,|and)\\s*#[0-9]+)*"; "g").string | match("#[0-9]+"; "g").string] | unique | length' <<<"$pv" 2>/dev/null)
   linked=$(jq -r '.closingIssuesReferences | length' <<<"$pv" 2>/dev/null)
   [ -n "$named" ] && [ -n "$linked" ] && [ "$named" -gt "$linked" ] \
     && closes_note="${closes_note}PR #${num} body names ${named} issue(s) after a closing keyword but GitHub linked ${linked}; repeat the keyword per issue (closes #a, closes #b) and edit the body. "
@@ -146,7 +148,7 @@ if [ -n "$cwd_origin" ]; then
   if [ "$has_matching_fresh" = "1" ]; then
     # Two PR-file queries at most; the draft list is its own call.
     calls_left=2
-    drafts_json=$(gh pr list -R "$cwd_origin" --author @me --draft --state open --json number,files 2>/dev/null) || drafts_json=""
+    drafts_json=$(gh pr list -R "$cwd_origin" --author @me --draft --state open --json number,files,headRefName 2>/dev/null) || drafts_json=""
     if jq -e 'type == "array" and length > 0' >/dev/null 2>&1 <<<"$drafts_json"; then
       while read -r url; do
         [ -z "$url" ] && continue
@@ -154,7 +156,7 @@ if [ -n "$cwd_origin" ]; then
         repo=${url#https://github.com/}; repo=${repo%%/pull/*}; num=${url##*/}
         [ "$repo" = "$cwd_origin" ] || continue
         [ "$calls_left" -gt 0 ] || break
-        pv_files=$(gh pr view "$num" -R "$cwd_origin" --json files 2>/dev/null) || pv_files=""
+        pv_files=$(gh pr view "$num" -R "$cwd_origin" --json files,baseRefName 2>/dev/null) || pv_files=""
         calls_left=$((calls_left - 1))
         if jq -e 'type == "object"' >/dev/null 2>&1 <<<"$pv_files"; then
           matching_draft=$(jq -n -r \
@@ -164,6 +166,7 @@ if [ -n "$cwd_origin" ]; then
               ($fresh_view.files // [] | map(.path // empty)) as $fresh_paths
               | [ $drafts[]
                   | select(.number != $fresh_num)
+                  | select((.headRefName // "") == "" or .headRefName != $fresh_view.baseRefName)
                   | select(any(.files[]?; (.path // empty) as $p | $fresh_paths | index($p)))
                 ] | first | .number // empty
             ' 2>/dev/null) || matching_draft=""

@@ -127,6 +127,13 @@ case "$got" in
   *) echo "FAIL: empty payload rc=$got (want 0)"; fails=$((fails + 1)) ;;
 esac
 
+check "\$'...' body with escaped apostrophes and the marker passes" 0 \
+  "gh pr comment 5 --body \$'Posting the hourly summary by hand now because the routine\\'s post failed.\\n\\nPosted by an agent under the operator\\'s account.'"
+check "\$'...' body without the marker blocks" 2 \
+  "gh pr comment 5 --body \$'Posting the hourly summary by hand now because the routine\\'s post failed.\\n\\nno stamp here'"
+check "\$'...' with an octal-escaped apostrophe in the marker passes" 0 \
+  "gh pr comment 5 --body \$'A long enough comment body to clear the length floor here.\\n\\nPosted by an agent under the operator\\047s account.'"
+
 check "non-gh command exits 0 with no output" 0 'ls -la'
 out=$(jq -n --arg cwd "$CWD" --arg cmd 'ls -la' '{"cwd": $cwd, "tool_input": {"command": $cmd}}' | "$HOOK" 2>&1)
 [ -z "$out" ] && echo "PASS: non-gh command prints nothing" || { echo "FAIL: non-gh command printed: $out"; fails=$((fails + 1)); }

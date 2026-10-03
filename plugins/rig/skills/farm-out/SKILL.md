@@ -63,6 +63,7 @@ AGY_PID=$!            # agy itself, no subshell in between
 ## Models inside agy
 
 - `gemini-3.8-flash-high` for all delegable work with a strict template and a clear spec. Not open-ended unsupervised coding. `gemini-3.7-flash-high` if 3.8 misbehaves.
+- `gemini-3.8-flash-low` for purely mechanical items (a rename, a known one-line fix, running a suite): it skips thinking and runs about 3–4 s per step against 6–8 s on high.
 - `gemini-3.1-pro-high` is untested here and draws on Flash's pool: a quality choice, never a quota escape.
 - `claude-opus-4-6-thinking` and `claude-sonnet-4-6` sit in the other quota group and are not the Gemini fallback.
 - Avoid `gemini-3.5-flash-*` and `gpt-oss-120b-medium`.
@@ -74,9 +75,11 @@ A lane takes side work while the session keeps coding (`AGENTS.md` §Delegation)
 
 Write the spec to `~/ai-context/<repo>/<issue>-<slug>/spec-<lane>.md` or into the repo, never `/tmp`. Spawn `subagent_type: "agy-runner"` with the path. That is the whole dispatch.
 
-- One lane per umbrella issue, reused across its slices. Verification once at the umbrella: the lane pastes raw output of the umbrella's verify commands, the handler checks provenance, the session reads the diff against the spec.
+- One lane per item, run in parallel, each with its own branch and its own narrow test command. A run costs about 5 s per step, one step at a time, and every step resends the whole context. A ten-item lane took 400 steps and 40 minutes, then hit its timeout; ten one-item lanes each take a few minutes. Past ~140k tokens agy compacts and re-reads files (google-antigravity/antigravity-cli#878). Verification still runs once at the umbrella, after the item branches are merged into it.
+- Every work order carries: "Run tests, typecheck and builds in the foreground with `WaitMsBeforeAsync` 600000. Never background a command and poll it." agy's default of 5000 sends every suite to the background, and each status poll is a full step. Across 72 runs that came to 593 polls, and 7 runs were still waiting when the timeout hit.
+- Batch reads: one shell command reads several files, and each file is read once, whole.
 - Reuse one planner inside the prompt-cache hour; a fresh one pays for the whole context again (#79 - autopilot §0: name the prompt-cache TTL as a ceiling on the cron interval). Without SendMessage, batch the hour's specs into one planner prompt.
-- Never `SendMessage` a lane that is still running; a well-briefed lane refuses it as unsourced (#136 - The kit matches what gh-workflows #173 changes). Send the follow-up as the resume prompt.
+- A running agy process takes no message: a print run is one turn, and even `--input-format stream-json` holds a message until the turn ends (agy 1.1.15 changelog). Send its follow-up as the resume prompt. A running Claude subagent takes `SendMessage` at its next tool round; name the source (the operator's words, an issue, a log path) or a well-briefed lane refuses it as unsourced (#136 - The kit matches what gh-workflows #173 changes).
 - A spec pointing outside the lane's project root says to read it with Bash or Read; context-mode refuses those paths.
 - The prompt goes in the file, not the subagent's prompt. Do not brief the runner on how to run agy: path in, verified report out.
 - In Workflows, where `subagent_type` is unavailable: `agent(pathOnlyPrompt, {model: 'sonnet', effort: 'medium', label: 'antigravity-gemini-3.8:<task>'})`, and the prompt says to load `farm-out` and `no-doze` first. The `antigravity-<model>` label is the only sign of who is working.

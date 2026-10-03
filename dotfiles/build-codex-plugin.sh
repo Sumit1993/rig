@@ -17,7 +17,6 @@ CLAUDE_ONLY=(
   "limit-log.sh: StopFailure and Notification, events Codex lacks"
   "pr-created.sh: Claude watcher tools" "reap-watchers.sh: Claude watcher tools"
   "agent-prompt-nudge.sh: Claude prompt conventions"
-  "ai-context-write-nudge.sh: Claude session context layout"
   "draft-posted-nudge.sh: post-tool cleanup in Claude sessions"
   "gh-write-nudge.sh: gh write conventions in Claude sessions"
   "merge-gate.sh: per-merge permission in Claude sessions"

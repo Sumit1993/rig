@@ -191,6 +191,18 @@ case "$c" in
   *"names "*) fail "a fully linked body still complained: ${c:0:200}" ;;
   *) pass "a body whose closes all linked says nothing about it" ;;
 esac
+PRV='{"body":"Part of #673 - release gate fix, see #674","closingIssuesReferences":[]}'
+c=$(GH_STUB_OK="pulls/52" GH_STUB_PRVIEW="$PRV" run "$CREATE_CMD" "https://github.com/acme/widget/pull/52" "$cl_dir" | ctx)
+case "$c" in
+  *"names "*) fail "a cited issue title containing fix read as a closing keyword: ${c:0:200}" ;;
+  *) pass "a keyword inside a cited title is not a closing keyword" ;;
+esac
+PRV='{"body":"Closes #1, #2","closingIssuesReferences":[{"number":1}]}'
+c=$(GH_STUB_OK="pulls/53" GH_STUB_PRVIEW="$PRV" run "cat notes.md" "https://github.com/acme/widget/pull/53" "$cl_dir" | ctx)
+case "$c" in
+  *"names "*) fail "a PR URL read from a file got a closes note: ${c:0:200}" ;;
+  *) pass "a PR this call did not write gets no closes note" ;;
+esac
 rm -rf "$cl_dir"
 
 # --- An existence check that itself fails must not suppress ------------------
@@ -221,6 +233,16 @@ case "$c" in
   *"PR #60 touches files also changed in open draft #10; fold the work into #10 unless it is its own unit (compass Step 3)."*)
     pass "overlap with a draft prints the fold note" ;;
   *) fail "overlap note missing or wrong: $c" ;;
+esac
+
+# Case 1b: a PR stacked on the draft's branch is not a fold candidate
+c=$(GIT_STUB_ORIGIN="git@github.com:acme/widget.git" GH_STUB_OK="pulls/65" \
+    GH_STUB_PRLIST='[{"number":10,"headRefName":"feat/a","files":[{"path":"lib/bar.rb"}]}]' \
+    GH_STUB_PRVIEW_FILES='{"baseRefName":"feat/a","files":[{"path":"lib/bar.rb"}]}' \
+    run "$CREATE_CMD" "https://github.com/acme/widget/pull/65" "$ov_dir/1b" | ctx)
+case "$c" in
+  *"touches files also changed"*) fail "a PR stacked on the draft got a fold note: $c" ;;
+  *) pass "a PR stacked on the draft's branch gets no fold note" ;;
 esac
 
 # Case 2: no overlap prints none
