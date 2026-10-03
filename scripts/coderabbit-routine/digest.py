@@ -9,6 +9,7 @@ import re
 import os
 import sys
 import urllib.error
+import urllib.parse
 import urllib.request
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
@@ -52,7 +53,8 @@ def gh(path, paginate=False):
         return data
     items = list(data)
     while (m := re.search(r'<([^>]+)>;\s*rel="next"', link)):
-        data, link = request(m.group(1))
+        # rel="next" names /repositories/<id>/, which the cloud proxy refuses (#159): keep our path, take its query.
+        data, link = request(urllib.parse.urlsplit(url)._replace(query=urllib.parse.urlsplit(m.group(1)).query).geturl())
         items.extend(data)
     return items
 
