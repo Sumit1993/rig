@@ -90,8 +90,10 @@ Nothing merges on its own; every merge waits for `MERGE_OK`, and `compass` Step 
 
 Check `rig-meta.sh get <owner/repo> merge_queue` first.
 
+Every repo merges with merge commits, queues included (operator ruling 2026-10-03, #164). A stacked PR keeps its history when its base lands, and release-please reads each commit on the branch, so every commit message is conventional.
+
 - Queue repos (`merge_queue` true): enqueue with the `enqueuePullRequest` GraphQL mutation (`gh pr merge` answers `Auto merge is not allowed for this repository`, seen on prismalens/gh-workflows#217 - chore: remove the hourly review queue; the CodeRabbit summoner routine summons again), and the merge queue tests a speculative merge onto main before landing it. No BEHIND cascade, no update-branch babysitting. Do not enqueue before the liveness comment shows posted review output (`claude-review-lane` §2, the liveness comment). The routine gates on checks and threads, not on whether a reviewer spoke, so enqueueing into silence merges an unreviewed head.
-- Classic repos (`merge_queue` false): merge by hand once CI is green and every review thread resolved by the reviewer that opened it, `gh pr merge <n> --squash`. BEHIND still applies, so update the branch and re-green before merging the next.
+- Classic repos (`merge_queue` false): merge by hand once CI is green and every review thread resolved by the reviewer that opened it, `gh pr merge <n> --merge`. BEHIND still applies, so update the branch and re-green before merging the next.
 
 Afterward remove the lane's worktree and delete its local branch (`AGENTS.md` §Worktrees). `git worktree unlock` first if git refuses because the tree is locked.
 
