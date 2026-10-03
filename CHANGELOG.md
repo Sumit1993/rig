@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.13.1](https://github.com/Sumit1993/rig/compare/rig-v0.13.0...rig-v0.13.1) (2026-10-03)
+
+
+### Bug Fixes
+
+* **coderabbit-routine:** pagination keeps the repos/ path the cloud proxy accepts ([#162](https://github.com/Sumit1993/rig/issues/162)) ([fdfead8](https://github.com/Sumit1993/rig/commit/fdfead81f9e1eddd1c4da1368504b84ea64e7087))
+* **rig:** review debt is per repo, the watchdog signature is written down, no bare stash in a lane, summon gate keys on the handle ([#161](https://github.com/Sumit1993/rig/issues/161)) ([d460e3e](https://github.com/Sumit1993/rig/commit/d460e3e1bcadfbc2773e85235719bf86870db621)), closes [#160](https://github.com/Sumit1993/rig/issues/160)
+
 ## [0.13.0](https://github.com/Sumit1993/rig/compare/rig-v0.12.0...rig-v0.13.0) (2026-09-30)
 
 
