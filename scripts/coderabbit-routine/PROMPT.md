@@ -32,7 +32,6 @@ A pull request is a candidate when all of these hold:
 
 - It is not `docs_only`.
 - CodeRabbit has not reviewed `head`. `coderabbit_reviewed_head: true` counts. So does a CodeRabbit comment saying it finished a review that covers `head`. A rate-limit notice, a "review skipped" or "paused" note, or an acknowledgement does not.
-- `head_age_min` is at least 20.
 - No summon is pending. A summon is pending when `last_summon.after_head` is true and `first_coderabbit_reply_after_summon` is null, or is anything other than a rate-limit notice or a misparse ("initiate chat"). Every reply to a summon ends with the note that CodeRabbit "does not re-review already reviewed commits". That note is boilerplate, not a refusal.
 
 A candidate is a **re-review** if CodeRabbit reviewed an earlier commit. It qualifies only when `coderabbit_threads_without_operator_reply` is 0; otherwise its fixes are still pending. Any other candidate is **new**.

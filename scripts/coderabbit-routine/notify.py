@@ -14,6 +14,10 @@ def link(p):
     return f"<https://github.com/{p['repo']}/pull/{p['number']}|{p['repo'].split('/')[1]}#{p['number']}>"
 
 
+def age(m):
+    return f"{m}m" if m < 60 else f"{m // 60}h"
+
+
 def summary(d, action):
     prs = [p for r in d["repos"].values() for p in r.get("pull_requests", []) if not p.get("excluded")]
     errors = [f"{repo}: {r['error'][:120]}" for repo, r in d["repos"].items() if "error" in r]
@@ -31,7 +35,7 @@ def summary(d, action):
     if clean:
         lines.append("*Reviewed, nothing owed (check in compass):* " + ", ".join(link(p) for p in clean))
     if waiting:
-        lines.append("*Waiting for review:* " + ", ".join(f"{link(p)} ({p['head_age_min'] // 60}h)" for p in waiting))
+        lines.append("*Waiting for review:* " + ", ".join(f"{link(p)} ({age(p['head_age_min'])})" for p in waiting))
     if last.get("age_min") is not None:
         lines.append(f"Last CodeRabbit review {last['age_min']} min ago.")
     return "\n".join(lines)
