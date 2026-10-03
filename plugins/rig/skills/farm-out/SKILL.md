@@ -76,7 +76,7 @@ Write the spec to `~/ai-context/<repo>/<issue>-<slug>/spec-<lane>.md` or into th
 
 - One lane per umbrella issue, reused across its slices. Verification once at the umbrella: the lane pastes raw output of the umbrella's verify commands, the handler checks provenance, the session reads the diff against the spec.
 - Reuse one planner inside the prompt-cache hour; a fresh one pays for the whole context again (#79 - autopilot §0: name the prompt-cache TTL as a ceiling on the cron interval). Without SendMessage, batch the hour's specs into one planner prompt.
-- Never `SendMessage` a lane that is still running; a well-briefed lane refuses it as unsourced (#136 - The kit matches what gh-workflows #173 changes). Send the follow-up as the resume prompt.
+- A running agy process takes no message: a print run is one turn, and even `--input-format stream-json` holds a message until the turn ends (agy 1.1.15 changelog). Send its follow-up as the resume prompt. A running Claude subagent takes `SendMessage` at its next tool round; name the source (the operator's words, an issue, a log path) or a well-briefed lane refuses it as unsourced (#136 - The kit matches what gh-workflows #173 changes).
 - A spec pointing outside the lane's project root says to read it with Bash or Read; context-mode refuses those paths.
 - The prompt goes in the file, not the subagent's prompt. Do not brief the runner on how to run agy: path in, verified report out.
 - In Workflows, where `subagent_type` is unavailable: `agent(pathOnlyPrompt, {model: 'sonnet', effort: 'medium', label: 'antigravity-gemini-3.8:<task>'})`, and the prompt says to load `farm-out` and `no-doze` first. The `antigravity-<model>` label is the only sign of who is working.

@@ -35,7 +35,6 @@ Plugin `rig`, path-independent via `${CLAUDE_PLUGIN_ROOT}`:
 | `hooks/limit-log.sh` | StopFailure(rate_limit, overloaded) and Notification(quota_auto_resume_*): one JSON line each in `~/.claude/metrics/limits.jsonl` |
 | `hooks/outside-view-nudge.sh` | PreToolUse(AskUserQuestion, EnterPlanMode, fable-planner spawn): get an outside view first. 1st time, then every 3rd per session |
 | `hooks/gh-write-nudge.sh` | PreToolUse(Bash): nudges once per session on a handoff-shaped or 40-plus-line gh body, a bare `#N`, and a non-draft `gh pr create` |
-| `hooks/ai-context-write-nudge.sh` | PreToolUse(Edit, Write): suggests the `<repo>/<issue>-<slug>/` layout and reminds that a ruling written there goes on the issue |
 | `hooks/draft-posted-nudge.sh` | PostToolUse(Bash): a body file posted from ai-context is told to delete the draft, once per file |
 | `hooks/agent-prompt-nudge.sh` | PreToolUse(Agent): a Fable or Opus prompt asking it to show its reasoning, a Sonnet prompt with no verify step, a second fable-planner inside the cache hour |
 | `hooks/protected-edit-gate.sh` | PreToolUse(Edit, Write): blocks edits to loose skill copies and to the import line of `~/.claude/CLAUDE.md` |
