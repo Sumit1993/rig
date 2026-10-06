@@ -185,17 +185,17 @@ c9_skill_pro=0
 printf '%s' "$HANDLER" | grep -q 'share a pool' && c9_skill_pro=1
 c9_skill_self=0
 printf '%s' "$HANDLER" | grep -qi 'do the task yourself' && c9_skill_self=1
-c9_skill_no_agy_claude=0
-printf '%s' "$HANDLER" | grep -qE 'claude-(sonnet|opus)-[45]-[56]' || c9_skill_no_agy_claude=1
+c9_skill_agy_sonnet=0
+printf '%s' "$HANDLER" | grep -q 'claude-sonnet-5-5-low' && c9_skill_agy_sonnet=1
 c9_runner_pro=0
 grep -q 'share one pool' "$RUNNER_FILE" && c9_runner_pro=1
 c9_runner_self=0
 grep -q 'I do the task myself' "$RUNNER_FILE" && c9_runner_self=1
-c9_runner_no_agy_claude=0
-grep -qE 'claude-(sonnet|opus)-[45]-[56]' "$RUNNER_FILE" || c9_runner_no_agy_claude=1
+c9_runner_agy_sonnet=0
+grep -q 'claude-sonnet-5-5-low' "$RUNNER_FILE" && c9_runner_agy_sonnet=1
 c9_runner_tools=0
 grep -q '^tools:.*Edit' "$RUNNER_FILE" && grep -q '^tools:.*Write' "$RUNNER_FILE" && c9_runner_tools=1
-check "the skill and the agent definition route a dry Gemini the same way" '[ "$c9_skill_pro" -eq 1 ] && [ "$c9_skill_self" -eq 1 ] && [ "$c9_skill_no_agy_claude" -eq 1 ] && [ "$c9_runner_pro" -eq 1 ] && [ "$c9_runner_self" -eq 1 ] && [ "$c9_runner_no_agy_claude" -eq 1 ] && [ "$c9_runner_tools" -eq 1 ]'
+check "the skill and the agent definition route a dry Gemini the same way" '[ "$c9_skill_pro" -eq 1 ] && [ "$c9_skill_self" -eq 1 ] && [ "$c9_skill_agy_sonnet" -eq 1 ] && [ "$c9_runner_pro" -eq 1 ] && [ "$c9_runner_self" -eq 1 ] && [ "$c9_runner_agy_sonnet" -eq 1 ] && [ "$c9_runner_tools" -eq 1 ]'
 
 # The watchdog cds to the worktree, so $0 must be resolved before that. Issue #108.
 (cd "$SRC" && STUB_AGY_MODE=quota bash ./run-agy-watchdog.sh \
