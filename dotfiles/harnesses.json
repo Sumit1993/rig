@@ -1,0 +1,39 @@
+{
+  "claude": {
+    "marketplaces": {
+      "rig": {
+        "repo": "Sumit1993/rig",
+        "autoUpdate": true
+      },
+      "mattpocock": {
+        "repo": "mattpocock/skills",
+        "autoUpdate": true
+      }
+    },
+    "plugins": [
+      "rig@rig",
+      "mattpocock-skills@mattpocock",
+      "frontend-design@claude-plugins-official",
+      "posthog@claude-plugins-official"
+    ],
+    "mcp": {},
+    "account_marketplaces": [
+      "synced"
+    ]
+  },
+  "agy": {
+    "plugins": [
+      "rig"
+    ],
+    "mcp": {}
+  },
+  "codex": {
+    "plugins": [
+      "rig@rig-local"
+    ],
+    "mcp": {},
+    "account_marketplaces": [
+      "openai-curated-remote"
+    ]
+  }
+}

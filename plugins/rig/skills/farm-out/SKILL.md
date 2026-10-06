@@ -66,7 +66,6 @@ AGY_PID=$!            # agy itself, no subshell in between
 - `gemini-3.1-pro-high` is untested here and draws on Flash's pool: a quality choice, never a quota escape.
 - `claude-opus-5-5-{low,medium,high}` and `claude-sonnet-5-5-{low,medium,high}` (agy 1.2.16 `agy models`) sit in the other quota group with `gpt-oss-120b-medium`. `claude-sonnet-5-5-low` is the Gemini fallback: it did the #167 work order in 5 turns and 24 s, correct. Opus 5.5 there is untested and draws on the same pool.
 - `gemini-3.8-flash-medium`, `gemini-3.6-flash-*` and `gemini-3.1-pro-low` are listed and untested here. Avoid `gpt-oss-120b-medium`.
-- agy has its own skills: Matt Pocock's set is at `~/ai-context/vendor/mattpocock-skills` for agy-side planning and review.
 
 ## Dispatch
 

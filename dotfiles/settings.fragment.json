@@ -1,6 +1,8 @@
 {
   "permissions": {
-    "allow": ["Bash(agy *)"],
+    "allow": [
+      "Bash(agy *)"
+    ],
     "deny": [
       "WebFetch",
       "Bash(npm run dev*)",
@@ -16,21 +18,9 @@
     "type": "command",
     "command": "bash ~/.claude/statusline-command.sh"
   },
-  "worktree": { "baseRef": "head" },
-  "effortLevel": "high",
-  "tui": "fullscreen",
-  "extraKnownMarketplaces": {
-    "rig": {
-      "source": { "source": "github", "repo": "Sumit1993/rig" },
-      "autoUpdate": true
-    },
-    "mattpocock": {
-      "source": { "source": "github", "repo": "mattpocock/skills" },
-      "autoUpdate": true
-    }
+  "worktree": {
+    "baseRef": "head"
   },
-  "enabledPlugins": {
-    "rig@rig": true,
-    "mattpocock-skills@mattpocock": true
-  }
+  "effortLevel": "high",
+  "tui": "fullscreen"
 }
