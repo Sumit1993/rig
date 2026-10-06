@@ -125,7 +125,8 @@ if command -v jq >/dev/null 2>&1; then
   CID=$(jq -r '.conversation_id // empty' "$OUT" 2>/dev/null || true)
   STATUS=$(jq -r '.status // empty' "$OUT" 2>/dev/null || true)
   # agy reports SUCCESS for a run cut off by --print-timeout; only stderr says so (#164).
-  grep -q 'print timeout after .* returning partial output' "$OUT.err" 2>/dev/null && STATUS=TIMEOUT
+  grep -q 'print timeout after .* returning partial output' "$OUT.err" 2>/dev/null
+  case $? in 0) STATUS=TIMEOUT ;; 1) ;; *) STATUS=STDERR_UNREADABLE ;; esac
   SENTINEL_STATUS="${STATUS:-UNPARSEABLE}"
   # launched is true only when at least one turn ran. num_turns: 0 means the
   # request was rejected before any work started (bad model, quota hit). Issue #50.

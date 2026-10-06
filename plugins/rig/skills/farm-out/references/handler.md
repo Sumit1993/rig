@@ -10,7 +10,7 @@ The `agy-runner`'s half of `farm-out`. The dispatcher never needs this file; the
 | Exit 0, empty `response`, `status` not `SUCCESS` | Claude quota out, or the turn failed | Same |
 | `authentication failed or timed out` | Login expired | Re-login, smoke-test `-p "say ok"`, then relaunch |
 | Output is not parseable JSON | `--print-timeout` hit mid-write | Truncation. Resume, below |
-| `status` `TIMEOUT`: agy said `SUCCESS`, stderr says `print timeout after … returning partial output` | The turn was still running, usually polling a backgrounded test or typecheck | Not done. Check the worktree, then resume |
+| `status` `TIMEOUT`: agy said `SUCCESS`, stderr says `print timeout after … returning partial output` | The turn was still running, usually polling a backgrounded test or typecheck; seen on 7 runs (#164) | Not done. Check the worktree, then resume |
 | Parseable JSON, work half done | Out of turns or time | Resume, never re-prompt |
 | Full report printed, process never exits | Hang-after-report | Artifacts exist, log ends in a full report, log stale about 3 min: kill by PID now |
 | Non-zero exit, populated worktree (e.g. `Error: timeout waiting for response`) | Died after real edits, nothing committed | `git status` and `git diff` first. Never relaunch onto uncommitted work; salvage or resume |

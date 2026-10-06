@@ -16,11 +16,11 @@ sub ansi_end {
   while ($i < $n) { my $c = substr($s, $i, 1); return $i + 1 if $c eq "'"; $i += $c eq '\\' ? 2 : 1 }
   $n;
 }
-my %ESC = (n => "\n", t => "\t", r => "\r", a => "\a", b => "\b", e => "\e", E => "\e", f => "\f", v => "\x0b");
+my %ESC = (n => "\n", t => "\t", r => "\r", a => "\a", b => "\b", e => "\e", E => "\e", f => "\f", v => "\x0b", "'" => "'", '"' => '"', '?' => '?', '\\' => '\\');
 sub ansi_decode {
   my $t = shift;
   $t =~ s/\\(x[0-9A-Fa-f]{1,2}|[0-7]{1,3}|.)/
-    my $x = $1; $x =~ m{^x(.+)}s ? chr(hex $1) : $x =~ m{^[0-7]+$} ? chr(oct $x) : exists $ESC{$x} ? $ESC{$x} : $x/gse;
+    my $x = $1; $x =~ m{^x(.+)}s ? chr(hex $1) : $x =~ m{^[0-7]+$} ? chr(oct $x) : exists $ESC{$x} ? $ESC{$x} : "\\$x"/gse;
   $t;
 }
 sub heredoc_at {
