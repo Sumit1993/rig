@@ -43,16 +43,21 @@ def summary(d, action):
 
 def main():
     try:
-        text = summary(json.load(open(sys.argv[1])), sys.argv[2])
-    except (OSError, ValueError, KeyError):
+        with open(sys.argv[1]) as f:
+            text = summary(json.load(f), sys.argv[2])
+    except (OSError, ValueError, KeyError, TypeError, AttributeError):
         text = f"⚠️ *CodeRabbit routine*: no digest. {sys.argv[2]}"
     url = os.environ.get("SLACK_WEBHOOK_URL")
     if not url:
         print(text)
         sys.exit("SLACK_WEBHOOK_URL is not set; put the summary above in the report instead")
     req = urllib.request.Request(url, json.dumps({"text": text}).encode(), {"Content-Type": "application/json"})
-    with urllib.request.urlopen(req, timeout=20) as resp:
-        print(resp.status)
+    try:
+        with urllib.request.urlopen(req, timeout=20) as resp:
+            print(resp.status)
+    except OSError as e:
+        print(text)
+        sys.exit(f"Slack post failed: {e}")
 
 
 if __name__ == "__main__":

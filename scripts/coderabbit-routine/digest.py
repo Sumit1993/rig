@@ -213,8 +213,8 @@ def safe_pr_facts(repo, pr):
     # One unreadable PR must not drop its whole repo (#159, prismalens#776).
     try:
         return pr_facts(repo, pr)
-    except RuntimeError as e:
-        return {"repo": repo, "number": pr["number"], "title": pr["title"], "error": str(e)}
+    except (RuntimeError, KeyError, TypeError, ValueError) as e:
+        return {"repo": repo, "number": pr.get("number"), "title": pr.get("title"), "error": f"{type(e).__name__}: {e}"}
 
 
 def repo_digest(repo):
