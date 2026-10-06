@@ -1,6 +1,6 @@
 # agy handler: failure, resume, kill, babysit
 
-The `agy-runner`'s half of `farm-out`. The dispatcher never needs this file; the runner loads it before launching.
+The `agy-runner`'s half of `farm-out`. The session launches the watchdog itself and spawns the runner only for a run whose `AGY_EXITED` line is not clean; the runner loads this file first.
 
 ## Failure modes
 

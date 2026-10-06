@@ -1,6 +1,6 @@
 ---
 name: agy-runner
-description: Thin wrapper that owns one Antigravity CLI (agy) run end to end. Give it a prompt-file path and nothing else; it loads the agy doctrine itself. Spawned by the farm-out skill's wrapper pattern, not a general-purpose worker.
+description: Salvages one Antigravity CLI (agy) run that did not end clean, or owns a run end to end inside a Workflow. Give it the prompt-file path and the envelope path if there is one; it loads the agy doctrine itself. Spawned per farm-out §Dispatch, not a general-purpose worker.
 tools: Bash, Read, Glob, Grep, Edit, Write
 model: sonnet
 effort: medium

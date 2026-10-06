@@ -11,7 +11,8 @@ DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 RUN_SH="$DIR/../run.sh"
 PROJECTS="$DIR/fixtures/projects"
 AGY_LOGS="$DIR/fixtures/agy-logs"
-export PROJECTS AGY_LOGS
+AGY_BRAIN="$DIR/fixtures/agy-brain"
+export PROJECTS AGY_LOGS AGY_BRAIN
 
 fails=0
 check() {
@@ -99,6 +100,14 @@ if echo "$adc_out" | grep -E 'synthetic-fixture-model.*│ +1 +│' >/dev/null 2
   check "agy-dispatch-cost counts 1 run for fixture model" 0
 else
   check "agy-dispatch-cost counts 1 run for fixture model" 1
+fi
+
+# agy-turns: 3 turns, 3 calls, 2 in one turn, 2 view_file, 1 manage_task, 1 backgrounded (rig#167).
+at_out=$(bash "$RUN_SH" agy-turns 2>&1)
+if echo "$at_out" | grep -E 'Fixture Flash \(High\) +│ +2\.0 +│ +3 +│ +2 +│ +3 +│ +2 +│ +1 +│ +1 +│' >/dev/null 2>&1; then
+  check "agy-turns counts turns, calls, parallel calls and background waits" 0
+else
+  check "agy-turns counts turns, calls, parallel calls and background waits" 1; echo "$at_out"
 fi
 
 # 9. hook-blocks counts exactly 1 real refusal for rig/guard/test-fixture, and does not
