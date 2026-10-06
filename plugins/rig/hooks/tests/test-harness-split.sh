@@ -9,7 +9,8 @@ bash "$ROOT/dotfiles/build-agy-plugin.sh" "$T/agy" >/dev/null
 check "plugin.json at the root, valid, named" 'jq -e ".name == \"rig\"" "$T/agy/plugin.json" >/dev/null'
 check "no hooks cross to agy" '[ -z "$(find "$T/agy" -name "hooks*" -o -name "*.sh" -path "*hooks*")" ]'
 check "no agents cross to agy" '[ ! -e "$T/agy/agents" ]'
-check "at least one skill crosses" '[ -n "$(ls "$T/agy/skills")" ]'
+# agy is a headless lane worker; only lane-worker skills cross (#167).
+check "only the lane skill crosses to agy" '[ "$(ls "$T/agy/skills" | tr "\n" " ")" = "lane " ]'
 
 # A tag is a claim; a skill that names a Claude-only tool or path cannot carry it.
 bad=$(grep -rlwE 'Monitor|Workflow|SendMessage|TaskStop|ScheduleWakeup|CronCreate|subagent_type|EnterWorktree|AskUserQuestion|CLAUDE_PLUGIN_ROOT' "$T/agy/skills" 2>/dev/null)

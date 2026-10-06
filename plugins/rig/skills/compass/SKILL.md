@@ -2,7 +2,7 @@
 name: compass
 description: "Where a repo stands and what to work on next, read from GitHub itself: review debt on open PRs first, then the version milestone, its open issues by priority and surface, blocked skipped. Load when a session picks up work cold, is asked \"what's next\" or \"where are we\", must rank a queue, or merges on the operator's word. Also the frozen label and milestone vocabulary."
 metadata:
-  harnesses: "claude agy codex"
+  harnesses: "claude codex"
   version: "1.1.0"
 ---
 
