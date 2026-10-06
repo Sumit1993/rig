@@ -1,5 +1,39 @@
 # Changelog
 
+## [0.14.0](https://github.com/Sumit1993/rig/compare/rig-v0.13.0...rig-v0.14.0) (2026-10-06)
+
+
+### Features
+
+* **coderabbit-routine:** every run posts its summary to Slack, not only failures ([585b399](https://github.com/Sumit1993/rig/commit/585b399d281c1696e5c01dbd3bdf8b070c510532))
+* **coderabbit-routine:** every run posts its summary to Slack; one bad PR no longer drops its repo ([463585c](https://github.com/Sumit1993/rig/commit/463585c19a46477d77b081a68e2b2fa941bde58d))
+* **coderabbit-routine:** every run posts its summary to Slack; one bad PR no longer drops its repo ([#166](https://github.com/Sumit1993/rig/issues/166)) ([463585c](https://github.com/Sumit1993/rig/commit/463585c19a46477d77b081a68e2b2fa941bde58d))
+* **coderabbit-routine:** no 20-minute head-age wait; draft state is the hold ([e9a6424](https://github.com/Sumit1993/rig/commit/e9a642413d917cf5c87f7bba875b915923fedb41))
+* **coderabbit-routine:** one bad PR no longer drops its repo; failures alert Slack ([9f8392c](https://github.com/Sumit1993/rig/commit/9f8392c95aae2927b20cbc997d3558299af5a9e9))
+
+
+### Bug Fixes
+
+* **coderabbit-routine:** a malformed PR or digest degrades to an error line; a failed Slack post still prints the summary ([3446a30](https://github.com/Sumit1993/rig/commit/3446a3029b1399d64e1b6bbff4899ec24d8a1065))
+* **coderabbit-routine:** pagination keeps the repos/ path the cloud proxy accepts ([#162](https://github.com/Sumit1993/rig/issues/162)) ([fdfead8](https://github.com/Sumit1993/rig/commit/fdfead81f9e1eddd1c4da1368504b84ea64e7087))
+* **farm-out:** agy lanes per item, foreground suites, timeout is not success; merge commits everywhere ([b5f98ef](https://github.com/Sumit1993/rig/commit/b5f98efd660f9c819bbe62d482677a4c2fd6788a))
+* **hooks:** ANSI-C decoder keeps the backslash on escapes bash keeps; watchdog grep error is not success; cite agy and release-please claims ([4c8753d](https://github.com/Sumit1993/rig/commit/4c8753d7a3ed778571ef74e979b7f1776da8ec15))
+* **hooks:** stamp gate reads $'...' bodies; pr-created stops flagging cited titles and stacked PRs ([2572c0f](https://github.com/Sumit1993/rig/commit/2572c0f8deb5cbc708b65ca30b366d6e68b31b44))
+* **hooks:** stamp gate reads $'...' bodies; pr-created stops flagging cited titles and stacked PRs ([f617ff4](https://github.com/Sumit1993/rig/commit/f617ff41c1b0b491e1dfff5b57d82822fe14f833))
+* **hooks:** stamp gate reads $'...' bodies; pr-created stops flagging cited titles and stacked PRs ([#165](https://github.com/Sumit1993/rig/issues/165)) ([2572c0f](https://github.com/Sumit1993/rig/commit/2572c0f8deb5cbc708b65ca30b366d6e68b31b44))
+* **pr-babysit:** drop the date marker the doc lint rejects ([7f66e6d](https://github.com/Sumit1993/rig/commit/7f66e6d37ddf1685a54db4f4e9b42bb8b221ed37))
+* **rig:** review debt is per repo, the watchdog signature is written down, no bare stash in a lane, summon gate keys on the handle ([#161](https://github.com/Sumit1993/rig/issues/161)) ([d460e3e](https://github.com/Sumit1993/rig/commit/d460e3e1bcadfbc2773e85235719bf86870db621)), closes [#160](https://github.com/Sumit1993/rig/issues/160)
+
+
+### Documentation
+
+* **pr-babysit:** a classic merge passes the PR title as its subject, so the merge commit is conventional too ([f99d5a7](https://github.com/Sumit1993/rig/commit/f99d5a7885a06bb4937693b5ad4d016692774d29))
+
+
+### Miscellaneous Chores
+
+* **rig:** drop the ai-context write nudge; SendMessage ban covers only agy lanes ([c154d7c](https://github.com/Sumit1993/rig/commit/c154d7c723590ab388c9a218a781977d4a267a18))
+
 ## [0.13.0](https://github.com/Sumit1993/rig/compare/rig-v0.12.0...rig-v0.13.0) (2026-09-30)
 
 
