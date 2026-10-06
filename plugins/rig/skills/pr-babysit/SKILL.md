@@ -44,7 +44,7 @@ Push freely; nothing runs pre-push. Escalate by risk, and never pay model tokens
 
 A PR body that closes several issues repeats the keyword per issue, `closes #a, closes #b`; GitHub links only the first number after one keyword. `pr-created.sh` reads `closingIssuesReferences` and says when the body names more than GitHub linked (gh-workflows #140 claimed seven, linked one).
 
-Never bypass the ruleset. Batch every fix before you push: the routine summons a PR once its head commit is 20 minutes old, so a push right after a fix batch lands spends a slot on a commit you are about to amend.
+Never bypass the ruleset. Batch every fix before you push: the routine can summon a ready PR on its next hourly run, so a push mid-batch spends a slot on a commit you are about to amend. Keep the PR a draft while commits are still coming.
 
 ## Phase 1: arm the watcher, only for a held round
 
