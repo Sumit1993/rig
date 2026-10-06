@@ -64,8 +64,8 @@ AGY_PID=$!            # agy itself, no subshell in between
 
 - `gemini-3.8-flash-low` is the default for a work order that names its files, its change and a `Verify:` line: the same order took 7 turns in 27 s on low against 11 turns in 2.9 min on high, both correct (#167). `gemini-3.8-flash-high` when the lane must work out what to change. Neither for open-ended unsupervised coding. `gemini-3.7-flash-high` if 3.8 misbehaves.
 - `gemini-3.1-pro-high` is untested here and draws on Flash's pool: a quality choice, never a quota escape.
-- `claude-opus-4-6-thinking` and `claude-sonnet-4-6` sit in the other quota group and are not the Gemini fallback.
-- Avoid `gemini-3.5-flash-*` and `gpt-oss-120b-medium`.
+- `claude-opus-5-5-{low,medium,high}` and `claude-sonnet-5-5-{low,medium,high}` (agy 1.2.16 `agy models`) sit in the other quota group with `gpt-oss-120b-medium` and are not the Gemini fallback. `claude-sonnet-5-5-low` did the #167 work order in 5 turns and 24 s, correct.
+- `gemini-3.8-flash-medium`, `gemini-3.6-flash-*` and `gemini-3.1-pro-low` are listed and untested here. Avoid `gpt-oss-120b-medium`.
 - agy has its own skills: Matt Pocock's set is at `~/ai-context/vendor/mattpocock-skills` for agy-side planning and review.
 
 ## Dispatch

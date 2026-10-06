@@ -27,7 +27,7 @@ if [ -r "$log" ]; then
   [ -n "$caps" ] && acct="${acct}. ${caps}"
 fi
 g=$( [ -x "$quota" ] && "$quota" check gemini-3.8-flash-high 2>/dev/null | head -1 || echo "unknown")
-c=$( [ -x "$quota" ] && "$quota" check claude-opus-4.6 2>/dev/null | head -1 || echo "unknown")
+c=$( [ -x "$quota" ] && "$quota" check claude-sonnet-5-5-low 2>/dev/null | head -1 || echo "unknown")
 
 policy="A model whose weekly cap reads critical is not spawned; scoped-cap-gate refuses it, so write the spec on the session model. Past 60% on the 5h window: Sonnet subagents only, no research fan-out, no planner respawn. A dry agy group means the Sonnet handler does the task itself from the prompt file and says so."
 resume=""
