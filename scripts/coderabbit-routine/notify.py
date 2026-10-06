@@ -15,29 +15,38 @@ def link(p):
 
 
 def age(m):
-    return f"{m}m" if m < 60 else f"{m // 60}h"
+    if m < 60:
+        return f"{m}m"
+    if m < 1440:
+        return f"{m // 60}h {m % 60}m" if m % 60 else f"{m // 60}h"
+    return f"{m // 1440}d {m % 1440 // 60}h"
+
+
+def item(p, note=""):
+    title = (p.get("title") or "")[:70]
+    return f"• {link(p)}  {title}" + (f"  _({note})_" if note else "")
+
+
+def section(head, rows):
+    return [f"\n*{head}*", *rows] if rows else []
 
 
 def summary(d, action):
     prs = [p for r in d["repos"].values() for p in r.get("pull_requests", []) if not p.get("excluded")]
-    errors = [f"{repo}: {r['error'][:120]}" for repo, r in d["repos"].items() if "error" in r]
-    errors += [f"{link(p)}: {p['error'][:120]}" for p in prs if "error" in p]
+    errors = [f"• {repo}: {r['error'][:120]}" for repo, r in d["repos"].items() if "error" in r]
+    errors += [f"• {link(p)}: {p['error'][:120]}" for p in prs if "error" in p]
     ok = [p for p in prs if "error" not in p]
     debt = [p for p in ok if p.get("coderabbit_threads_without_operator_reply")]
     clean = [p for p in ok if p.get("coderabbit_reviewed_head") and not p.get("coderabbit_threads_without_operator_reply")]
     waiting = [p for p in ok if not p.get("coderabbit_reviewed_head") and not p.get("docs_only")]
     last = d.get("coderabbit_last_review") or {}
-    lines = [f"{'⚠️' if errors else '🐇'} *CodeRabbit routine* {d['now'][11:16]}Z: {action}"]
-    if errors:
-        lines.append("*Errors:* " + "; ".join(errors))
-    if debt:
-        lines.append("*Your reply owed:* " + ", ".join(f"{link(p)} ({p['coderabbit_threads_without_operator_reply']})" for p in debt))
-    if clean:
-        lines.append("*Reviewed, nothing owed (check in compass):* " + ", ".join(link(p) for p in clean))
-    if waiting:
-        lines.append("*Waiting for review:* " + ", ".join(f"{link(p)} ({age(p['head_age_min'])})" for p in waiting))
+    lines = [f"{'⚠️' if errors else '🐇'} *CodeRabbit routine* · {d['now'][11:16]}Z", f">{action}"]
+    lines += section("Errors", errors)
+    lines += section("Your reply owed", [item(p, f"{n} thread{'s' * (n > 1)}") for p in debt for n in [p["coderabbit_threads_without_operator_reply"]]])
+    lines += section("Waiting for review", [item(p, f"head {age(p['head_age_min'])} old") for p in waiting])
+    lines += section("Reviewed, nothing owed (check in compass)", [item(p) for p in clean])
     if last.get("age_min") is not None:
-        lines.append(f"Last CodeRabbit review {last['age_min']} min ago.")
+        lines.append(f"\n_Last CodeRabbit review {age(last['age_min'])} ago_")
     return "\n".join(lines)
 
 
