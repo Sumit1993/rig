@@ -10,6 +10,19 @@ local $/; my $s = <STDIN>; $s = '' unless defined $s;
 my $n = length $s;
 
 sub sq_end { my $j = index($s, "'", $_[0] + 1); $j < 0 ? $n : $j + 1 }
+# $'...': backslash escapes the closing quote, so \' does not end the string.
+sub ansi_end {
+  my $i = $_[0] + 2;
+  while ($i < $n) { my $c = substr($s, $i, 1); return $i + 1 if $c eq "'"; $i += $c eq '\\' ? 2 : 1 }
+  $n;
+}
+my %ESC = (n => "\n", t => "\t", r => "\r", a => "\a", b => "\b", e => "\e", E => "\e", f => "\f", v => "\x0b", "'" => "'", '"' => '"', '?' => '?', '\\' => '\\');
+sub ansi_decode {
+  my $t = shift;
+  $t =~ s/\\(x[0-9A-Fa-f]{1,2}|[0-7]{1,3}|.)/
+    my $x = $1; $x =~ m{^x(.+)}s ? chr(hex $1) : $x =~ m{^[0-7]+$} ? chr(oct $x) : exists $ESC{$x} ? $ESC{$x} : "\\$x"/gse;
+  $t;
+}
 sub heredoc_at {
   my $i = shift;
   return undef unless substr($s, $i, 2) eq '<<' && substr($s, $i + 2, 1) ne '<';
@@ -48,6 +61,7 @@ sub sub_end {
     my $c = substr($s, $i, 1);
     if ($c eq "\n" && @pend) { $i = heredoc_skip($i + 1, \@pend); next }
     if ($c eq '\\') { $i += 2; next }
+    if (substr($s, $i, 2) eq "\$'") { $i = ansi_end($i); next }
     if ($c eq "'") { $i = sq_end($i); next }
     if ($c eq '"') { $i = dq_end($i); next }
     if (substr($s, $i, 2) eq '$(') { $i = sub_end($i); next }
@@ -66,6 +80,7 @@ while ($i < $n) {
   my $c = substr($s, $i, 1);
   if ($c eq "\n" && @pend) { my $e = heredoc_skip($i + 1, \@pend); $fill->($i + 1, $e); $i = $e; next }
   if ($c eq '\\') { $fill->($i, $i + 2 > $n ? $n : $i + 2); $i += 2; next }
+  if (substr($s, $i, 2) eq "\$'") { my $e = ansi_end($i); $fill->($i, $e); $i = $e; next }
   if ($c eq "'") { my $e = sq_end($i); $fill->($i, $e); $i = $e; next }
   if ($c eq '"') { my $e = dq_end($i); $fill->($i, $e); $i = $e; next }
   if (my $h = heredoc_at($i)) { push @pend, $h->[0]; $i = $h->[1]; next }
@@ -87,6 +102,7 @@ while ($i < $n) {
   if ($c =~ /[ \t]/) { $emit->(); $i++; next }
   $have = 1;
   if ($c eq '\\') { $w .= substr($s, $i + 1, 1) if substr($s, $i + 1, 1) ne "\n"; $i += 2; next }
+  if (substr($s, $i, 2) eq "\$'") { my $e = ansi_end($i); $w .= ansi_decode(substr($s, $i + 2, $e - $i - 3)); $i = $e; next }
   if ($c eq "'") { my $e = sq_end($i); $w .= substr($s, $i + 1, $e - $i - 2); $i = $e; next }
   if (substr($s, $i, 2) eq '$(') { my $e = sub_end($i); $w .= substr($s, $i, $e - $i); $i = $e; next }
   if ($c eq '"') {
