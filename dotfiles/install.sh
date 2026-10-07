@@ -107,11 +107,13 @@ fi
 echo "→ MCP servers declared in harnesses.json"
 bash "$HERE/harnesses.sh" apply
 
-echo "→ settings.json (deep-merge: fragment and harnesses.json plugins overlay existing; permissions.allow unions)"
+echo "→ settings.json (deep-merge; harnesses.json replaces the plugin maps; permissions.allow unions)"
 frag=$(jq -s '.[0] * .[1]' "$HERE/settings.fragment.json" <(bash "$HERE/harnesses.sh" fragment))
 if [ -f "$CLAUDE/settings.json" ]; then
   cp "$CLAUDE/settings.json" "$CLAUDE/settings.json.bak-$(date +%s)"
+  # harnesses.json owns the plugin maps whole, so a removed plugin leaves too (#169).
   jq -s '.[0] as $cur | .[1] as $frag | ($cur * $frag)
+         | .enabledPlugins = $frag.enabledPlugins | .extraKnownMarketplaces = $frag.extraKnownMarketplaces
          | .permissions.allow = (($cur.permissions.allow // []) + ($frag.permissions.allow // []) | unique)' \
     "$CLAUDE/settings.json" <(printf '%s' "$frag") > /tmp/settings.merged.json
   jq -e . /tmp/settings.merged.json >/dev/null

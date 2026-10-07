@@ -47,6 +47,12 @@ drift=0
 report() { echo "DRIFT $1"; drift=1; }
 # Plugins from a marketplace the account syncs (claude.ai, ChatGPT) are the account's, not rig's.
 drop_account() { grep -v -E "@($(jq -r --arg h "$1" '.[$h].account_marketplaces // ["-"] | join("|")' "$M"))\$" || true; }
+# A config file that exists but won't parse is drift, never an empty inventory (#169).
+mcp_check() { # label declared config
+  local got=""
+  [ ! -e "$3" ] || got=$(jq -r '.mcpServers // {} | keys[]' "$3" 2>/dev/null) || { report "$1: cannot read $3"; return; }
+  compare "$1" "$2" "$got"
+}
 compare() { # label declared installed
   local x
   for x in $(comm -23 <(sort -u <<<"$2") <(sort -u <<<"$3")); do report "$1: $x declared, not installed"; done
@@ -58,11 +64,10 @@ check() {
     "$(claude plugin list --json < /dev/null 2>/dev/null | jq -r '.[].id' | drop_account claude)"
   compare "claude marketplace" "$(jq -r '.claude.marketplaces | keys[]' "$M"; tr ' ' '\n' <<<"$BUILT_IN_MARKETPLACES")" \
     "$(claude plugin marketplace list --json < /dev/null 2>/dev/null | jq -r '.[].name' | grep -vxF -f <(jq -r '.claude.account_marketplaces[]' "$M"))"
-  compare "claude mcp" "$(jq -r '.claude.mcp | keys[]' "$M")" \
-    "$(jq -r '.mcpServers // {} | keys[]' "$CLAUDE_JSON" 2>/dev/null)"
+  mcp_check "claude mcp" "$(jq -r '.claude.mcp | keys[]' "$M")" "$CLAUDE_JSON"
   if command -v agy >/dev/null 2>&1; then
     compare "agy plugin" "$(jq -r '.agy.plugins[]' "$M")" "$(ls "$AGY_PLUGINS" 2>/dev/null)"
-    compare "agy mcp" "$(jq -r '.agy.mcp | keys[]' "$M")" "$(jq -r '.mcpServers // {} | keys[]' "$AGY_MCP" 2>/dev/null)"
+    mcp_check "agy mcp" "$(jq -r '.agy.mcp | keys[]' "$M")" "$AGY_MCP"
     local built; built=$(mktemp -d); bash "$HERE/build-agy-plugin.sh" "$built/p" >/dev/null
     compare "agy rig skill" "$(ls "$built/p/skills")" "$(ls "$AGY_PLUGINS/rig/skills" 2>/dev/null)"
     rm -rf "$built"
@@ -75,7 +80,9 @@ check() {
     local want got; want=$(jq -r .version "$HERE/../plugins/rig/.claude-plugin/plugin.json")
     got=$(jq -r '.installed[] | select(.pluginId == "rig@rig-local") | .version' <<<"$cj")
     [ -z "$got" ] || [ "$got" = "$want" ] || report "codex plugin: rig@rig-local is $got, the repo is $want"
-    compare "codex mcp" "$(jq -r '.codex.mcp | keys[]' "$M")" "$(codex mcp list --json < /dev/null 2>/dev/null | jq -r '.[].name')"
+    local cm; if cm=$(codex mcp list --json < /dev/null 2>/dev/null) && cm=$(jq -r '.[].name' <<<"$cm"); then
+      compare "codex mcp" "$(jq -r '.codex.mcp | keys[]' "$M")" "$cm"
+    else report "codex mcp: codex mcp list --json failed"; fi
   fi
   [ "$drift" -eq 0 ] && echo "no drift"
   return "$drift"

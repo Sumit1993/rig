@@ -27,7 +27,9 @@ for b in jq; do ln -sf "$(command -v $b)" "$T/bin/$b"; done
 echo '{}' > "$T/claude.json"
 manifest() { jq -n --argjson p "$1" '{claude: {marketplaces: {rig: {repo: "Sumit1993/rig", autoUpdate: true}}, plugins: $p, mcp: {}, account_marketplaces: ["synced"]},
   agy: {plugins: ["rig"], mcp: {}}, codex: {plugins: ["rig@rig-local"], mcp: {}, account_marketplaces: ["openai-curated-remote"]}}' > "$T/m.json"; }
-run() { PATH="$T/bin:/usr/bin:/bin" HARNESSES_JSON="$T/m.json" CLAUDE_JSON="$T/claude.json" bash "$H" check 2>&1; }
+mkdir -p "$T/home"
+# HOME and the agy paths point into the fixture, so an agy on PATH never reads the operator's state.
+run() { HOME="$T/home" AGY_MCP="$T/home/agy-mcp.json" AGY_PLUGINS="$T/home/agy-plugins" PATH="$T/bin:/usr/bin:/bin" HARNESSES_JSON="$T/m.json" CLAUDE_JSON="$T/claude.json" bash "$H" check 2>&1; }
 
 manifest '["rig@rig"]'
 out=$(run); rc=$?
@@ -45,6 +47,11 @@ check "an installed plugin that is undeclared is drift" 'grep -q "rig@rig instal
 manifest '["rig@rig"]'
 out=$(CODEX_RIG_VERSION=0.0.1 run)
 check "a stale codex rig build is drift" 'grep -q "rig@rig-local is 0.0.1, the repo is $V" <<<"$out"'
+
+echo '{broken' > "$T/claude.json"
+out=$(run); rc=$?
+check "an unreadable MCP config is drift, not an empty list" '[ $rc -eq 1 ] && grep -q "claude mcp: cannot read" <<<"$out"'
+echo '{}' > "$T/claude.json"
 
 frag=$(HARNESSES_JSON="$T/m.json" bash "$H" fragment)
 check "fragment enables declared plugins with their marketplaces" 'jq -e ".enabledPlugins[\"rig@rig\"] and .extraKnownMarketplaces.rig.autoUpdate" <<<"$frag" >/dev/null'
