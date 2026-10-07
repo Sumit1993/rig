@@ -27,7 +27,7 @@ An issue carries the decision, its Done when, the exact commands and the excerpt
 | Fable 5.1 | 2 | 9 | 9 | high | Judgement calls, plan-hard problems, taste-critical output; a problem Opus at xhigh failed twice |
 | Opus 5.5 (1M) | 4 | 9 | 8 | session | Session model: the coding and review. `low` for mechanical edits across files, `high` to verify or when medium stalls |
 | Gemini 3.8 Flash | 6 | 8 | 5 | in slug | Side work via agy: tests, checks, triage, evidence |
-| Codex (configured model) | — | — | — | high | Independent adversarial idea, plan, spec, approach, code and decision review via `codex-judge`; xhigh for consequential or unresolved judgments |
+| GPT-6.1 Sol | — | — | — | high | Independent adversarial idea, plan, spec, approach, code and decision review via `codex-judge`; xhigh for consequential or unresolved judgments |
 | Sonnet 5.5 | 7 | 7 | 7 | medium | Lookups, reading logs and test output, thin wrappers, well-scoped drafts |
 
 Claude models via the Agent or Workflow `model` parameter. Gemini only through agy; `farm-out` owns model choice inside a run. Scores are defaults; override freely. Sub-par output is redone on a smarter model unasked.
