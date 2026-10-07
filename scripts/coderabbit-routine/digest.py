@@ -165,8 +165,8 @@ def pr_facts(repo, pr):
         "head": head,
         "head_committed_at": head_at,
         "head_age_min": age_min(head_at),
-        "docs_only": bool(files) and full["changed_files"] <= 100
-        and all(f.endswith((".md", ".mdx")) or f.startswith("docs/") for f in files),
+        # Ranks last, never excluded: prismalens.io's product is docs, and docs/ holds its site code (#159).
+        "docs_only": bool(files) and full["changed_files"] <= 100 and all(f.endswith((".md", ".mdx")) for f in files),
         "coderabbit_reviewed_head": any(r["commit_id"] == head for r in reviews),
         "coderabbit_last_review_at": reviews[-1]["submitted_at"] if reviews else None,
         "coderabbit_reviews": [

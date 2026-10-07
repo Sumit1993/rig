@@ -38,7 +38,7 @@ def summary(d, action):
     ok = [p for p in prs if "error" not in p]
     debt = [p for p in ok if p.get("coderabbit_threads_without_operator_reply")]
     clean = [p for p in ok if p.get("coderabbit_reviewed_head") and not p.get("coderabbit_threads_without_operator_reply")]
-    waiting = [p for p in ok if not p.get("coderabbit_reviewed_head") and not p.get("docs_only")]
+    waiting = [p for p in ok if not p.get("coderabbit_reviewed_head")]
     last = d.get("coderabbit_last_review") or {}
     lines = [f"{'⚠️' if errors else '🐇'} *CodeRabbit routine* · {d['now'][11:16]}Z", f">{action}"]
     lines += section("Errors", errors)
