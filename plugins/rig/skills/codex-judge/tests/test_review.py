@@ -57,10 +57,10 @@ args=sys.argv[1:]
 mode=os.environ.get('REVIEW_MODE','success')
 if 'mcp' in args:
  if mode=='mcp_failure': sys.exit(7)
- disabled='mcp_servers."fixture".enabled=false' in args
- print(json.dumps([{'name':'fixture','enabled':False if disabled and mode!='unsafe_mcp' else True}]))
+ disabled='mcp_servers.fixture.enabled=false' in args
+ print(json.dumps([{'name':'fixture.dot' if mode=='unsafe_name' else 'fixture','enabled':False if disabled and mode!='unsafe_mcp' else True}]))
  sys.exit(0)
-required=['--no-daemon','--search','--ask-for-approval','never','exec','--ephemeral','read-only','gpt-6.1-sol','model_reasoning_effort=high','--json','features.plugins=false','features.enable_mcp_apps=false','mcp_servers."fixture".enabled=false']
+required=['--no-daemon','--search','--ask-for-approval','never','exec','--ephemeral','read-only','gpt-6.1-sol','model_reasoning_effort=high','--json','features.plugins=false','features.enable_mcp_apps=false','mcp_servers.fixture.enabled=false']
 assert all(value in args for value in required), args
 assert sys.stdin.read().startswith('You are the independent adversarial judge')
 mode=os.environ.get('REVIEW_MODE','success')
@@ -196,7 +196,7 @@ print(json.dumps({'type':'turn.completed'}))
         self.assertIn("OBJ-001", (self.out / "prompt.md").read_text())
 
     def test_mcp_discovery_failure_or_enabled_server_prevents_launch(self):
-        for mode in ["mcp_failure", "unsafe_mcp"]:
+        for mode in ["mcp_failure", "unsafe_mcp", "unsafe_name"]:
             self.out = self.history / mode
             os.environ["REVIEW_MODE"] = mode
             self.assertEqual(self.run_review(), 1)

@@ -4,6 +4,7 @@ import argparse
 import hashlib
 import json
 import os
+import re
 from pathlib import Path
 import signal
 import subprocess
@@ -84,7 +85,9 @@ def integrations(worktree):
             raise ValueError("unrecognized MCP discovery result")
         return rows
     for server in servers(options):
-        options += ["-c", "mcp_servers." + json.dumps(server["name"]) + ".enabled=false"]
+        if not re.fullmatch(r"[A-Za-z0-9_-]+", server["name"]):
+            raise ValueError("MCP name cannot be safely disabled with CLI dotted overrides")
+        options += ["-c", "mcp_servers." + server["name"] + ".enabled=false"]
     if any(server.get("enabled") is not False for server in servers(options)):
         raise ValueError("MCP isolation could not be verified")
     return options
