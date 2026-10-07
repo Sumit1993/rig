@@ -30,7 +30,6 @@ Post nothing this run in either of these cases:
 
 A pull request is a candidate when all of these hold:
 
-- It is not `docs_only`.
 - CodeRabbit has not reviewed `head`. `coderabbit_reviewed_head: true` counts. So does a CodeRabbit comment saying it finished a review that covers `head`. A rate-limit notice, a "review skipped" or "paused" note, or an acknowledgement does not.
 - No summon is pending. A summon is pending when `last_summon.after_head` is true and `first_coderabbit_reply_after_summon` is null, or is anything other than a rate-limit notice or a misparse ("initiate chat"). Every reply to a summon ends with the note that CodeRabbit "does not re-review already reviewed commits". That note is boilerplate, not a refusal.
 
@@ -38,7 +37,7 @@ A candidate is a **re-review** if CodeRabbit reviewed an earlier commit. It qual
 
 A re-review also has to buy something. Every review of a fix commit finds a smaller nit in the fix, so summoning on each fix loops forever (prismalens/gh-workflows#222). Read `since_coderabbit_review` against `coderabbit_threads` and judge whether the commits after the last review carry work CodeRabbit has not seen. A commit that answers a thread (`operator_reply` names it) and that CodeRabbit confirmed in `coderabbit_after_reply` is already verified: skip the PR if that is all there is. Summon when a commit adds anything beyond those fixes, such as a new feature, a refactor, or files that no thread touches, or when CodeRabbit disputed a fix or has not replied to one. A small diff confined to the threaded files leans toward skip. When unsure, summon. Name each skipped PR and its reason in the report.
 
-Pick re-reviews first, ordered by the oldest `head_committed_at`. Then pick new ones, ordered by the oldest `created_at`. Summon the pick with `python3 act.py <repo> <n> '@coderabbitai review'`. `act.py` adds the hidden `summoned-by` marker. Never post `full review`: it spends the same slot to re-read commits that were already reviewed.
+Pick re-reviews first, ordered by the oldest `head_committed_at`. Then pick new ones, ordered by the oldest `created_at`. A `docs_only` candidate goes after every other candidate, in the same order, so prose takes the slot only when no code waits. Summon the pick with `python3 act.py <repo> <n> '@coderabbitai review'`. `act.py` adds the hidden `summoned-by` marker. Never post `full review`: it spends the same slot to re-read commits that were already reviewed.
 
 ## 4. Post the summary, then report
 
