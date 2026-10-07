@@ -140,7 +140,7 @@ Run `plugins/rig/scripts/ai-context-sweep.sh` (`--delete`) to list or prune `~/a
 
 Claude Code loads `rig:codex-judge` for adversarial scrutiny of a substantial plan, a coherent code change or a disputed decision. GPT-6.1 Sol looks for the strongest credible counterexample, challenges whether the checks prove the outcome, researches primary sources and withdraws objections disproven by evidence. Fable remains the Claude-side planner/adjudicator; AGY remains the execution lane. This local review does not replace required PR reviewers or grant merge permission.
 
-Requires an authenticated Codex CLI with `gpt-6.1-sol`, Git, Python 3.10+ and `jsonschema` (`python3 -c 'import jsonschema'` checks availability). The launcher uses existing CLI authentication; it does not purchase access or provision API credentials. It ignores user configuration, so inherited model defaults and MCP services do not steer the review. Effort is explicit: high by default, xhigh for consequential or unresolved judgments.
+Requires an authenticated Codex CLI with `gpt-6.1-sol`, Git, Python 3.10+ and `jsonschema` (`python3 -c 'import jsonschema'` checks availability). The launcher uses existing CLI authentication; it does not purchase access or provision API credentials. Model, effort and sandbox are explicit. Plugins/apps are disabled; configured MCP servers are inventoried, individually disabled and checked again before execution. Inventory failure blocks launch. Configuration must remain unchanged during a run; this is verified local capability reduction, not a general external-service isolation guarantee. Effort is explicit: high by default, xhigh for consequential or unresolved judgments.
 
 Prepare a packet with the objective, acceptance criteria, original constraints, surrounding records, source paths and exact base/target commits. Use a clean dedicated worktree under `.claude/worktrees/`; snapshot uncommitted work first. Run directories are new directories under `~/ai-context/`, outside that worktree. The first packet excludes the author's persuasive defense. Read-only execution cannot run checks that require writes; report them unverified or validate separately.
 
@@ -161,12 +161,12 @@ The thin runner invokes:
 ```bash
 python3 "${CLAUDE_PLUGIN_ROOT}/skills/codex-judge/run-review.py" \
   --packet "$PACKET" --worktree "$REVIEW_WORKTREE" --run-dir "$RUN_DIR" \
-  --effort high --timeout 1200
+  --base "$BASE_SHA" --head "$HEAD_SHA" --effort high --timeout 1200
 ```
 
-`status.json` reports completed, incomplete or failed. Only schema-valid, internally consistent responses for an unchanged target become `result.json`; a blocked verdict is a completed review, not a failed process. Quota errors, timeout, malformed output and material coverage gaps never count as a clean review. The launcher kills only its own process group on timeout. Review prompts prohibit external writes; the filesystem sandbox alone is not an external-service permission boundary.
+`status.json` reports completed, incomplete or failed. Only schema-valid, internally consistent responses for an unchanged target become `result.json`; a blocked verdict is a completed review, not a failed process. Quota errors, timeout, malformed output and material coverage gaps never count as a clean review. The launcher kills only its own process group on timeout or cancellation. Review prompts prohibit external writes; the filesystem sandbox alone is not an external-service permission boundary.
 
-Keep stable objection IDs and include the prior ledger in a fresh rebuttal packet. The default budget is an initial review and one rebuttal; further review needs a new concrete question, not a demand for agreement. Copy deciding evidence into the issue/PR or private planning record, never cite telemetry paths. Do not silently fall back to Claude or another model.
+Keep stable objection IDs and pass the prior result with `--previous-result "$PREVIOUS_RESULT"` on a fresh rebuttal run. Missing prior IDs fail validation; the session still verifies the substance of fixed/withdrawn claims. The default budget is an initial review and one rebuttal; further review needs a new concrete question, not a demand for agreement. Copy deciding evidence into the issue/PR or private planning record, never cite telemetry paths. Do not silently fall back to Claude or another model.
 
 Verify the launcher without model usage:
 

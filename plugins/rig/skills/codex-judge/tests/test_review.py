@@ -7,6 +7,9 @@ import os
 from pathlib import Path
 import subprocess
 import tempfile
+import signal
+import threading
+import time
 import unittest
 from unittest.mock import patch
 
@@ -42,6 +45,8 @@ class ReviewTests(unittest.TestCase):
         self.history.mkdir()
         self.packet = self.history / "packet.md"
         self.packet.write_text("Review the fixture.\n")
+        self.head = judge.git(self.worktree, "rev-parse", "HEAD")
+        self.previous = None
         self.out = self.history / "round-1"
         self.bin = self.root / "bin"
         self.bin.mkdir()
@@ -49,7 +54,13 @@ class ReviewTests(unittest.TestCase):
         fake.write_text('''#!/usr/bin/env python3
 import json, os, pathlib, subprocess, sys, time
 args=sys.argv[1:]
-required=['--no-daemon','--search','--ask-for-approval','never','exec','--ignore-user-config','--ephemeral','read-only','gpt-6.1-sol','model_reasoning_effort=high','--json']
+mode=os.environ.get('REVIEW_MODE','success')
+if 'mcp' in args:
+ if mode=='mcp_failure': sys.exit(7)
+ disabled='mcp_servers."fixture".enabled=false' in args
+ print(json.dumps([{'name':'fixture','enabled':False if disabled and mode!='unsafe_mcp' else True}]))
+ sys.exit(0)
+required=['--no-daemon','--search','--ask-for-approval','never','exec','--ephemeral','read-only','gpt-6.1-sol','model_reasoning_effort=high','--json','features.plugins=false','features.enable_mcp_apps=false','mcp_servers."fixture".enabled=false']
 assert all(value in args for value in required), args
 assert sys.stdin.read().startswith('You are the independent adversarial judge')
 mode=os.environ.get('REVIEW_MODE','success')
@@ -80,7 +91,8 @@ print(json.dumps({'type':'turn.completed'}))
     def run_review(self, timeout=5, worktree=None):
         with contextlib.redirect_stdout(io.StringIO()):
             return judge.run(argparse.Namespace(packet=self.packet, worktree=worktree or self.worktree,
-                             run_dir=self.out, effort="high", timeout=timeout))
+                             run_dir=self.out, effort="high", timeout=timeout, base=self.head,
+                             head=self.head, previous_result=self.previous))
 
     def status(self):
         return json.loads((self.out / "status.json").read_text())
@@ -150,6 +162,65 @@ print(json.dumps({'type':'turn.completed'}))
         os.environ["CHILD_PID"] = str(pidfile)
         self.assertEqual(self.run_review(timeout=1), 1)
         self.assertIn("timed out", self.status()["error"])
+        pid = int(pidfile.read_text())
+        stat = Path(f"/proc/{pid}/stat")
+        self.assertTrue(not stat.exists() or stat.read_text().split()[2] == "Z")
+
+
+    def test_wrong_expected_commit_is_rejected_before_launch(self):
+        (self.worktree / "source.txt").write_text("new snapshot")
+        subprocess.run(["git", "-C", str(self.worktree), "commit", "-qam", "snapshot"], check=True,
+                       stdout=subprocess.PIPE)
+        with self.assertRaisesRegex(ValueError, "requested review target"):
+            self.run_review()
+        self.assertFalse(self.out.exists())
+
+    def test_rebuttal_cannot_drop_or_renumber_prior_ids(self):
+        prior = result("blocked")
+        objection = {"id": "OBJ-001", "status": "open", "severity": "blocking",
+                     "category": "credible_risk", "title": "test", "scenario": "test",
+                     "constraint": "test", "evidence": "test", "impact": "test",
+                     "falsification_check": "test", "disposition_reason": "test"}
+        prior["objections"] = [objection]
+        judge.validate(prior)
+        for response in [result(), {**prior, "objections": [{**objection, "id": "OBJ-002"}]}]:
+            with self.assertRaisesRegex(ValueError, "missing prior"):
+                judge.validate(response, prior)
+        for status in ["fixed", "withdrawn"]:
+            judge.validate({**result(), "objections": [{**objection, "status": status}]}, prior)
+        self.previous = self.history / "prior.json"
+        self.previous.write_text(json.dumps(prior))
+        self.assertEqual(self.run_review(), 1)
+        self.assertIn("missing prior", self.status()["error"])
+        self.assertTrue((self.out / "previous-result.json").exists())
+        self.assertIn("OBJ-001", (self.out / "prompt.md").read_text())
+
+    def test_mcp_discovery_failure_or_enabled_server_prevents_launch(self):
+        for mode in ["mcp_failure", "unsafe_mcp"]:
+            self.out = self.history / mode
+            os.environ["REVIEW_MODE"] = mode
+            self.assertEqual(self.run_review(), 1)
+            self.assertEqual(self.status()["state"], "failed")
+            self.assertFalse((self.out / "result.json").exists())
+            self.assertFalse((self.out / "events.jsonl").exists())
+
+    def test_cancellation_terminates_owned_descendant_and_records_failure(self):
+        os.environ["REVIEW_MODE"] = "timeout"
+        pidfile = self.history / "child.pid"
+        os.environ["CHILD_PID"] = str(pidfile)
+        def interrupt():
+            for _ in range(100):
+                if pidfile.exists():
+                    os.kill(os.getpid(), signal.SIGTERM)
+                    return
+                time.sleep(0.02)
+        worker = threading.Thread(target=interrupt)
+        worker.start()
+        try:
+            self.assertEqual(self.run_review(), 1)
+        finally:
+            worker.join()
+        self.assertIn("cancelled", self.status()["error"])
         pid = int(pidfile.read_text())
         stat = Path(f"/proc/{pid}/stat")
         self.assertTrue(not stat.exists() or stat.read_text().split()[2] == "Z")
