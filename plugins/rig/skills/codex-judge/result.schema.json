@@ -1,0 +1,144 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "verdict": {
+      "type": "string",
+      "enum": [
+        "blocked",
+        "risks",
+        "survived",
+        "incomplete"
+      ]
+    },
+    "coverage_complete": {
+      "type": "boolean"
+    },
+    "summary": {
+      "type": "string"
+    },
+    "objections": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^OBJ-[0-9]{3,}$"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "open",
+              "fixed",
+              "withdrawn"
+            ]
+          },
+          "severity": {
+            "type": "string",
+            "enum": [
+              "blocking",
+              "material",
+              "minor"
+            ]
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "confirmed_defect",
+              "credible_risk",
+              "open_question"
+            ]
+          },
+          "title": {
+            "type": "string"
+          },
+          "scenario": {
+            "type": "string"
+          },
+          "constraint": {
+            "type": "string"
+          },
+          "evidence": {
+            "type": "string"
+          },
+          "impact": {
+            "type": "string"
+          },
+          "falsification_check": {
+            "type": "string"
+          },
+          "disposition_reason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "severity",
+          "category",
+          "title",
+          "scenario",
+          "constraint",
+          "evidence",
+          "impact",
+          "falsification_check",
+          "disposition_reason"
+        ]
+      }
+    },
+    "survived_attacks": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "unverified": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "sources": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "inside": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "outside": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "inside",
+        "outside"
+      ]
+    },
+    "simplest_alternative": {
+      "type": "string"
+    },
+    "objection_to_recommendation": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "verdict",
+    "coverage_complete",
+    "summary",
+    "objections",
+    "survived_attacks",
+    "unverified",
+    "sources",
+    "simplest_alternative",
+    "objection_to_recommendation"
+  ]
+}

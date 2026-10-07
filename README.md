@@ -16,6 +16,8 @@ Plugin `rig`, path-independent via `${CLAUDE_PLUGIN_ROOT}`:
 | `skills/claude-review-lane` | How `claude[bot]` behaves: liveness verdicts, the ways it stays quiet, summon grammar, verify rounds, who resolves a thread |
 | `skills/coderabbit-lane` | How `coderabbitai[bot]` behaves: per-developer counter, hand admission by label, bare triggers, in-thread replies |
 | `skills/farm-out` | Antigravity CLI delegation: preflight probe, launch line, model choice, failure table, kill by PID, the runner's babysit loop |
+| `skills/codex-judge` | GPT-6.1 Sol challenges premises, plans, code and decisions; evidence-backed objections survive rebuttal rounds |
+| `agents/codex-runner` | Thin Claude handler for one bounded independent Codex review; no self-review fallback |
 | `skills/docs-drift` | Four-phase docs-drift playbook plus the illustration standard |
 | `skills/tweet` | Draft tweet options for @Desolatte from the session, voice and dedup from n8n |
 | `skills/no-comments` | Enforce the comment budget on a diff via `agents/comment-sicko`. Vendored from pstack, patched 2026-08-22 |
@@ -132,3 +134,44 @@ Not vendored: `mattpocock/skills`, subscribed as `mattpocock-skills@mattpocock` 
 Rule of thumb: if upstream ships a plugin, subscribe to it. Vendor a skill only when you patch it, and say so in the table. pstack is the exception: subscribing pulls 44 skills, about 20 of them one-idea `principle-*` files restating `AGENTS.md`, so one skill and one agent are vendored and patched.
 
 Run `plugins/rig/scripts/ai-context-sweep.sh` (`--delete`) to list or prune `~/ai-context` candidates whose issues have closed.
+
+
+## Independent Codex challenger
+
+Claude Code loads `rig:codex-judge` for adversarial scrutiny of a substantial plan, a coherent code change or a disputed decision. GPT-6.1 Sol looks for the strongest credible counterexample, challenges whether the checks prove the outcome, researches primary sources and withdraws objections disproven by evidence. Fable remains the Claude-side planner/adjudicator; AGY remains the execution lane. This local review does not replace required PR reviewers or grant merge permission.
+
+Requires an authenticated Codex CLI with `gpt-6.1-sol`, Git, Python 3.10+ and `jsonschema` (`python3 -c 'import jsonschema'` checks availability). The launcher uses existing CLI authentication; it does not purchase access or provision API credentials. It ignores user configuration, so inherited model defaults and MCP services do not steer the review. Effort is explicit: high by default, xhigh for consequential or unresolved judgments.
+
+Prepare a packet with the objective, acceptance criteria, original constraints, surrounding records, source paths and exact base/target commits. Use a clean dedicated worktree under `.claude/worktrees/`; snapshot uncommitted work first. Run directories are new directories under `~/ai-context/`, outside that worktree. The first packet excludes the author's persuasive defense. Read-only execution cannot run checks that require writes; report them unverified or validate separately.
+
+Worked review and rebuttal flow (illustrative, not a live result):
+
+```text
+CC → codex-runner: packet.md, frozen review worktree, round-1 directory
+launcher → Codex: gpt-6.1-sol, high, read-only, 1200-second deadline
+Codex → result.json: blocked; OBJ-001: retry can duplicate a side effect
+CC → checks the scenario; fixes it; commits a new review snapshot
+CC → codex-runner: round-2 packet with prior ledger + fix evidence
+Codex → result.json: OBJ-001 fixed, or open with the remaining counterexample
+CC → records the decision and evidence; unresolved material disagreement → operator
+```
+
+The thin runner invokes:
+
+```bash
+python3 "${CLAUDE_PLUGIN_ROOT}/skills/codex-judge/run-review.py" \
+  --packet "$PACKET" --worktree "$REVIEW_WORKTREE" --run-dir "$RUN_DIR" \
+  --effort high --timeout 1200
+```
+
+`status.json` reports completed, incomplete or failed. Only schema-valid, internally consistent responses for an unchanged target become `result.json`; a blocked verdict is a completed review, not a failed process. Quota errors, timeout, malformed output and material coverage gaps never count as a clean review. The launcher kills only its own process group on timeout. Review prompts prohibit external writes; the filesystem sandbox alone is not an external-service permission boundary.
+
+Keep stable objection IDs and include the prior ledger in a fresh rebuttal packet. The default budget is an initial review and one rebuttal; further review needs a new concrete question, not a demand for agreement. Copy deciding evidence into the issue/PR or private planning record, never cite telemetry paths. Do not silently fall back to Claude or another model.
+
+Verify the launcher without model usage:
+
+```bash
+python3 -m unittest discover -s plugins/rig/skills/codex-judge/tests -v
+```
+
+[Official Codex noninteractive documentation](https://learn.chatgpt.com/docs/non-interactive-mode) covers explicit sandboxing, saved authentication, JSON event output and schema-constrained results.
