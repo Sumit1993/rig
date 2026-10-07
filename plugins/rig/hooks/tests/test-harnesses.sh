@@ -23,13 +23,13 @@ case "\$*" in
 esac
 STUB
 chmod +x "$T/bin/"*
-for b in jq; do ln -sf "$(command -v $b)" "$T/bin/$b"; done
+# PATH is only these tools, so an agy installed anywhere never enters the check (#169).
+for b in bash jq git comm sort grep tr ls cat mktemp rm readlink dirname sed head; do ln -sf "$(command -v $b)" "$T/bin/$b"; done
 echo '{}' > "$T/claude.json"
 manifest() { jq -n --argjson p "$1" '{claude: {marketplaces: {rig: {repo: "Sumit1993/rig", autoUpdate: true}}, plugins: $p, mcp: {}, account_marketplaces: ["synced"]},
   agy: {plugins: ["rig"], mcp: {}}, codex: {plugins: ["rig@rig-local"], mcp: {}, account_marketplaces: ["openai-curated-remote"]}}' > "$T/m.json"; }
 mkdir -p "$T/home"
-# HOME and the agy paths point into the fixture, so an agy on PATH never reads the operator's state.
-run() { HOME="$T/home" AGY_MCP="$T/home/agy-mcp.json" AGY_PLUGINS="$T/home/agy-plugins" PATH="$T/bin:/usr/bin:/bin" HARNESSES_JSON="$T/m.json" CLAUDE_JSON="$T/claude.json" bash "$H" check 2>&1; }
+run() { HOME="$T/home" AGY_MCP="$T/home/agy-mcp.json" AGY_PLUGINS="$T/home/agy-plugins" PATH="$T/bin" HARNESSES_JSON="$T/m.json" CLAUDE_JSON="$T/claude.json" bash "$H" check 2>&1; }
 
 manifest '["rig@rig"]'
 out=$(run); rc=$?
