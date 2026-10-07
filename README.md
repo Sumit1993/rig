@@ -16,7 +16,8 @@ Plugin `rig`, path-independent via `${CLAUDE_PLUGIN_ROOT}`:
 | `skills/claude-review-lane` | How `claude[bot]` behaves: liveness verdicts, the ways it stays quiet, summon grammar, verify rounds, who resolves a thread |
 | `skills/coderabbit-lane` | How `coderabbitai[bot]` behaves: per-developer counter, hand admission by label, bare triggers, in-thread replies |
 | `skills/farm-out` | Antigravity CLI delegation: preflight probe, launch line, model choice, failure table, kill by PID, the runner's babysit loop |
-| `skills/codex-judge` | GPT-6.1 Sol challenges premises, plans, code and decisions; evidence-backed objections survive rebuttal rounds |
+| `skills/codex-judge` | Codex challenges ideas, plans, specs, approaches, code and decisions; evidence-backed objections survive rebuttal rounds |
+| `skills/codex-desktop` | WSL prepares a Windows desktop experiment; user sends the prefilled app request; observed evidence returns to the judge |
 | `agents/codex-runner` | Thin Claude handler for one bounded independent Codex review; no self-review fallback |
 | `skills/docs-drift` | Four-phase docs-drift playbook plus the illustration standard |
 | `skills/tweet` | Draft tweet options for @Desolatte from the session, voice and dedup from n8n |
@@ -138,17 +139,17 @@ Run `plugins/rig/scripts/ai-context-sweep.sh` (`--delete`) to list or prune `~/a
 
 ## Independent Codex challenger
 
-Claude Code loads `rig:codex-judge` for adversarial scrutiny of a substantial plan, a coherent code change or a disputed decision. GPT-6.1 Sol looks for the strongest credible counterexample, challenges whether the checks prove the outcome, researches primary sources and withdraws objections disproven by evidence. Fable remains the Claude-side planner/adjudicator; AGY remains the execution lane. This local review does not replace required PR reviewers or grant merge permission.
+Claude Code loads `rig:codex-judge` for adversarial scrutiny of an idea, plan, spec, approach, code change or disputed decision. Codex looks for the strongest credible counterexample, challenges whether the checks prove the outcome, researches primary sources and withdraws objections disproven by evidence. Fable remains the Claude-side planner/adjudicator; AGY remains the execution lane. This local review does not replace required PR reviewers or grant merge permission.
 
-Requires an authenticated Codex CLI with `gpt-6.1-sol`, Git, Python 3.10+ and `jsonschema` (`python3 -c 'import jsonschema'` checks availability). The launcher uses existing CLI authentication; it does not purchase access or provision API credentials. Model, effort and sandbox are explicit. Plugins/apps are disabled; configured MCP servers are inventoried, individually disabled and checked again before execution. Inventory failure blocks launch. Configuration must remain unchanged during a run; this is verified local capability reduction, not a general external-service isolation guarantee. Effort is explicit: high by default, xhigh for consequential or unresolved judgments.
+Requires an authenticated Codex CLI, Python 3.10+ and `jsonschema` (`python3 -c 'import jsonschema'` checks availability). The launcher uses existing CLI authentication; it does not purchase access or provision API credentials. Choose a model with `--model` or `RIG_CODEX_MODEL`; `gpt-6.1-sol` is the current default. Model, effort and sandbox are recorded explicitly. Plugins/apps are disabled; configured MCP servers are inventoried, individually disabled and checked again before execution. Inventory failure blocks launch. Configuration must remain unchanged during a run; this is verified local capability reduction, not a general external-service isolation guarantee. Effort is explicit: high by default, xhigh for consequential or unresolved judgments.
 
-Prepare a packet with the objective, acceptance criteria, original constraints, surrounding records, source paths and exact base/target commits. Use a clean dedicated worktree under `.claude/worktrees/`; snapshot uncommitted work first. Run directories are new directories under `~/ai-context/`, outside that worktree. The first packet excludes the author's persuasive defense. Read-only execution cannot run checks that require writes; report them unverified or validate separately.
+For standalone ideas, plans, specs and approaches, put the actual proposal, assumptions, users, alternatives, constraints and success/failure criteria into a self-contained packet. Omit worktree/base/head; the launcher hashes and copies the proposal without requiring Git. For repository evidence, include source paths and exact base/target commits; use a clean dedicated worktree under `.claude/worktrees/` and snapshot uncommitted work first. Run directories are new directories under `~/ai-context/`, outside that worktree. The first packet excludes the author's persuasive defense. Read-only execution cannot run checks that require writes; report them unverified or validate separately.
 
 Worked review and rebuttal flow (illustrative, not a live result):
 
 ```text
 CC → codex-runner: packet.md, frozen review worktree, round-1 directory
-launcher → Codex: gpt-6.1-sol, high, read-only, 1200-second deadline
+launcher → Codex: configured model, high, read-only, 1200-second deadline
 Codex → result.json: blocked; OBJ-001: retry can duplicate a side effect
 CC → checks the scenario; fixes it; commits a new review snapshot
 CC → codex-runner: round-2 packet with prior ledger + fix evidence
@@ -156,7 +157,14 @@ Codex → result.json: OBJ-001 fixed, or open with the remaining counterexample
 CC → records the decision and evidence; unresolved material disagreement → operator
 ```
 
-The thin runner invokes:
+A standalone proposal needs only:
+
+```bash
+python3 "${CLAUDE_PLUGIN_ROOT}/skills/codex-judge/run-review.py" \
+  --packet "$PACKET" --run-dir "$RUN_DIR" --effort high
+```
+
+For repository evidence, the thin runner invokes:
 
 ```bash
 python3 "${CLAUDE_PLUGIN_ROOT}/skills/codex-judge/run-review.py" \
@@ -175,3 +183,17 @@ python3 -m unittest discover -s plugins/rig/skills/codex-judge/tests -v
 ```
 
 [Official Codex noninteractive documentation](https://learn.chatgpt.com/docs/non-interactive-mode) covers explicit sandboxing, saved authentication, JSON event output and schema-constrained results.
+
+## Windows desktop tasks from WSL
+
+CC, AGY or Codex can load `rig:codex-desktop` to prepare a bounded desktop task in a native Windows handoff directory. Keep development, CC, AGY and Rig in WSL; Windows needs the signed-in Codex desktop app with Computer Use enabled. No Windows Rig clone or shared authentication files are required.
+
+```text
+CC in WSL → frozen experiment packet → handoff.py → native Windows workspace
+codex://new → prefilled composer → user sends → Computer Use observes live behavior
+report + screenshots + actual build identity → CC → fresh adversarial judgment
+```
+
+`handoff.py --packet "$PACKET" --windows-dir /mnt/c/Users/sumit/Documents/rig-live-tests/experiment-001 --open` opens the supported composer link. It never claims the test ran. The user must send the request, select the model, and handle app permissions/authentication. The desktop remains unlocked and available; Windows localhost connectivity and the actual running build must be verified. Do not treat a test against the dev checkout as verification of another commit.
+
+The [desktop command reference](https://learn.chatgpt.com/docs/reference/commands) specifies that deep links prefill without sending; [Computer Use](https://learn.chatgpt.com/docs/computer-use) documents the foreground runtime and app permissions. See the skill for packet scope, report transfer and blocked-test handling. Electron UX review is one packet type; the same transport accepts other scoped desktop tasks. Unattended app dispatch remains unverified by this lane until a desktop-capable interface passes an end-to-end check.

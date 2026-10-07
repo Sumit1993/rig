@@ -14,7 +14,7 @@ import time
 from jsonschema import Draft202012Validator
 from jsonschema.exceptions import ValidationError
 
-MODEL = "gpt-6.1-sol"
+DEFAULT_MODEL = "gpt-6.1-sol"
 AI_CONTEXT = Path.home() / "ai-context"
 HERE = Path(__file__).resolve().parent
 
@@ -95,39 +95,53 @@ def integrations(worktree):
 
 
 def run(args):
+    model = getattr(args, "model", DEFAULT_MODEL)
+    if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._:-]*", model):
+        raise ValueError("invalid model name")
     packet = args.packet.resolve(strict=True)
-    worktree = args.worktree.resolve(strict=True)
+    worktree = args.worktree.resolve(strict=True) if args.worktree else None
     out = args.run_dir.resolve()
     if not out.is_relative_to(AI_CONTEXT.resolve()):
         raise ValueError("run directory must be under ~/ai-context")
-    if out.is_relative_to(worktree):
+    if worktree and out.is_relative_to(worktree):
         raise ValueError("run directory must be outside review worktree")
     if not 0 < args.timeout <= 3600:
         raise ValueError("timeout must be greater than zero and at most 3600 seconds")
-    if git(worktree, "rev-parse", "--show-toplevel") != str(worktree):
-        raise ValueError("worktree must name the repository root")
-    git_dir = Path(git(worktree, "rev-parse", "--absolute-git-dir"))
-    common_dir = Path(git(worktree, "rev-parse", "--git-common-dir"))
-    if not common_dir.is_absolute():
-        common_dir = worktree / common_dir
-    if git_dir.resolve() == common_dir.resolve() or ".claude/worktrees/" not in str(worktree) + "/":
-        raise ValueError("review requires a dedicated .claude/worktrees worktree")
     expected = {}
-    for name, value in [("base", args.base), ("head", args.head)]:
-        if len(value) != 40 or any(c not in "0123456789abcdef" for c in value):
-            raise ValueError("expected base/head must be full commit SHAs")
-        expected[name] = git(worktree, "rev-parse", "--verify", value + "^{commit}")
+    if worktree is None:
+        if args.base or args.head:
+            raise ValueError("base/head require --worktree")
+    else:
+        if git(worktree, "rev-parse", "--show-toplevel") != str(worktree):
+            raise ValueError("worktree must name the repository root")
+        git_dir = Path(git(worktree, "rev-parse", "--absolute-git-dir"))
+        common_dir = Path(git(worktree, "rev-parse", "--git-common-dir"))
+        if not common_dir.is_absolute():
+            common_dir = worktree / common_dir
+        if git_dir.resolve() == common_dir.resolve() or ".claude/worktrees/" not in str(worktree) + "/":
+            raise ValueError("review requires a dedicated .claude/worktrees worktree")
+        expected = {}
+        for name, value in [("base", args.base), ("head", args.head)]:
+            if not value or len(value) != 40 or any(c not in "0123456789abcdef" for c in value):
+                raise ValueError("expected base/head must be full commit SHAs")
+            expected[name] = git(worktree, "rev-parse", "--verify", value + "^{commit}")
     previous = None
     if args.previous_result is not None:
         previous = json.loads(args.previous_result.read_text())
         validate(previous)
-    before = target(worktree)
-    if before["commit"] != expected["head"]:
+    packet_text = packet.read_text()
+    before = target(worktree) if worktree else {"packet_sha256": hashlib.sha256(packet_text.encode()).hexdigest()}
+    if worktree and before["commit"] != expected["head"]:
         raise ValueError("worktree HEAD differs from requested review target")
-    if before["status"]:
+    if worktree and before["status"]:
         raise ValueError("review target must be clean; commit a snapshot first")
     out.mkdir(parents=True, exist_ok=False)
-    packet_text = packet.read_text()
+    if not worktree:
+        worktree = out / "evidence"
+        worktree.mkdir()
+        (worktree / "packet.md").write_text(packet_text)
+        expected = {"mode": "packet", **before}
+    packet_mode = "packet_sha256" in before
     prompt = ((HERE / "review-contract.md").read_text() + "\nVerified review identity:\n"
               + json.dumps(expected) + "\n" + packet_text)
     if previous is not None:
@@ -138,11 +152,12 @@ def run(args):
     (out / "packet.md").write_text(packet_text)
     candidate = out / "candidate.json"
     command = ["codex", "--no-daemon", "--search", "--ask-for-approval", "never", "exec",
-               "--ephemeral", "-C", str(worktree), "-m", MODEL,
+               "--ephemeral", "-C", str(worktree),
+               *(["--skip-git-repo-check"] if packet_mode else []), "-m", model,
                "-c", f"model_reasoning_effort={args.effort}", "--sandbox", "read-only",
                "--json", "--output-schema", str(HERE / "result.schema.json"),
                "-o", str(candidate), "-"]
-    status = {"state": "failed", "target_commit": before["commit"], "exit_code": None}
+    status = {"state": "failed", "target_commit": before.get("commit"), "exit_code": None}
     started = time.monotonic()
     proc = None
     old_handlers = {}
@@ -152,7 +167,7 @@ def run(args):
         for sig in (signal.SIGINT, signal.SIGTERM):
             old_handlers[sig] = signal.signal(sig, cancelled)
         command[1:1] = integrations(worktree)
-        save(out / "metadata.json", {"model": MODEL, "effort": args.effort,
+        save(out / "metadata.json", {"model": model, "effort": args.effort,
          "target": before, "expected": expected, "worktree": str(worktree), "packet": str(packet),
          "prompt_sha256": hashlib.sha256(prompt.encode()).hexdigest(),
          "argv": command, "timeout_seconds": args.timeout})
@@ -169,7 +184,8 @@ def run(args):
         status["exit_code"] = proc.returncode
         if proc.returncode != 0:
             raise RuntimeError(f"Codex exited {proc.returncode}; independent review incomplete")
-        if target(worktree) != before:
+        if (not packet_mode and target(worktree) != before) or (packet_mode and
+            hashlib.sha256((worktree / "packet.md").read_bytes()).hexdigest() != before["packet_sha256"]):
             raise ValueError("review target changed during the run")
         result = json.loads(candidate.read_text())
         validate(result, previous)
@@ -192,11 +208,13 @@ def run(args):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--packet", type=Path, required=True)
-    parser.add_argument("--worktree", type=Path, required=True)
+    parser.add_argument("--worktree", type=Path, help="Optional frozen Git target; omit for self-contained ideas/plans/specs")
     parser.add_argument("--run-dir", type=Path, required=True)
-    parser.add_argument("--base", required=True, help="Full immutable base commit SHA")
-    parser.add_argument("--head", required=True, help="Full immutable requested target SHA")
+    parser.add_argument("--base", help="Full immutable base commit SHA")
+    parser.add_argument("--head", help="Full immutable requested target SHA")
     parser.add_argument("--previous-result", type=Path, help="Validated previous ledger for a rebuttal")
+    parser.add_argument("--model", default=os.environ.get("RIG_CODEX_MODEL", DEFAULT_MODEL),
+                        help="Codex model name; defaults to RIG_CODEX_MODEL or gpt-6.1-sol")
     parser.add_argument("--effort", choices=["high", "xhigh"], default="high")
     parser.add_argument("--timeout", type=float, default=1200)
     args = parser.parse_args()

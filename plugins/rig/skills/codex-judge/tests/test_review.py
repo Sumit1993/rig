@@ -61,7 +61,7 @@ if 'mcp' in args:
  disabled='mcp_servers.fixture.enabled=false' in args
  print(json.dumps([{'name':'fixture.dot' if mode=='unsafe_name' else 'fixture','enabled':False if disabled and mode!='unsafe_mcp' else True}]))
  sys.exit(0)
-required=['--no-daemon','--search','--ask-for-approval','never','exec','--ephemeral','read-only','gpt-6.1-sol','model_reasoning_effort=high','--json','features.plugins=false','features.apps=false','features.enable_mcp_apps=false','mcp_servers.fixture.enabled=false']
+required=['--no-daemon','--search','--ask-for-approval','never','exec','--ephemeral','read-only','model_reasoning_effort=high','--json','features.plugins=false','features.apps=false','features.enable_mcp_apps=false','mcp_servers.fixture.enabled=false']
 assert all(value in args for value in required), args
 assert sys.stdin.read().startswith('You are the independent adversarial judge')
 mode=os.environ.get('REVIEW_MODE','success')
@@ -74,6 +74,8 @@ if mode=='timeout':
 if mode=='changed':
  wt=args[args.index('-C')+1]
  pathlib.Path(wt,'source.txt').write_text('changed')
+if mode=='changed_packet':
+ pathlib.Path(args[args.index('-C')+1], 'packet.md').write_text('changed')
 p=pathlib.Path(args[args.index('-o')+1])
 p.write_text('{broken' if mode=='malformed' else os.environ['REVIEW_RESULT'])
 print(json.dumps({'type':'turn.completed'}))
@@ -108,6 +110,34 @@ print(json.dumps({'type':'turn.completed'}))
         self.assertEqual(meta["effort"], "high")
         self.assertEqual(meta["target"]["status"], "")
         self.assertEqual((self.out / "packet.md").read_text(), self.packet.read_text())
+
+    def test_packet_only_requires_no_git_and_binds_copied_proposal(self):
+        with contextlib.redirect_stdout(io.StringIO()):
+            code = judge.run(argparse.Namespace(packet=self.packet, worktree=None,
+                run_dir=self.out, effort="high", timeout=5, base=None, head=None,
+                previous_result=None, model="future-model"))
+        self.assertEqual(code, 0)
+        meta = json.loads((self.out / "metadata.json").read_text())
+        self.assertEqual(meta["model"], "future-model")
+        self.assertEqual(meta["expected"]["mode"], "packet")
+        self.assertIn("--skip-git-repo-check", meta["argv"])
+        self.assertEqual((self.out / "evidence/packet.md").read_text(), self.packet.read_text())
+
+    def test_changed_packet_invalidates_concept_review(self):
+        os.environ["REVIEW_MODE"] = "changed_packet"
+        with contextlib.redirect_stdout(io.StringIO()):
+            code = judge.run(argparse.Namespace(packet=self.packet, worktree=None,
+                run_dir=self.out, effort="high", timeout=5, base=None, head=None,
+                previous_result=None))
+        self.assertEqual(code, 1)
+        self.assertFalse((self.out / "result.json").exists())
+        self.assertIn("target changed", self.status()["error"])
+
+    def test_packet_mode_rejects_git_identity(self):
+        with self.assertRaisesRegex(ValueError, "require --worktree"):
+            judge.run(argparse.Namespace(packet=self.packet, worktree=None,
+                run_dir=self.out, effort="high", timeout=5, base=self.head, head=None,
+                previous_result=None))
 
     def test_quota_has_no_fallback_or_valid_result(self):
         os.environ["REVIEW_MODE"] = "quota"
