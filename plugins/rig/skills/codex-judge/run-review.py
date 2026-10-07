@@ -75,11 +75,12 @@ def terminate(proc):
 
 
 def integrations(worktree):
-    options = ["-c", "features.plugins=false", "-c", "features.enable_mcp_apps=false"]
+    options = ["-c", "features.plugins=false", "-c", "features.apps=false",
+               "-c", "features.enable_mcp_apps=false"]
     prefix = ["codex", "--no-daemon", "-C", str(worktree)]
     def servers(overrides):
         output = subprocess.check_output(prefix + overrides + ["mcp", "list", "--json"],
-                                         text=True, stderr=subprocess.PIPE, timeout=30)
+                                         cwd=worktree, text=True, stderr=subprocess.PIPE, timeout=30)
         rows = json.loads(output)
         if not isinstance(rows, list) or any(not isinstance(r.get("name"), str) for r in rows):
             raise ValueError("unrecognized MCP discovery result")

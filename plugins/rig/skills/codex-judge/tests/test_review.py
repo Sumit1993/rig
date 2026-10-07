@@ -56,11 +56,12 @@ import json, os, pathlib, subprocess, sys, time
 args=sys.argv[1:]
 mode=os.environ.get('REVIEW_MODE','success')
 if 'mcp' in args:
+ assert pathlib.Path.cwd() == pathlib.Path(args[args.index('-C')+1]), 'inventory used launcher cwd'
  if mode=='mcp_failure': sys.exit(7)
  disabled='mcp_servers.fixture.enabled=false' in args
  print(json.dumps([{'name':'fixture.dot' if mode=='unsafe_name' else 'fixture','enabled':False if disabled and mode!='unsafe_mcp' else True}]))
  sys.exit(0)
-required=['--no-daemon','--search','--ask-for-approval','never','exec','--ephemeral','read-only','gpt-6.1-sol','model_reasoning_effort=high','--json','features.plugins=false','features.enable_mcp_apps=false','mcp_servers.fixture.enabled=false']
+required=['--no-daemon','--search','--ask-for-approval','never','exec','--ephemeral','read-only','gpt-6.1-sol','model_reasoning_effort=high','--json','features.plugins=false','features.apps=false','features.enable_mcp_apps=false','mcp_servers.fixture.enabled=false']
 assert all(value in args for value in required), args
 assert sys.stdin.read().startswith('You are the independent adversarial judge')
 mode=os.environ.get('REVIEW_MODE','success')
