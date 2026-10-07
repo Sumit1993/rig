@@ -73,6 +73,7 @@ if command -v jq >/dev/null 2>&1; then
 fi
 
 BASE=$(git -C "$WT" rev-parse HEAD 2>/dev/null)
+[ -n "$BASE" ] || echo "WATCHDOG: cannot resolve HEAD in $WT; completion unknown, so no early kill" >&2
 agy --model "$MODEL" --log-file "$ACTIVITY" --output-format json \
   -p "$(cat "$PROMPT")" \
   --dangerously-skip-permissions --print-timeout "$TMOUT" > "$OUT" 2> "$OUT.err" &
@@ -95,7 +96,8 @@ while kill -0 "$PID" 2>/dev/null; do
     ahead=$(git -C "$WT" rev-list --count "$BASE"..HEAD 2>/dev/null || echo 0)
     dirty=$(git -C "$WT" status --porcelain 2>/dev/null | head -1)
     # A live child is a command still running (agy >=1.2.9 waits quietly on background work, #167).
-    busy=$(pgrep -P "$PID" | head -1)
+    # pgrep exits 1 on no match; anything higher (or missing) is "could not determine", so no kill.
+    busy=$(pgrep -P "$PID" 2>/dev/null) || [ $? -eq 1 ] || busy=unknown
     if [ "$ahead" -ge "$EXPECT" ] && [ -z "$dirty" ] && [ -z "$busy" ]; then
       stale_fmt=$(fmt_stale "$stale")
       echo "WATCHDOG: log stale $stale_fmt, killing agy (work complete: $ahead commits, clean tree)" >&2

@@ -10,7 +10,7 @@ WITH steps AS (
         CAST(content AS VARCHAR) AS content,
         CAST(tool_calls AS JSON) AS tool_calls
     FROM read_json(getvariable('agy_brain') || '/*/.system_generated/logs/transcript.jsonl',
-                   format = 'newline_delimited', union_by_name = true, ignore_errors = true, filename = true)
+                   format = 'newline_delimited', union_by_name = true, filename = true)
 ),
 calls AS (
     SELECT conversation_id, json_extract_string(c, '$.name') AS tool
