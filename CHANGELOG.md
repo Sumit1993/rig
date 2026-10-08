@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.15.0](https://github.com/Sumit1993/rig/compare/rig-v0.14.0...rig-v0.15.0) (2026-10-08)
+
+
+### Features
+
+* **coderabbit-routine:** Slack summary reads as sections, one PR per line with its title ([258474f](https://github.com/Sumit1993/rig/commit/258474f5b1c6fc319f89b2ac22c1e91be7d44914))
+* **coderabbit-routine:** Slack summary reads as sections, one PR per line with its title ([35bf007](https://github.com/Sumit1993/rig/commit/35bf007a25550a4673f1ab0968c599119712a2f3))
+* **codex:** adversarial judge and Windows desktop handoff ([#175](https://github.com/Sumit1993/rig/issues/175)) ([d0d4218](https://github.com/Sumit1993/rig/commit/d0d4218947bfdafdf786ddfa99445d0bcc51c26f))
+* **farm-out:** agy lanes run the agy way and cost no Claude tokens while they work ([#168](https://github.com/Sumit1993/rig/issues/168)) ([9968bd5](https://github.com/Sumit1993/rig/commit/9968bd5f2be5e68023b6b8207794d56949399524))
+
+
+### Bug Fixes
+
+* **coderabbit-routine:** docs-only PRs rank last instead of never, so prismalens.io gets reviewed ([#159](https://github.com/Sumit1993/rig/issues/159)) ([#173](https://github.com/Sumit1993/rig/issues/173)) ([3abcbb0](https://github.com/Sumit1993/rig/commit/3abcbb05f2a6d9aaef8e5288e6697cb8dbbdaadd))
+
 ## [0.14.0](https://github.com/Sumit1993/rig/compare/rig-v0.13.0...rig-v0.14.0) (2026-10-06)
 
 
