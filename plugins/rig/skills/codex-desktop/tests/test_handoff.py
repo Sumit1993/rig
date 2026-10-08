@@ -29,8 +29,13 @@ class HandoffTests(unittest.TestCase):
             with patch.object(Path, "resolve", lambda p, **kw: p):
                 original = self.directory
                 self.directory = Path("/mnt") / original.relative_to("/")
-                with patch.object(Path, "mkdir"), patch.object(Path, "write_text") as write:
+                packet = b"Observe only; do not submit.\r\n"
+                self.packet.write_bytes(packet)
+                with patch.object(Path, "mkdir"), patch.object(Path, "write_bytes") as copy, \
+                     patch.object(Path, "write_text") as write:
                     status = handoff.prepare(self.packet, self.directory)
+                copy.assert_called_once_with(packet)
+                self.assertEqual(status["packet_sha256"], handoff.hashlib.sha256(packet).hexdigest())
                 self.assertEqual(status["state"], "prepared")
                 self.assertFalse(status["execution_verified"])
                 links = [c.args[0] for c in write.call_args_list if c.args[0].startswith("codex://")]
@@ -55,7 +60,7 @@ class HandoffTests(unittest.TestCase):
     def test_open_failure_preserves_failure_evidence(self):
         with patch.object(Path, "resolve", lambda p, **kw: p), \
              patch.object(handoff.subprocess, "check_output", return_value="C:\\Tests\\request\n"), \
-             patch.object(Path, "mkdir"), patch.object(Path, "write_text") as write, \
+             patch.object(Path, "mkdir"), patch.object(Path, "write_bytes"), patch.object(Path, "write_text") as write, \
              patch.object(handoff.subprocess, "run", side_effect=OSError("launcher unavailable")):
             with self.assertRaises(OSError):
                 handoff.prepare(self.packet, Path("/mnt/request"), True)
@@ -65,7 +70,7 @@ class HandoffTests(unittest.TestCase):
     def test_open_uses_encoded_argument_not_shell(self):
         with patch.object(Path, "resolve", lambda p, **kw: p), \
              patch.object(handoff.subprocess, "check_output", return_value="C:\\Tests\\request\n"), \
-             patch.object(Path, "mkdir"), patch.object(Path, "write_text"), \
+             patch.object(Path, "mkdir"), patch.object(Path, "write_bytes"), patch.object(Path, "write_text"), \
              patch.object(handoff.subprocess, "run") as run:
             status = handoff.prepare(self.packet, Path("/mnt/request"), True)
         argv = run.call_args.args[0]

@@ -34,7 +34,7 @@ def target(worktree):
             "status": git(worktree, "status", "--porcelain", "--untracked-files=all")}
 
 
-def validate(result, previous=None):
+def validate(result, previous=None, ledger=False):
     schema = json.loads((HERE / "result.schema.json").read_text())
     Draft202012Validator(schema).validate(result)
     objections = result["objections"]
@@ -45,6 +45,13 @@ def validate(result, previous=None):
         prior_ids = {item["id"] for item in previous["objections"]}
         if prior_ids - set(ids):
             raise ValueError("missing prior objections: " + ", ".join(sorted(prior_ids - set(ids))))
+    prior_ids = {item["id"] for item in previous["objections"]} if previous else set()
+    for item in objections:
+        if item["status"] != "open" and not ledger and item["id"] not in prior_ids:
+            raise ValueError(f"{item['id']} is {item['status']} without a prior ledger entry")
+        for field in ("scenario", "evidence", "falsification_check"):
+            if not item[field].strip():
+                raise ValueError(f"{item['id']} has empty {field}")
     open_items = [item for item in objections if item["status"] == "open"]
     blocking = any(item["severity"] == "blocking" for item in open_items)
     material = any(item["severity"] == "material" for item in open_items)
@@ -71,7 +78,10 @@ def terminate(proc):
             os.killpg(proc.pid, signal.SIGKILL)
         except ProcessLookupError:
             pass
-        proc.wait()
+        try:
+            proc.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            pass
 
 
 def integrations(worktree):
@@ -128,7 +138,7 @@ def run(args):
     previous = None
     if args.previous_result is not None:
         previous = json.loads(args.previous_result.read_text())
-        validate(previous)
+        validate(previous, ledger=True)
     packet_text = packet.read_text()
     before = target(worktree) if worktree else {"packet_sha256": hashlib.sha256(packet_text.encode()).hexdigest()}
     if worktree and before["commit"] != expected["head"]:

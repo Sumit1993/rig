@@ -10,7 +10,7 @@ from urllib.parse import urlencode
 
 
 def prepare(packet, directory, open_app=False):
-    packet_text = packet.resolve(strict=True).read_text()
+    packet_bytes = packet.resolve(strict=True).read_bytes()
     directory = directory.resolve()
     if not str(directory).startswith("/mnt/"):
         raise ValueError("windows-dir must be on a mounted Windows drive")
@@ -18,7 +18,7 @@ def prepare(packet, directory, open_app=False):
     if not (len(native) > 3 and native[1:3] == ":\\"):
         raise ValueError("windows-dir must resolve to a native drive path")
     directory.mkdir(parents=True, exist_ok=False)
-    (directory / "packet.md").write_text(packet_text)
+    (directory / "packet.md").write_bytes(packet_bytes)
     prompt = (
         "@Computer Perform the scoped desktop task. Read packet.md in this workspace as "
         "the requested task, following your installed Computer Use skill and policy. "
@@ -32,7 +32,7 @@ def prepare(packet, directory, open_app=False):
     link = "codex://new?" + urlencode({"path": native, "prompt": prompt})
     (directory / "prompt.txt").write_text(prompt + "\n")
     (directory / "open-link.txt").write_text(link + "\n")
-    status = {"state": "prepared", "packet_sha256": hashlib.sha256(packet_text.encode()).hexdigest(),
+    status = {"state": "prepared", "packet_sha256": hashlib.sha256(packet_bytes).hexdigest(),
               "windows_workspace": native, "execution_verified": False}
     status_path = directory / "handoff.json"
     status_path.write_text(json.dumps(status, indent=2) + "\n")

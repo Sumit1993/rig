@@ -272,7 +272,13 @@ print(json.dumps({'type':'turn.completed'}))
             judge.validate(response)
         response["objections"] = [{**objection, "status": "fixed"}]
         response["verdict"] = "survived"
-        judge.validate(response)
+        with self.assertRaisesRegex(ValueError, "without a prior ledger"):
+            judge.validate(response)
+        judge.validate(response, ledger=True)
+        response["objections"] = [{**objection, "evidence": "  "}]
+        response["verdict"] = "blocked"
+        with self.assertRaisesRegex(ValueError, "empty evidence"):
+            judge.validate(response)
 
 
 if __name__ == "__main__":

@@ -36,7 +36,7 @@ python3 "${CLAUDE_PLUGIN_ROOT}/skills/codex-judge/run-review.py" \
   --packet "$PACKET" --run-dir "$RUN_DIR" --effort high --timeout 1200
 ```
 
-Packet mode hashes and copies the proposal into an isolated evidence directory, uses Codex’s supported `--skip-git-repo-check`, and validates the same objection ledger. It freezes the copied packet, not arbitrary external documents. For repository evidence, the thin runner uses Bash to launch:
+Packet mode hashes and copies the proposal into an isolated evidence directory, uses Codex’s `--skip-git-repo-check` ([`exec/src/cli.rs`](https://github.com/openai/codex/blob/main/codex-rs/exec/src/cli.rs); `codex exec --help`, codex-cli 0.160.1), and validates the same objection ledger. It freezes the copied packet, not arbitrary external documents. For repository evidence, the thin runner uses Bash to launch:
 
 ```bash
 python3 "${CLAUDE_PLUGIN_ROOT}/skills/codex-judge/run-review.py" \

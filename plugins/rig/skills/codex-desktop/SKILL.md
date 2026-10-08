@@ -32,9 +32,10 @@ A localhost URL is a hypothesis until the Windows browser can reach the WSL dev 
 Prepare a new request beneath a mounted Windows workspace owned by the operator:
 
 ```bash
+WIN_HOME=$(wslpath "$(cmd.exe /c 'echo %USERPROFILE%' 2>/dev/null | tr -d '\r')")
 python3 "$SKILL_DIR/handoff.py" \
   --packet "$PACKET" \
-  --windows-dir /mnt/c/Users/sumit/Documents/rig-live-tests/experiment-001
+  --windows-dir "$WIN_HOME/Documents/rig-live-tests/<experiment>"
 ```
 
 Resolve `SKILL_DIR` to this installed skill’s absolute directory from the skill location supplied by the calling harness. The Python helper is independent of the calling harness. The directory must be new. The command copies the packet, hashes it, writes a native Windows prompt and a `codex://new` link. Add `--open` to ask Windows to open the supported link. This opens a composer: **the user must send it** and select the intended model in the app. There is no verified unattended dispatch or completion callback. A zero exit means the handoff was prepared/opened, never that a test passed.
@@ -52,7 +53,7 @@ The native workspace contains the whole request; Rig remains in WSL. The prompt 
 
 Read: [desktop deep links](https://learn.chatgpt.com/docs/reference/commands), [Computer Use](https://learn.chatgpt.com/docs/computer-use), [Windows app](https://learn.chatgpt.com/docs/windows/windows-app), [WSL setup](https://learn.chatgpt.com/docs/windows/wsl).
 
-Deep links prefill but do not send. App-server CLI/remote control does not establish desktop Computer Use access. Bundled app-tools expects app-supplied pipe and thread metadata; it is not a standalone public WSL bridge. Do not reverse-engineer the helper protocol, fabricate thread IDs, expose an unauthenticated relay or reuse app internals as an API. Future automated dispatch requires a documented desktop-capable interface and a real end-to-end check.
+Deep links prefill but do not send. None of these pages documents a desktop-capable dispatch interface, so do not reverse-engineer the app's helpers, fabricate thread IDs or expose a relay. Automated dispatch waits for a documented interface and a real end-to-end check.
 
 This skill is exported to Claude, AGY and Codex. Windows receives the portable request, not Linux hooks or imported WSL policy. The app's installed Computer Use skill owns desktop execution.
 
@@ -64,6 +65,4 @@ Electron is one use case. Other packets can request a desktop reproduction, comp
 
 ## 6. CLI experiments and future transport
 
-The installed Codex CLI uses `codex exec` for noninteractive prompts; `-p` selects a configuration profile, not a print/prompt mode. The judge uses native JSON events, final-message/schema output and read-only ephemeral runs; these choices do not inherit AGY’s constraints. Desktop tasks retain the app’s permissions/runtime.
-
-Native Windows CLI `queue --thread ... --message ...` can address existing daemon sessions, but its existence does not prove it can drive desktop Computer Use. On the inspected Windows installation, `app-server daemon version` could not reach the control socket (Windows error 10050). Do not wire automatic queue dispatch until a known app-created thread actually performs a harmless Computer Use action and returns evidence through the supported interface. The current transport remains the documented composer handoff.
+`codex exec` runs noninteractive prompts; `-p` is `--profile`, a configuration profile, not a print/prompt mode (`codex exec --help`, codex-cli 0.160.1; [CLI reference](https://learn.chatgpt.com/docs/non-interactive-mode)). The judge's JSON events, schema output and read-only ephemeral runs do not inherit AGY's constraints. Desktop tasks retain the app's permissions/runtime. The current transport stays the documented composer handoff until another interface passes a harmless end-to-end Computer Use check.
