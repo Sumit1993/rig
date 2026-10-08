@@ -44,7 +44,7 @@ Plugin `rig`, path-independent via `${CLAUDE_PLUGIN_ROOT}`:
 
 Claude Code does not read the name `AGENTS.md` on its own. `install.sh` writes `~/.claude/CLAUDE.md` as a one-line `@` import to this checkout, so there is one copy. Machine-local rules go below the import line. A plugin cannot carry this; Claude Code does not load a `CLAUDE.md` at a plugin root.
 
-Dotfiles, what a plugin cannot carry: `AGENTS.md`, `statusline-command.sh`, `agy-statusline-command.sh`, `settings.fragment.json` (registers this repo as a marketplace and enables the plugin), `GEMINI.md` (agy's global rules, linked to `~/.gemini/GEMINI.md`), `install.sh`, `build-agy-plugin.sh`, `dedupe.sh`.
+Dotfiles, what a plugin cannot carry: `AGENTS.md`, `statusline-command.sh`, `agy-statusline-command.sh`, `settings.fragment.json` (permissions, statusline and other Claude Code settings), `harnesses.json` and `harnesses.sh` (below), `GEMINI.md` (agy's global rules, linked to `~/.gemini/GEMINI.md`), `install.sh`, `build-agy-plugin.sh`, `dedupe.sh`.
 
 Two harnesses, one source. `plugins/rig` is the Claude Code plugin. `install.sh` builds the agy plugin from it with `build-agy-plugin.sh` and runs `agy plugin install` on the result. Only skills whose `metadata.harnesses` names `agy` cross; untagged means Claude-only. agy runs as a headless lane worker, so only `lane` carries the tag. Hooks and agents never cross: agy's hooks read `toolCall.args` and answer with a `decision` field, and its agents take different model names. `hooks/tests/test-harness-split.sh` fails if a tagged skill names a Claude-only tool.
 
@@ -127,7 +127,9 @@ When upstream has moved, re-apply the patch onto the new copy rather than diffin
 
 This repo is the source of truth. Edit here, commit, push; machines with `autoUpdate: true` pick it up. Never edit the loose `~/.claude/skills/` or `~/.agents/skills/` copies; `dedupe.sh` removes them after first plugin load.
 
-Not vendored: `mattpocock/skills`, subscribed as `mattpocock-skills@mattpocock` through `settings.fragment.json`, because a copy installed via `npx skills add` rots silently and a plugin cannot drift. mage and context-mode own their own lifecycles. Tokens and auth never live here.
+`dotfiles/harnesses.json` is the one list of what each harness has installed: Claude Code plugins and marketplaces, agy and Codex plugins, and MCP servers per harness. `install.sh` applies it (Claude Code through `settings.json`, which installs at launch; agy and Codex through their CLIs), and `install.sh --check` prints each plugin or server that is installed but undeclared or declared but missing, plus a stale Codex rig build or a `GEMINI.md` link that does not point here, and exits 1 on drift. Plugins from a marketplace the account syncs (`synced` on claude.ai, `openai-curated-remote` on ChatGPT) belong to the account and are listed under `account_marketplaces`, not tracked.
+
+Not vendored: `mattpocock/skills`, subscribed as `mattpocock-skills@mattpocock` through `harnesses.json`, because a copy installed via `npx skills add` rots silently and a plugin cannot drift. agy gets no third-party skills: it runs as a headless lane worker (#167). context-mode is not installed on any harness; on agy it lost an A/B (#169). mage owns its own lifecycle. Tokens and auth never live here.
 
 Rule of thumb: if upstream ships a plugin, subscribe to it. Vendor a skill only when you patch it, and say so in the table. pstack is the exception: subscribing pulls 44 skills, about 20 of them one-idea `principle-*` files restating `AGENTS.md`, so one skill and one agent are vendored and patched.
 

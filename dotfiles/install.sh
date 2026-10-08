@@ -2,6 +2,8 @@
 # rig bootstrap for a new machine. Idempotent. Requires: jq, git, gh (authed).
 set -euo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
+# --check reports drift from dotfiles/harnesses.json and changes nothing (#169).
+[ "${1:-}" = "--check" ] && exec bash "$HERE/harnesses.sh" check
 CLAUDE="$HOME/.claude"
 mkdir -p "$CLAUDE"
 
@@ -74,7 +76,8 @@ if [ -d "$AGY" ]; then
   jq --arg cmd "$AGY/statusline.sh" '.statusLine = ((.statusLine // {}) + {type: "command", command: $cmd, enabled: true})' "$s" > "$s.tmp" \
     && jq -e . "$s.tmp" >/dev/null && mv "$s.tmp" "$s"
   echo "→ agy GEMINI.md"
-  ln -sfn "$HERE/GEMINI.md" "$HOME/.gemini/GEMINI.md"
+  if [ -f "$src_root/dotfiles/GEMINI.md" ]; then ln -sfn "$src_root/dotfiles/GEMINI.md" "$HOME/.gemini/GEMINI.md"
+  else echo "  WARN: no GEMINI.md in the main checkout yet; merge, then re-run" >&2; fi
   if command -v agy >/dev/null 2>&1; then
     echo "→ agy plugin (skills tagged agy; no hooks, no agents)"
     b="${XDG_DATA_HOME:-$HOME/.local/share}/rig/agy-plugin"
@@ -101,18 +104,25 @@ if command -v codex >/dev/null 2>&1; then
   fi
 fi
 
-echo "→ settings.json (deep-merge: fragment overlays existing; permissions.allow unions)"
+echo "→ MCP servers declared in harnesses.json"
+bash "$HERE/harnesses.sh" apply
+
+echo "→ settings.json (deep-merge; harnesses.json replaces the plugin maps; permissions.allow unions)"
+frag=$(jq -s '.[0] * .[1]' "$HERE/settings.fragment.json" <(bash "$HERE/harnesses.sh" fragment))
 if [ -f "$CLAUDE/settings.json" ]; then
   cp "$CLAUDE/settings.json" "$CLAUDE/settings.json.bak-$(date +%s)"
+  # harnesses.json owns the plugin maps whole, so a removed plugin leaves too (#169).
   jq -s '.[0] as $cur | .[1] as $frag | ($cur * $frag)
+         | .enabledPlugins = $frag.enabledPlugins | .extraKnownMarketplaces = $frag.extraKnownMarketplaces
          | .permissions.allow = (($cur.permissions.allow // []) + ($frag.permissions.allow // []) | unique)' \
-    "$CLAUDE/settings.json" "$HERE/settings.fragment.json" > /tmp/settings.merged.json
+    "$CLAUDE/settings.json" <(printf '%s' "$frag") > /tmp/settings.merged.json
   jq -e . /tmp/settings.merged.json >/dev/null
   mv /tmp/settings.merged.json "$CLAUDE/settings.json"
 else
-  cp "$HERE/settings.fragment.json" "$CLAUDE/settings.json"
+  printf '%s\n' "$frag" > "$CLAUDE/settings.json"
 fi
 
+bash "$HERE/harnesses.sh" check || echo "  drift above; most of it clears on the Claude Code restart that installs plugins"
 echo "→ done. Restart Claude Code; the rig marketplace + rig plugin load from settings."
 echo "   Skills arrive under the rig: prefix, one per directory in plugins/rig/skills/."
 echo "   If migrating FROM a machine with loose copies in ~/.claude/skills/, run dedupe.sh next."
