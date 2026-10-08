@@ -1,11 +1,11 @@
 #!/bin/bash
 # Usage: run-agy-watchdog.sh <worktree> <promptfile> <outfile> <expected_commits> <timeout> [model]
 # Runs agy headless; kills it if it hangs after completing its work
-# (activity log stale >3min AND >=expected commits ahead of origin/main AND clean tree).
+# (activity log stale >3min AND >=expected commits since launch AND clean tree AND no live child).
 # Always appends the AGY_EXITED sentinel to <outfile>, wait on that, per the no-doze skill.
 set -u
 WT="$1"; PROMPT="$2"; OUT="$3"; EXPECT="$4"; TMOUT="$5"
-MODEL="${6:-gemini-3.8-flash-high}"
+MODEL="${6:-gemini-3.8-flash-low}"
 
 WT=$(realpath -m "$WT")
 PROMPT=$(realpath -m "$PROMPT")
@@ -72,6 +72,8 @@ if command -v jq >/dev/null 2>&1; then
     }' > "$OUT.meta.json.tmp" 2>/dev/null && mv -f "$OUT.meta.json.tmp" "$OUT.meta.json" 2>/dev/null || rm -f "$OUT.meta.json.tmp" 2>/dev/null
 fi
 
+BASE=$(git -C "$WT" rev-parse HEAD 2>/dev/null)
+[ -n "$BASE" ] || echo "WATCHDOG: cannot resolve HEAD in $WT; completion unknown, so no early kill" >&2
 agy --model "$MODEL" --log-file "$ACTIVITY" --output-format json \
   -p "$(cat "$PROMPT")" \
   --dangerously-skip-permissions --print-timeout "$TMOUT" > "$OUT" 2> "$OUT.err" &
@@ -91,9 +93,12 @@ while kill -0 "$PID" 2>/dev/null; do
   now=$(date +%s); mt=$(stat -c %Y "$ACTIVITY" 2>/dev/null || echo "$now")
   stale=$((now - mt))
   if [ "$stale" -gt 180 ]; then
-    ahead=$(git -C "$WT" rev-list --count origin/main..HEAD 2>/dev/null || echo 0)
+    ahead=$(git -C "$WT" rev-list --count "$BASE"..HEAD 2>/dev/null || echo 0)
     dirty=$(git -C "$WT" status --porcelain 2>/dev/null | head -1)
-    if [ "$ahead" -ge "$EXPECT" ] && [ -z "$dirty" ]; then
+    # A live child is a command still running (agy >=1.2.9 waits quietly on background work, #167).
+    # pgrep exits 1 on no match; anything higher (or missing) is "could not determine", so no kill.
+    busy=$(pgrep -P "$PID" 2>/dev/null) || [ $? -eq 1 ] || busy=unknown
+    if [ "$ahead" -ge "$EXPECT" ] && [ -z "$dirty" ] && [ -z "$busy" ]; then
       stale_fmt=$(fmt_stale "$stale")
       echo "WATCHDOG: log stale $stale_fmt, killing agy (work complete: $ahead commits, clean tree)" >&2
       kill -9 "$PID" 2>/dev/null
@@ -180,4 +185,13 @@ else
   SENTINEL_STATUS="NO_JQ"
 fi
 
-echo "AGY_EXITED rc=$RC model=$MODEL status=$SENTINEL_STATUS cid=${CID:-none} out=$OUT bytes=$(stat -c %s "$OUT" 2>/dev/null || echo 0)" >> "$ACTIVITY"
+# The work order's `Verify:` command, run here so a clean run needs no LLM to check it (#167).
+VERIFY=$(grep -m1 -oP '^Verify:\s*`\K[^`]+' "$PROMPT" 2>/dev/null)
+VRC=none
+if [ -n "$VERIFY" ]; then
+  (cd "$WT" && timeout -k 10 900 bash -c "$VERIFY" < /dev/null > "$OUT.verify.log" 2>&1)
+  VRC=$?
+fi
+COMMITS=$(git -C "$WT" rev-list --count "$BASE"..HEAD 2>/dev/null || echo 0)
+DIRTY=$(git -C "$WT" status --porcelain 2>/dev/null | wc -l)
+echo "AGY_EXITED rc=$RC model=$MODEL status=$SENTINEL_STATUS cid=${CID:-none} out=$OUT bytes=$(stat -c %s "$OUT" 2>/dev/null || echo 0) commits=$COMMITS dirty=$DIRTY verify_rc=$VRC" >> "$ACTIVITY"

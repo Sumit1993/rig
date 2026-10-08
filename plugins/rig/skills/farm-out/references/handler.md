@@ -1,6 +1,6 @@
 # agy handler: failure, resume, kill, babysit
 
-The `agy-runner`'s half of `farm-out`. The dispatcher never needs this file; the runner loads it before launching.
+The `agy-runner`'s half of `farm-out`. The session launches the watchdog itself and spawns the runner only for a run whose `AGY_EXITED` line is not clean; the runner loads this file first.
 
 ## Failure modes
 
@@ -50,8 +50,8 @@ The runner's section, not the dispatcher's. A handler owns its run end to end: l
 4. Empty output: check the worktree (`git status`, expected files) before assuming failure. Landed and passing its own verification is success; note the silent death.
 5. Run every verify command in the spec yourself once before reporting, whatever agy pasted. Then check provenance: the pasted output names the worktree path and the head SHA. Report your output, not agy's claims.
 6. A run with no output that dies within about 30 seconds never started. Relaunch without charging the budget. Three in a row is an agy-side problem: change model.
-7. A quota wall hits the whole group, not one model. Flash and Pro share a pool, so relaunching on the other Gemini slug walks into the same wall. Gemini dry means agy is finished for this run, and you are not. You are a Sonnet agent already holding the prompt file and the worktree. Do the task yourself from that prompt, and say so in the report. Handing it on costs a re-read of everything you have. A weekly bar refreshes in days, so the reset timer is not a plan.
-8. Retry budget: 2 real relaunches. A resume on a surviving `conversation_id` is free, it is the same run. A quota wall costs no budget; it costs the group, and a dry Gemini group costs the agy run, not the task.
+7. A quota wall hits the whole group, not one model. Flash and Pro share a pool, so relaunching on the other Gemini slug walks into the same wall. Gemini dry moves the run to agy's other group: if `agy-quota.sh check claude-sonnet-5-5-low` reads usable, relaunch with that model (resume the `conversation_id` when the worktree holds partial work). Only when both groups are dry is agy finished and you are not. You are a Sonnet agent already holding the prompt file and the worktree. Do the task yourself from that prompt, and say so in the report. Handing it on costs a re-read of everything you have. A weekly bar refreshes in days, so the reset timer is not a plan.
+8. Retry budget: 2 real relaunches. A resume on a surviving `conversation_id` is free, it is the same run. A quota wall costs no budget; it costs the group, and a dry group moves the run, never the task.
 9. Name any PR the lane opened: `gh pr list --head <branch> --json number,url`, URL in the report. Do not arm a watcher; a Monitor dies with your turn. The main session arms `pr-babysit` on it.
 10. Preserve work before reporting. A change that passes the prompt's own verification gets committed on the lane's branch and said so. Stop there: no push, no PR, no merge.
 
@@ -61,6 +61,6 @@ The runner's section, not the dispatcher's. A handler owns its run end to end: l
 2. A salvaged partial, with evidence of what landed and what did not.
 3. The relaunch budget spent on real failures, with the log tail, the worktree state, and what remains.
 
-Gemini going dry never produces report 3. It is not a terminal condition and it does not spend the step-8 budget, which counts relaunches. You finish the task on your own Sonnet and return report 1 or 2, saying which parts Gemini did and which you did.
+A dry group never produces report 3. It is not a terminal condition and it does not spend the step-8 budget, which counts relaunches. With both groups dry you finish the task on your own Sonnet and return report 1 or 2, saying which parts agy did and which you did.
 
 "Standing by", "still waiting on the agy run" and every other progress update is not a terminal report. Returning one ends the handler while the work is live.

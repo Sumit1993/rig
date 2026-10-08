@@ -9,17 +9,17 @@ metadata:
 
 Which model gets which task is `AGENTS.md`. Model choice inside an agy run is this skill's. How to wait on a run is `no-doze`. What the runner does once a run is live (failure table, resume, kill, the babysit loop, terminal reports) is `references/handler.md`.
 
-Verified against agy 1.1.27. Check `agy --version` before trusting a flag; `agy changelog` records what moved.
+Verified against agy 1.2.16. Check `agy --version` before trusting a flag; `agy changelog` records what moved.
 
 ## Gotchas
 
 - An agy run takes a median 8 minutes, p90 28, and nearly a quarter end in ERROR (#150 carries the numbers). Dispatch only what the session will not wait on.
 - Permission to use subagents is not an exemption. A Claude subagent on delegable work needs a stated reason in your reply, and "simpler to set up" is not one.
 - agy meters two quota groups, not one lane per model: Gemini Flash and Pro share one, Claude Opus, Claude Sonnet and GPT-OSS share the other. `agy` with no arguments prints both. Probe with `agy-quota.sh check <model>` before fanning out.
-- Gemini dry ends the dispatch; the work goes to a Claude subagent on `model: sonnet` holding the same prompt file, and a run you launched yourself with no wrapper goes the same way. Never a reset timer, and never the Claude and GPT group.
+- Gemini dry moves the lane to agy's other group: relaunch the same spec on `claude-sonnet-5-5-low` if `agy-quota.sh check claude-sonnet-5-5-low` reads usable (operator ruling on #167, superseding claude-kit#118). Both groups dry ends the dispatch; the work goes to a Claude subagent on `model: sonnet` holding the same prompt file, and a run you launched yourself with no wrapper goes the same way. Never a reset timer.
 - Lane count is derived from the scarce resource and its scope (a review counter, a merge invariant, a weekly pool). A limit assumed per-repo can be org-wide or per-developer.
 - Reference content from another repo is fetched from live refs (`gh api repos/<r>/contents/<path>`, or `git show origin/main:<path>`), never a working tree.
-- `~/.gemini/GEMINI.md` carries the global standards agy loads itself. Prompts stay lean on those; you still verify agy's claims.
+- `~/.gemini/GEMINI.md` (a link to `dotfiles/GEMINI.md`) carries how agy works a lane: `view_file` for reads, `lane/scripts/run.sh` for suites, no polling, no wandering. agy loads it in `-p` runs (canary test, #167). Work orders stay lean on those; you still verify agy's claims.
 
 ## Launch
 
@@ -30,7 +30,7 @@ mkdir -p ~/ai-context/agy-logs
 SLUG="agy-<task>-$(date +%s)"
 ACTIVITY=~/ai-context/agy-logs/$SLUG.activity.log   # streams; staleness keys on this
 OUT=~/ai-context/agy-logs/$SLUG.json                # the envelope, written once at the end
-MODEL=gemini-3.8-flash-high
+MODEL=gemini-3.8-flash-low
 command -v jq >/dev/null 2>&1 && jq -n \
   --arg slug "$SLUG" \
   --arg model "$MODEL" \
@@ -62,22 +62,23 @@ AGY_PID=$!            # agy itself, no subshell in between
 
 ## Models inside agy
 
-- `gemini-3.8-flash-high` for all delegable work with a strict template and a clear spec. Not open-ended unsupervised coding. `gemini-3.7-flash-high` if 3.8 misbehaves.
-- `gemini-3.8-flash-low` for purely mechanical items (a rename, a known one-line fix, running a suite): it skips thinking and runs about 3–4 s per step against 6–8 s on high (local agy transcripts, measured 2026-10).
+- `gemini-3.8-flash-low` is the default for a work order that names its files, its change and a `Verify:` line: the same order took 7 turns in 27 s on low against 11 turns in 2.9 min on high, both correct (#167). `gemini-3.8-flash-high` when the lane must work out what to change. Neither for open-ended unsupervised coding. `gemini-3.7-flash-high` if 3.8 misbehaves.
 - `gemini-3.1-pro-high` is untested here and draws on Flash's pool: a quality choice, never a quota escape.
-- `claude-opus-4-6-thinking` and `claude-sonnet-4-6` sit in the other quota group and are not the Gemini fallback.
-- Avoid `gemini-3.5-flash-*` and `gpt-oss-120b-medium`.
+- `claude-opus-5-5-{low,medium,high}` and `claude-sonnet-5-5-{low,medium,high}` (agy 1.2.16 `agy models`) sit in the other quota group with `gpt-oss-120b-medium`. `claude-sonnet-5-5-low` is the Gemini fallback: it did the #167 work order in 5 turns and 24 s, correct. Opus 5.5 there is untested and draws on the same pool.
+- `gemini-3.8-flash-medium`, `gemini-3.6-flash-*` and `gemini-3.1-pro-low` are listed and untested here. Avoid `gpt-oss-120b-medium`.
 - agy has its own skills: Matt Pocock's set is at `~/ai-context/vendor/mattpocock-skills` for agy-side planning and review.
 
 ## Dispatch
 
 A lane takes side work while the session keeps coding (`AGENTS.md` §Delegation). The session writes the work order itself: the files, the command that must pass, what to return. A work order that hinges on a ruling (security, design surface, product semantics) comes from `fable-planner`: hand it the issue, the constraints and the worktree path, and it returns the prompt file's content. A weak spec is not recoverable downstream; the lane is entitled to follow it off a cliff.
 
-Write the spec to `~/ai-context/<repo>/<issue>-<slug>/spec-<lane>.md` or into the repo, never `/tmp`. Spawn `subagent_type: "agy-runner"` with the path. That is the whole dispatch.
+Write the spec to `~/ai-context/<repo>/<issue>-<slug>/spec-<lane>.md` or into the repo, never `/tmp`. Its last lines are one `` Verify: `<command>` `` line and what to return.
+
+Launch it yourself with Bash `run_in_background: true`: `run-agy-watchdog.sh <worktree> <spec> ~/ai-context/agy-logs/<slug>.json <expected_commits> <timeout>`. The session spends nothing while agy works; the completion notice lands when it exits. The watchdog runs the spec's `Verify:` command itself and appends one line to `<slug>.activity.log`: `AGY_EXITED rc= status= commits= dirty= verify_rc=`.
+- `status=SUCCESS`, `commits` at least the expected count, `dirty=0` and `verify_rc=0`: read the diff against the spec and the tail of `<slug>.json.verify.log`. That is the whole review.
+- Anything else: spawn `subagent_type: "agy-runner"` with the spec path and the envelope path to salvage, resume or finish it (`references/handler.md`). A Sonnet runner that waits on a healthy run cost a median 2.4M cache-read tokens per lane across 83 lanes (#167); spend that only on a run that needs it.
 
 - One lane per item, run in parallel, each with its own branch and its own narrow test command. A run costs about 5 s per step, one step at a time, and every step resends the whole context. A ten-item lane took 400 steps and 40 minutes, then hit its timeout; ten one-item lanes each take a few minutes (run data in #164 - Friction from a long unattended prismalens run). Past ~140k tokens agy compacts and re-reads files (google-antigravity/antigravity-cli#878). Verification still runs once at the umbrella, after the item branches are merged into it.
-- Every work order carries: "Run tests, typecheck and builds in the foreground with `WaitMsBeforeAsync` 600000. Never background a command and poll it." agy's default of 5000 sends every suite to the background, and each status poll is a full step. Across 72 runs that came to 593 polls, and 7 runs were still waiting when the timeout hit (#164).
-- Batch reads: one shell command reads several files, and each file is read once, whole.
 - Reuse one planner inside the prompt-cache hour; a fresh one pays for the whole context again (#79 - autopilot §0: name the prompt-cache TTL as a ceiling on the cron interval). Without SendMessage, batch the hour's specs into one planner prompt.
 - A running agy process takes no message: a print run is one turn, and even `--input-format stream-json` holds a message until the turn ends (agy 1.1.15 changelog). Send its follow-up as the resume prompt. A running Claude subagent takes `SendMessage` at its next tool round; name the source (the operator's words, an issue, a log path) or a well-briefed lane refuses it as unsourced (#136 - The kit matches what gh-workflows #173 changes).
 - A spec pointing outside the lane's project root says to read it with Bash or Read; context-mode refuses those paths.
