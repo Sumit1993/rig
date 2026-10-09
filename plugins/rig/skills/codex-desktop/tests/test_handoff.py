@@ -71,6 +71,14 @@ class HandoffTests(unittest.TestCase):
         self.assertIn('"state": "open_failed"', write.call_args.args[0])
         self.assertIn('"execution_verified": false', write.call_args.args[0])
 
+    def test_ask_back_is_answer_only_and_absent_outside_claude(self):
+        cmd = handoff.ask_back("/mnt/c/lane/tasks/x", session="sid-1", cwd="/home/u/repo")
+        self.assertIn("claude -p --resume sid-1 --fork-session", cmd)
+        self.assertIn('--tools "" --strict-mcp-config', cmd)
+        self.assertIn("< /mnt/c/lane/tasks/x/question.md", cmd)
+        with patch.dict(handoff.os.environ, {}, clear=True):
+            self.assertEqual(handoff.ask_back("/mnt/c/x"), "")
+
     def test_open_uses_encoded_argument_not_shell(self):
         with patch.object(Path, "resolve", lambda p, **kw: p), \
              patch.object(handoff.subprocess, "check_output", return_value="C:\\Tests\\request\n"), \

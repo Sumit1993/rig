@@ -4,9 +4,21 @@ import argparse
 import base64
 import hashlib
 import json
+import os
 from pathlib import Path
 import subprocess
 from urllib.parse import urlencode
+
+
+def ask_back(directory, session=None, cwd=None):
+    """The command a Codex thread runs to ask the dispatching Claude session a question; empty outside one."""
+    session = session or os.environ.get("CLAUDE_CODE_SESSION_ID")
+    if not session:
+        return ""
+    # Answer-only: no tools and no MCP servers, so a thread reading untrusted pages can ask but never act.
+    return (f" To ask the Claude session that sent this task a question, write it to question.md in that folder and run "
+            f"`wsl.exe -e bash -lc 'cd {cwd or os.getcwd()} && claude -p --resume {session} --fork-session "
+            f"--tools \"\" --strict-mcp-config < {directory}/question.md'`; its output is the answer.")
 
 
 def prepare(packet, directory, open_app=False, report="report.md"):
@@ -32,6 +44,7 @@ def prepare(packet, directory, open_app=False, report="report.md"):
         "decoding a screenshot data URL to a file yourself and listing an MD5 of every evidence file, which must all differ; "
         "include steps, outcomes, failures, blocked/untried steps and, for app testing, build identity. "
         "If file output is unavailable, return the report in chat and say so."
+        + ask_back(directory) +
         # The approval reviewer weighs only user messages, so the packet's permissions travel inline.
         "\n\n---\n\n" + packet_bytes.decode("utf-8", "replace")
     )
