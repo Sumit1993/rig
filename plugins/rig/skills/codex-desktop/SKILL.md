@@ -1,8 +1,8 @@
 ---
 name: codex-desktop
-description: "Hand scoped desktop or browser work from WSL to the Windows Codex desktop app (in-app browser or Computer Use), in threads started with no click. Load for app reviews, QA or any desktop task from CC, AGY or Codex."
+description: "Hand scoped desktop or browser work from WSL to the Windows Codex desktop app (in-app browser or Computer Use), in threads started with no click. Load for app reviews, QA or any desktop task from CC or Codex."
 metadata:
-  harnesses: "claude agy codex"
+  harnesses: "claude codex"
   version: "2.0.0"
 ---
 
@@ -79,7 +79,7 @@ The `<hash>` folder changes with each app update.
 
 Read: [Computer Use](https://learn.chatgpt.com/docs/computer-use), [desktop deep links](https://learn.chatgpt.com/docs/reference/commands), [Windows app](https://learn.chatgpt.com/docs/windows/windows-app), [WSL setup](https://learn.chatgpt.com/docs/windows/wsl).
 
-This skill is exported to Claude, AGY and Codex. Windows receives the portable request, not Linux hooks or imported WSL policy. The app's installed Computer Use skill owns desktop execution.
+This skill is exported to Claude and Codex. Windows receives the portable request, not Linux hooks or imported WSL policy. The app's installed Computer Use skill owns desktop execution.
 
 ## 5. What to hand over
 
