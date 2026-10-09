@@ -12,11 +12,19 @@ D1 index and no Worker, and none gets added until a query is measurably slow.
 raw/claude-code/<project-slug>/<session-id>/[subagents/]<file>.jsonl
 raw/agy-brain/<conversation-id>/.system_generated/logs/transcript*.jsonl
 raw/agy-envelopes/<slug>-<epoch>.json
+raw/codex/<yyyy>/<mm>/<dd>/rollout-*.jsonl
+raw/{claude-code,agy-brain,codex}-windows/...   same shapes, from the Windows side
+superseded/<utc-stamp>-<pid>/<source>/...       remote copies a later run replaced
 ```
 
-Append-only. `--immutable` makes rclone fail rather than overwrite an object whose
-size or time changed, which is the guard against a truncated local file replacing a
-good remote one. `--min-age 2h` (override with `MIN_AGE`) keeps a transcript that is
+Nothing is ever lost. A resumed session or a continued Codex thread grows after its
+first upload; the next run uploads the new file and `--backup-dir` moves the old
+object under `superseded/`. A truncated local file therefore cannot destroy a good
+remote one, and a resumed session no longer fails the run. (`--immutable` did fail
+it, and resumed sessions stopped reaching the bucket: rig#74.)
+
+Windows-side sources are read through `/mnt/c/Users/$USER`; set `WIN_HOME` if the
+Windows user name differs. A source that is absent is skipped. `--min-age 2h` (override with `MIN_AGE`) keeps a transcript that is
 still being written out of the bucket, since the first upload of a growing file would
 freeze it truncated forever. A source's errors are printed and the next source still runs.
 
