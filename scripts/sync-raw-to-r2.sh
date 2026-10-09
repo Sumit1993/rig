@@ -8,7 +8,7 @@ REMOTE="${RCLONE_REMOTE:-r2}"
 DRY=""
 [ "${1:-}" = "--dry-run" ] && DRY="--dry-run"
 WIN_HOME="${WIN_HOME:-/mnt/c/Users/$USER}"
-SUPERSEDED="$REMOTE:$BUCKET/superseded/$(date -u +%Y-%m-%dT%H%M)"
+SUPERSEDED="$REMOTE:$BUCKET/superseded/$(date -u +%Y-%m-%dT%H%M%S)-$$"
 
 command -v rclone >/dev/null || { echo "rclone not found: see scripts/README-r2.md" >&2; exit 1; }
 

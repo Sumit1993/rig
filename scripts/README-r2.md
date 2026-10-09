@@ -14,7 +14,7 @@ raw/agy-brain/<conversation-id>/.system_generated/logs/transcript*.jsonl
 raw/agy-envelopes/<slug>-<epoch>.json
 raw/codex/<yyyy>/<mm>/<dd>/rollout-*.jsonl
 raw/{claude-code,agy-brain,codex}-windows/...   same shapes, from the Windows side
-superseded/<utc-stamp>/<source>/...             remote copies a later run replaced
+superseded/<utc-stamp>-<pid>/<source>/...       remote copies a later run replaced
 ```
 
 Nothing is ever lost. A resumed session or a continued Codex thread grows after its
