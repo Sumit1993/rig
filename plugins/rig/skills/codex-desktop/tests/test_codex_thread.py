@@ -32,7 +32,7 @@ class CodexThreadTests(unittest.TestCase):
         with patch.object(codex_thread.subprocess, "run") as run:
             codex_thread.queue("t-1", "do 'it'; rm -rf /", exe="codex.exe")
         argv = run.call_args.args[0]
-        self.assertEqual(argv, ["codex.exe", "queue", "--thread", "t-1", "--message", "do 'it'; rm -rf /"])
+        self.assertEqual(argv, ["codex.exe", "queue", "--thread", "t-1", "--approve-for-me", "--message", "do 'it'; rm -rf /"])
 
 
 if __name__ == "__main__":

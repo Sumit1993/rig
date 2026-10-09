@@ -63,7 +63,8 @@ def new_thread(name, workspace, exe=None, opener=subprocess.run):
 
 
 def queue(thread_id, message, exe=None):
-    subprocess.run([exe or codex_exe(), "queue", "--thread", thread_id, "--message", message],
+    # The app runs queued turns read-only; --approve-for-me routes their write escalations to the reviewer.
+    subprocess.run([exe or codex_exe(), "queue", "--thread", thread_id, "--approve-for-me", "--message", message],
                    check=True, timeout=60, stdout=subprocess.DEVNULL)
 
 
