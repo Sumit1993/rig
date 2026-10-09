@@ -1,6 +1,6 @@
 ---
 name: codex-desktop
-description: "Hand scoped desktop work from WSL to the Windows Codex desktop app, which drives the desktop with Computer Use, in threads started with no click. Load for live app testing, Electron UX review or any desktop task from CC, AGY or Codex."
+description: "Hand scoped desktop or browser work from WSL to the Windows Codex desktop app (in-app browser or Computer Use), in threads started with no click. Load for app reviews, QA or any desktop task from CC, AGY or Codex."
 metadata:
   harnesses: "claude agy codex"
   version: "2.0.0"
@@ -20,15 +20,19 @@ The Windows desktop must be unlocked and available to the test; Computer Use tak
 
 Write a self-contained Markdown packet under `~/ai-context/<repo>/<issue>-<slug>/`, its first line a `# ` title. Name:
 - Objective, exact app/URL and requested output file. For app reviews, add the expected build/commit and how the UI exposes it.
-- Preconditions, existing authenticated test session, synthetic data and reset method.
+- Preconditions, existing authenticated session, synthetic data and reset method.
 - Steps, expected results and a concrete failure condition for each. One packet is one large autonomous step with a checklist plus "flag anything odd"; micro-steps waste round trips.
-- Allowed actions and mutations, destination/data for any intended transmission. `handoff.py` sends the packet inline because "Approve for me" weighs only user messages: permissions that exist only in a file get rejected. Default is navigation and observation; do not infer permission to submit, delete, purchase or change access.
-- Stop conditions: security, sign-in or permission prompts and downloads. Banners, promos and "not your default browser" notices are ignorable; say so, or Codex halts on them.
-- Evidence: steps/outcomes, blocked/untried steps and residual uncertainty; app reviews add observed build identity. Screenshots of named app windows only (Computer Use cannot capture the full desktop) decoded by Codex from the data URL into `evidence/<name>.png`, with an MD5 of every file listed before the report is written. One export once wrote the same image for 9 of 11 files while the report described each; the orchestrator rejects duplicate hashes.
-- Web apps: the Codex Browser plugin's in-app browser (`browser@openai-bundled`, backend `iab`), named in the packet. It works in a background tab off the operator's browser profile, reads the DOM and accessibility tree in well under a second, takes Playwright locators and never hits the Chrome URL-policy stop; it costs far less quota than Computer Use. Ask for settled reads after a write or navigation, since an immediate read can return the old page. Computer Use is for native windows (Electron, tray, OS dialogs). On Chrome it stops the whole turn when it "could not determine the current browser URL ... to enforce policy" (after Ctrl+F, or a capture of the wrong window), and it refuses Brave outright.
-- Cleanup scoped to what the task opened. Notepad opens a tab inside the user's window: "close only that tab, don't save".
+- Allowed actions and mutations, and the destination of any data sent. `handoff.py` sends the packet inline because "Approve for me" weighs only user messages; a permission that exists only in a file is not one. Default is navigation and observation; never infer permission to submit, delete, purchase or change access.
+- Stop conditions: security, sign-in and permission prompts, and downloads. Name the incidental UI to ignore (banners, promos, notices), or Codex halts on it.
+- Evidence: steps/outcomes, blocked/untried steps and residual uncertainty; app reviews add observed build identity. Screenshots are of named app windows, saved by Codex as files, with an MD5 of each listed in the report; the orchestrator rejects duplicate hashes.
+- Cleanup limited to what the task opened, never the operator's own windows or documents.
 
-Not for Computer Use: drag-and-drop boards. Computer Use's drag sends only start and end points, so dnd-kit never sees a drop, and the in-app browser's documented `tab.cua.drag({path})` is not exposed in its tabs (`tab.cua` is undefined on app 26.1002). Drag-and-drop needs a human or Playwright. A localhost URL is a hypothesis until the Windows browser reaches the WSL dev server; report connectivity failures instead of changing firewall settings or the stack, and record the build actually served.
+Pick the surface by need:
+- **In-app browser** (Codex Browser plugin, `iab` backend) for browser work that needs no real login. It runs in the background off the operator's browser profile, reads the page structure rather than pixels, and costs far less quota. Ask for settled reads after a write or navigation.
+- **Computer Use** when the work needs a real browser session, or anything outside a browser: native apps, OS dialogs, cross-app tasks. It drives the operator's live desktop, so every app it may touch is a deliberate grant (§4).
+- **A human or Playwright** for any interaction the packet cannot verify through either surface; say so in the report rather than guess.
+
+A localhost URL is a hypothesis until Windows reaches the WSL dev server; report connectivity failures instead of changing firewall settings or the stack, and record the build actually served.
 
 ## 3. Dispatch
 
@@ -56,11 +60,11 @@ CC → verify hashes, provenance, build → fresh codex-judge packet → objecti
 Verified on app 26.1002 / codex-cli 0.162.0-alpha.2 (rig#174). None of it is in OpenAI's docs; after any app update rerun one harmless two-thread probe before relying on it.
 - `codex.exe app-server --stdio` with `clientInfo.name = "codex_desktop"`: `thread/start` (workspace-write sandbox, `approvalsReviewer = "auto_review"`, the "Approve for me" reviewer), `thread/name/set`, `thread/inject_items`. A thread with no item never reaches disk; the injected message persists it without a model turn.
 - The app keeps its own thread catalog and only consumes queued messages for threads it has mounted. `Start-Process 'codex://threads/<id>'` mounts it (idea from the third-party bridge Remodex).
-- `codex.exe queue --thread <id> --approve-for-me --message <text>` lands in `queue_1.sqlite`. The app runs queued turns read-only whatever the thread was started with; `--approve-for-me` lets Codex escalate writes through the reviewer (without it, a lane check answered in chat and wrote nothing); a mounted thread starts a turn within seconds, idle or mid-turn. Two threads started in the same second ran together, wrote their files and listed the real desktop windows through Computer Use with no prompt.
+- `codex.exe queue --thread <id> --approve-for-me --message <text>` lands in `queue_1.sqlite`. The app runs queued turns read-only whatever the thread was started with; `--approve-for-me` lets Codex escalate writes through the reviewer; a mounted thread starts a turn within seconds, idle or mid-turn. Two threads started in the same second ran together, wrote their files and listed the real desktop windows through Computer Use with no prompt.
 
 Limits:
-- Computer Use runs on the active desktop in the foreground; the desktop must be unlocked and the operator's apps are the ones it drives. "Approve for me" reviews escalations; Computer Use still asks once per app ("Allow ChatGPT to use X?") and an unanswered prompt times out in about 30 s and ends the turn. `[computer_use.windows] always_allowed_app_ids` is not a config key (the app-server warns it is ignored); approve apps in the app before leaving a run.
-- The Codex plan's 5-hour window stops a thread dead. One hour of Computer Use web QA used about half of it; ask for accessibility-tree reads and one screenshot per finding.
+- Computer Use runs on the active desktop in the foreground; the desktop must be unlocked and the operator's apps are the ones it drives. "Approve for me" reviews escalations; Computer Use asks once per app, and an unanswered prompt times out in about 30 s and ends the turn. Grant only the apps the task needs, in the app, before leaving a run, and revoke broad grants afterwards; `[computer_use.windows] always_allowed_app_ids` is not a config key.
+- The Codex plan's 5-hour window stops a thread dead. Computer Use is the expensive surface; prefer structure reads and one screenshot per finding.
 - openai/codex#49458: Windows tasks started remotely lacked Computer Use. Threads started this way did not hit it.
 - Fallback if `queue` breaks: a [Stop hook](https://developers.openai.com/codex/hooks) returning `{"decision":"block","reason":"<next instruction>"}` continues a turn. Whether desktop turns run hooks is unverified.
 
@@ -77,11 +81,9 @@ Read: [Computer Use](https://learn.chatgpt.com/docs/computer-use), [desktop deep
 
 This skill is exported to Claude, AGY and Codex. Windows receives the portable request, not Linux hooks or imported WSL policy. The app's installed Computer Use skill owns desktop execution.
 
-## 5. Electron UX review example
+## 5. What to hand over
 
-Ask the app to review a named Electron build through actual navigation, window resizing, keyboard traversal, empty/loading/error states and a representative user journey. Name the UX question (for example, can a first-time user discover how to connect a project?) and give observable completion criteria. Require screenshots with window size, confusing interactions, reproducible failures and severity tied to user impact. Avoid destructive actions and real production data unless explicitly authorized.
-
-Testing is one use. Codex's Computer Use is stronger than CC's, and CC is stronger at code, so any scoped desktop work fits: a reproduction, a comparison, data inspection, a cross-app task. A browser-only test is not evidence that native window controls or Electron-specific behavior work.
+Codex's Computer Use is stronger than CC's, and CC is stronger at code, so hand over any scoped desktop or browser work: app reviews and QA, reproductions, comparisons, data inspection, cross-app tasks. Name the question the work answers and observable completion criteria. A browser-only result is not evidence about native window behavior.
 
 ## 6. CLI notes
 
