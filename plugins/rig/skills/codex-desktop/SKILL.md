@@ -22,13 +22,13 @@ Write a self-contained Markdown packet under `~/ai-context/<repo>/<issue>-<slug>
 - Objective, exact app/URL and requested output file. For app reviews, add the expected build/commit and how the UI exposes it.
 - Preconditions, existing authenticated test session, synthetic data and reset method.
 - Steps, expected results and a concrete failure condition for each. One packet is one large autonomous step with a checklist plus "flag anything odd"; micro-steps waste round trips.
-- Allowed actions and mutations, destination/data for any intended transmission. Default is navigation and observation; do not infer permission to submit, delete, purchase or change access.
+- Allowed actions and mutations, destination/data for any intended transmission. `handoff.py` sends the packet inline because "Approve for me" weighs only user messages: permissions that exist only in a file get rejected. Default is navigation and observation; do not infer permission to submit, delete, purchase or change access.
 - Stop conditions: security, sign-in or permission prompts and downloads. Banners, promos and "not your default browser" notices are ignorable; say so, or Codex halts on them.
 - Evidence: steps/outcomes, blocked/untried steps and residual uncertainty; app reviews add observed build identity. Screenshots of named app windows only (Computer Use cannot capture the full desktop) decoded by Codex from the data URL into `evidence/<name>.png`, with an MD5 of every file listed before the report is written. One export once wrote the same image for 9 of 11 files while the report described each; the orchestrator rejects duplicate hashes.
-- Browser: Chrome or Edge. Computer Use refuses Brave ("could not determine the current browser URL").
+- Web apps: the Codex Browser plugin's in-app browser (`browser@openai-bundled`, backend `iab`), named in the packet. Its docs say it works in the background, reads the accessibility tree, has Playwright locators and drags along a path; it stays off the operator's browser profile. Computer Use is for native windows (Electron, tray, OS dialogs). On Chrome it stops the whole turn when it "could not determine the current browser URL ... to enforce policy" (after Ctrl+F, or a capture of the wrong window), and it refuses Brave outright.
 - Cleanup scoped to what the task opened. Notepad opens a tab inside the user's window: "close only that tab, don't save".
 
-Not for Computer Use: drag-and-drop boards (its drag sends only start and end points, so dnd-kit never sees a drop; use a human or Playwright). A localhost URL is a hypothesis until the Windows browser reaches the WSL dev server; report connectivity failures instead of changing firewall settings or the stack, and record the build actually served.
+Not for Computer Use: drag-and-drop boards. Its drag sends only start and end points, so dnd-kit never sees a drop; use the in-app browser's path drag, a human or Playwright. A localhost URL is a hypothesis until the Windows browser reaches the WSL dev server; report connectivity failures instead of changing firewall settings or the stack, and record the build actually served.
 
 ## 3. Dispatch
 
@@ -60,7 +60,7 @@ Verified on app 26.1002 / codex-cli 0.162.0-alpha.2 (rig#174). None of it is in 
 
 Limits:
 - Computer Use runs on the active desktop in the foreground; the desktop must be unlocked and the operator's apps are the ones it drives. "Approve for me" reviews escalations; Computer Use still asks once per app ("Allow ChatGPT to use X?") and an unanswered prompt times out in about 30 s and ends the turn. `[computer_use.windows] always_allowed_app_ids` is not a config key (the app-server warns it is ignored); approve apps in the app before leaving a run.
-- The Codex plan's 5-hour window stops a thread dead (about 2 h of Computer Use did it); size QA passes to it.
+- The Codex plan's 5-hour window stops a thread dead. One hour of Computer Use web QA used about half of it; ask for accessibility-tree reads and one screenshot per finding.
 - openai/codex#49458: Windows tasks started remotely lacked Computer Use. Threads started this way did not hit it.
 - Fallback if `queue` breaks: a [Stop hook](https://developers.openai.com/codex/hooks) returning `{"decision":"block","reason":"<next instruction>"}` continues a turn. Whether desktop turns run hooks is unverified.
 

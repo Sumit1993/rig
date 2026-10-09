@@ -46,7 +46,7 @@ class HandoffTests(unittest.TestCase):
                 self.assertIn("C:\\Tests\\request", query["prompt"][0])
                 self.assertIn("MD5", query["prompt"][0])
                 self.assertEqual(status["title"], "Settings dialog review")
-                self.assertNotIn("Observe only", links[0])
+                self.assertIn("Observe only; do not submit.", query["prompt"][0])
         with patch.object(Path, "resolve", lambda p, **kw: p), \
              patch.object(handoff.subprocess, "check_output", return_value="\\\\wsl$\\Ubuntu\n"):
             with self.assertRaisesRegex(ValueError, "native drive"):
