@@ -29,7 +29,7 @@ class HandoffTests(unittest.TestCase):
             with patch.object(Path, "resolve", lambda p, **kw: p):
                 original = self.directory
                 self.directory = Path("/mnt") / original.relative_to("/")
-                packet = b"Observe only; do not submit.\r\n"
+                packet = b"# Settings dialog review\r\nObserve only; do not submit.\r\n"
                 self.packet.write_bytes(packet)
                 with patch.object(Path, "mkdir"), patch.object(Path, "write_bytes") as copy, \
                      patch.object(Path, "write_text") as write:
@@ -42,6 +42,10 @@ class HandoffTests(unittest.TestCase):
                 query = parse_qs(urlparse(links[0]).query)
                 self.assertEqual(query["path"], ["C:\\Tests\\request"])
                 self.assertIn("@Computer", query["prompt"][0])
+                self.assertIn('"Settings dialog review"', query["prompt"][0])
+                self.assertIn("C:\\Tests\\request", query["prompt"][0])
+                self.assertIn("MD5", query["prompt"][0])
+                self.assertEqual(status["title"], "Settings dialog review")
                 self.assertNotIn("Observe only", links[0])
         with patch.object(Path, "resolve", lambda p, **kw: p), \
              patch.object(handoff.subprocess, "check_output", return_value="\\\\wsl$\\Ubuntu\n"):
@@ -73,6 +77,7 @@ class HandoffTests(unittest.TestCase):
              patch.object(Path, "mkdir"), patch.object(Path, "write_bytes"), patch.object(Path, "write_text"), \
              patch.object(handoff.subprocess, "run") as run:
             status = handoff.prepare(self.packet, Path("/mnt/request"), True)
+        self.assertEqual(status["title"], "proposal")
         argv = run.call_args.args[0]
         self.assertEqual(argv[:3], ["powershell.exe", "-NoProfile", "-NonInteractive"])
         script = base64.b64decode(argv[-1]).decode("utf-16le")

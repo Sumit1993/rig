@@ -1,9 +1,9 @@
 ---
 name: codex-desktop
-description: "Hand a scoped prompt from WSL to the Windows Codex desktop app for Computer Use. Load for Electron UX review, live app testing or other desktop tasks from CC, AGY or Codex."
+description: "Hand scoped desktop work from WSL to the Windows Codex desktop app, which drives the desktop with Computer Use, in threads started with no click. Load for live app testing, Electron UX review or any desktop task from CC, AGY or Codex."
 metadata:
   harnesses: "claude agy codex"
-  version: "1.0.0"
+  version: "2.0.0"
 ---
 
 # Codex desktop tasks
@@ -18,42 +18,62 @@ The Windows desktop must be unlocked and available to the test; Computer Use tak
 
 ## 2. Task packet
 
-Write a self-contained Markdown packet under `~/ai-context/<repo>/<issue>-<slug>/`. Name:
-- Objective, exact app/URL and requested output. For app reviews, add the expected build/commit and how the UI exposes it.
+Write a self-contained Markdown packet under `~/ai-context/<repo>/<issue>-<slug>/`, its first line a `# ` title. Name:
+- Objective, exact app/URL and requested output file. For app reviews, add the expected build/commit and how the UI exposes it.
 - Preconditions, existing authenticated test session, synthetic data and reset method.
-- Steps, expected results and a concrete failure condition for each.
-- Allowed actions and mutations, destination/data for any intended transmission, and stop conditions. Default is navigation and observation; do not infer permission to submit, delete, purchase or change access.
-- Evidence required: actual steps/outcomes, screenshots where available, blocked/untried steps and residual uncertainty. App reviews additionally need observed build identity and reproduction details.
+- Steps, expected results and a concrete failure condition for each. One packet is one large autonomous step with a checklist plus "flag anything odd"; micro-steps waste round trips.
+- Allowed actions and mutations, destination/data for any intended transmission. Default is navigation and observation; do not infer permission to submit, delete, purchase or change access.
+- Stop conditions: security, sign-in or permission prompts and downloads. Banners, promos and "not your default browser" notices are ignorable; say so, or Codex halts on them.
+- Evidence: steps/outcomes, blocked/untried steps and residual uncertainty; app reviews add observed build identity. Screenshots of named app windows only (Computer Use cannot capture the full desktop) decoded by Codex from the data URL into `evidence/<name>.png`, with an MD5 of every file listed before the report is written. One export once wrote the same image for 9 of 11 files while the report described each; the orchestrator rejects duplicate hashes.
+- Browser: Chrome or Edge. Computer Use refuses Brave ("could not determine the current browser URL").
+- Cleanup scoped to what the task opened. Notepad opens a tab inside the user's window: "close only that tab, don't save".
 
-A localhost URL is a hypothesis until the Windows browser can reach the WSL dev server. Report a forwarding/connectivity failure; do not silently change firewall settings or restart the development stack. A dev server's checkout may differ from the judge's frozen worktree: record the actual build and do not treat the test as verification of another commit.
+Not for Computer Use: drag-and-drop boards (its drag sends only start and end points, so dnd-kit never sees a drop; use a human or Playwright). A localhost URL is a hypothesis until the Windows browser reaches the WSL dev server; report connectivity failures instead of changing firewall settings or the stack, and record the build actually served.
 
-## 3. WSL-to-Windows handoff
+## 3. Dispatch
 
-Prepare a new request beneath a mounted Windows workspace owned by the operator:
+One trusted lane folder holds every task, so the app asks for trust once: `$WIN_HOME/Documents/rig-live-tests/codex-lane`, each task in `tasks/<slug>/`. Every thread's workspace is the lane folder; a new folder per thread would register as a new project and ask again.
 
 ```bash
 WIN_HOME=$(wslpath "$(cmd.exe /c 'echo %USERPROFILE%' 2>/dev/null | tr -d '\r')")
-python3 "$SKILL_DIR/handoff.py" \
-  --packet "$PACKET" \
-  --windows-dir "$WIN_HOME/Documents/rig-live-tests/<experiment>"
+LANE="$WIN_HOME/Documents/rig-live-tests/codex-lane"; TASK="$LANE/tasks/<slug>"
+python3 "$SKILL_DIR/handoff.py" --packet "$PACKET" --windows-dir "$TASK" [--report reply-1.md]
+TID=$(python3 "$SKILL_DIR/codex_thread.py" new --name "<packet title>" --workspace "$(wslpath -w "$LANE")")
+python3 "$SKILL_DIR/codex_thread.py" send --thread "$TID" --message-file "$TASK/prompt.txt"
 ```
 
-Resolve `SKILL_DIR` to this installed skill’s absolute directory from the skill location supplied by the calling harness. The Python helper is independent of the calling harness. The directory must be new. The command copies the packet, hashes it, writes a native Windows prompt and a `codex://new` link. Add `--open` to ask Windows to open the supported link. This opens a composer: **the user must send it** and select the intended model in the app. There is no verified unattended dispatch or completion callback. A zero exit means the handoff was prepared/opened, never that a test passed.
+`handoff.py` copies and hashes the packet into a new task folder and writes a prompt naming that folder, the title and the report file. `codex_thread.py new` starts a thread through the bundled app-server, persists it and mounts it in the app; `send` queues a message. Later steps go to the same `$TID` with `send`. Each task gets its own thread, so tasks run side by side. Then wait for the report file with a bounded background wait; no file means no result. A zero exit means dispatched, never passed.
 
-Worked flow:
 ```text
-CC → packet.md → handoff.py → Windows request/ + prefilled Codex composer
-user → Send / app permissions → Computer Use → report.md + evidence/
-CC → inspect report and artifacts → fresh codex-judge packet → objections
+CC → packet → handoff.py → tasks/<slug>/ → codex_thread new → send → Computer Use → report + evidence/
+CC → verify hashes, provenance, build → fresh codex-judge packet → objections
 ```
 
-The native workspace contains the whole request; Rig remains in WSL. The prompt requests `report.md` and evidence in that directory through normal file tools. If the app cannot write files, it returns the report in chat for explicit transfer; CC does not invent a result or poll forever. Bring the report and referenced artifacts back to ai-context, verify their provenance/build identity, and copy deciding evidence into the appropriate engineering issue or private product record. Keep private proposals out of public issues.
+`handoff.py --open` still opens the documented `codex://new` composer for a human Send, the fallback when the transport below breaks. Bring deciding evidence into the engineering issue; keep private proposals out of public issues.
 
-## 4. Supported surfaces and limits
+## 4. Transport: verified, undocumented, version-pinned
 
-Read: [desktop deep links](https://learn.chatgpt.com/docs/reference/commands), [Computer Use](https://learn.chatgpt.com/docs/computer-use), [Windows app](https://learn.chatgpt.com/docs/windows/windows-app), [WSL setup](https://learn.chatgpt.com/docs/windows/wsl).
+Verified on app 26.1002 / codex-cli 0.162.0-alpha.2 (rig#174). None of it is in OpenAI's docs; after any app update rerun one harmless two-thread probe before relying on it.
+- `codex.exe app-server --stdio` with `clientInfo.name = "codex_desktop"`: `thread/start` (workspace-write sandbox, `approvalsReviewer = "auto_review"`, the "Approve for me" reviewer), `thread/name/set`, `thread/inject_items`. A thread with no item never reaches disk; the injected message persists it without a model turn.
+- The app keeps its own thread catalog and only consumes queued messages for threads it has mounted. `Start-Process 'codex://threads/<id>'` mounts it (idea from the third-party bridge Remodex).
+- `codex.exe queue --thread <id> --message <text>` lands in `queue_1.sqlite`; a mounted thread starts a turn within seconds, idle or mid-turn. Two threads started in the same second ran together, wrote their files and listed the real desktop windows through Computer Use with no prompt.
 
-Deep links prefill but do not send. None of these pages documents a desktop-capable dispatch interface, so do not reverse-engineer the app's helpers, fabricate thread IDs or expose a relay. Automated dispatch waits for a documented interface and a real end-to-end check.
+Limits:
+- Computer Use runs on the active desktop in the foreground; the desktop must be unlocked and the operator's apps are the ones it drives. "Approve for me" reviews escalations; Computer Use still asks once per app ("Allow ChatGPT to use X?") and an unanswered prompt times out in about 30 s and ends the turn. `[computer_use.windows] always_allowed_app_ids` is not a config key (the app-server warns it is ignored); approve apps in the app before leaving a run.
+- The Codex plan's 5-hour window stops a thread dead (about 2 h of Computer Use did it); size QA passes to it.
+- openai/codex#49458: Windows tasks started remotely lacked Computer Use. Threads started this way did not hit it.
+- Fallback if `queue` breaks: a [Stop hook](https://developers.openai.com/codex/hooks) returning `{"decision":"block","reason":"<next instruction>"}` continues a turn. Whether desktop turns run hooks is unverified.
+
+Claude Code auto mode refuses the thread-start step and long wait loops as [Create Unsafe Agents]. Running unattended needs the operator's allow rules, exact paths with no inner `*`:
+
+```json
+"Bash(python3 <SKILL_DIR>/codex_thread.py:*)",
+"Bash(/mnt/c/Users/<user>/AppData/Local/OpenAI/Codex/bin/<hash>/codex.exe:*)"
+```
+
+The `<hash>` folder changes with each app update.
+
+Read: [Computer Use](https://learn.chatgpt.com/docs/computer-use), [desktop deep links](https://learn.chatgpt.com/docs/reference/commands), [Windows app](https://learn.chatgpt.com/docs/windows/windows-app), [WSL setup](https://learn.chatgpt.com/docs/windows/wsl).
 
 This skill is exported to Claude, AGY and Codex. Windows receives the portable request, not Linux hooks or imported WSL policy. The app's installed Computer Use skill owns desktop execution.
 
@@ -61,8 +81,8 @@ This skill is exported to Claude, AGY and Codex. Windows receives the portable r
 
 Ask the app to review a named Electron build through actual navigation, window resizing, keyboard traversal, empty/loading/error states and a representative user journey. Name the UX question (for example, can a first-time user discover how to connect a project?) and give observable completion criteria. Require screenshots with window size, confusing interactions, reproducible failures and severity tied to user impact. Avoid destructive actions and real production data unless explicitly authorized.
 
-Electron is one use case. Other packets can request a desktop reproduction, comparison, data inspection or a cross-app task, with their own scope and output. A browser-only test is not evidence that native window controls or Electron-specific behavior work.
+Testing is one use. Codex's Computer Use is stronger than CC's, and CC is stronger at code, so any scoped desktop work fits: a reproduction, a comparison, data inspection, a cross-app task. A browser-only test is not evidence that native window controls or Electron-specific behavior work.
 
-## 6. CLI experiments and future transport
+## 6. CLI notes
 
-`codex exec` runs noninteractive prompts; `-p` is `--profile`, a configuration profile, not a print/prompt mode (`codex exec --help`, codex-cli 0.160.1; [CLI reference](https://learn.chatgpt.com/docs/non-interactive-mode)). The judge's JSON events, schema output and read-only ephemeral runs do not inherit AGY's constraints. Desktop tasks retain the app's permissions/runtime. The current transport stays the documented composer handoff until another interface passes a harmless end-to-end Computer Use check.
+`codex exec` runs noninteractive prompts in its own process, without the desktop app's Computer Use; `-p` is `--profile`, not a prompt mode (`codex exec --help`). The judge's JSON events, schema output and read-only ephemeral runs do not inherit AGY's constraints. Desktop work goes through §3.
