@@ -2,7 +2,7 @@
 name: codex-desktop
 description: "Hand a scoped prompt from WSL to the Windows Codex desktop app for Computer Use. Load for Electron UX review, live app testing or other desktop tasks from CC, AGY or Codex."
 metadata:
-  harnesses: "claude agy codex"
+  harnesses: "claude codex"
   version: "1.0.0"
 ---
 
