@@ -186,7 +186,7 @@ python3 -m unittest discover -s plugins/rig/skills/codex-judge/tests -v
 
 ## Windows desktop tasks from WSL
 
-CC, AGY or Codex load `rig:codex-desktop` to hand bounded desktop work to the Windows Codex desktop app, whose Computer Use drives the real desktop. Development, CC, AGY and Rig stay in WSL; Windows needs the signed-in app with Computer Use enabled.
+CC or Codex load `rig:codex-desktop` to hand bounded desktop work to the Windows Codex desktop app, whose Computer Use drives the real desktop. Development, CC, AGY and Rig stay in WSL; Windows needs the signed-in app with Computer Use enabled.
 
 ```text
 packet → handoff.py → codex-lane/tasks/<slug>/ → codex_thread.py new → send → Computer Use
