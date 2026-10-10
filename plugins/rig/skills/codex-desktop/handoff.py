@@ -9,7 +9,11 @@ import subprocess
 from urllib.parse import urlencode
 
 
-def prepare(packet, directory, open_app=False, report="report.md"):
+MENTIONS = {"computer": ("@Computer", "Computer Use"), "browser": ("@Browser", "Browser")}
+
+
+def prepare(packet, directory, open_app=False, report="report.md", surface="computer"):
+    mention, plugin = MENTIONS[surface]
     packet_bytes = packet.resolve(strict=True).read_bytes()
     directory = directory.resolve()
     if not str(directory).startswith("/mnt/"):
@@ -22,9 +26,9 @@ def prepare(packet, directory, open_app=False, report="report.md"):
     title = next((line[2:].strip() for line in packet_bytes.decode("utf-8", "replace").splitlines()
                   if line.startswith("# ")), packet.stem)
     prompt = (
-        f"@Computer Perform the scoped desktop task \"{title}\". The packet below is the task, and its "
+        f"{mention} Perform the scoped desktop task \"{title}\". The packet below is the task, and its "
         f"allowed actions are my authorization; a copy is packet.md in {native}. "
-        "Follow your installed Computer Use skill and policy. "
+        f"Follow your installed {plugin} skill and policy. "
         "For app testing, observe the actual app/build and distinguish expected from observed behavior. "
         "Do not change source code or operate the Codex app UI. Stop on unavailable "
         "permissions/authentication, unclear mutation authority, locked desktop or, for app testing, a wrong build. "
@@ -43,7 +47,9 @@ def prepare(packet, directory, open_app=False, report="report.md"):
     status_path = directory / "handoff.json"
     status_path.write_text(json.dumps(status, indent=2) + "\n")
     if open_app:
-        script = "Start-Process -FilePath '" + link.replace("'", "''") + "'"
+        # The link stays in open-link.txt: inline it and the encoded command can pass Windows' 32,767-char limit.
+        link_file = (native.rstrip("\\") + "\\open-link.txt").replace("'", "''")
+        script = f"Start-Process -FilePath (Get-Content -Raw -LiteralPath '{link_file}').Trim()"
         encoded = base64.b64encode(script.encode("utf-16le")).decode()
         try:
             subprocess.run(["powershell.exe", "-NoProfile", "-NonInteractive",
@@ -63,9 +69,10 @@ def main():
     parser.add_argument("--windows-dir", type=Path, required=True)
     parser.add_argument("--open", action="store_true")
     parser.add_argument("--report", default="report.md", help="file the packet asks Codex to write")
+    parser.add_argument("--surface", choices=sorted(MENTIONS), default="computer", help="plugin the prompt mentions")
     args = parser.parse_args()
     try:
-        print(json.dumps(prepare(args.packet, args.windows_dir, args.open, args.report)))
+        print(json.dumps(prepare(args.packet, args.windows_dir, args.open, args.report, args.surface)))
     except (OSError, ValueError, subprocess.SubprocessError) as error:
         parser.exit(1, f"handoff failed: {error}\n")
 

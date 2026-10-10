@@ -81,9 +81,18 @@ class HandoffTests(unittest.TestCase):
         argv = run.call_args.args[0]
         self.assertEqual(argv[:3], ["powershell.exe", "-NoProfile", "-NonInteractive"])
         script = base64.b64decode(argv[-1]).decode("utf-16le")
-        self.assertTrue(script.startswith("Start-Process -FilePath 'codex://new?"))
+        self.assertEqual(script, "Start-Process -FilePath (Get-Content -Raw -LiteralPath 'C:\\Tests\\request\\open-link.txt').Trim()")
         self.assertEqual(status["state"], "open_requested")
         self.assertFalse(status["execution_verified"])
+
+    def test_browser_surface_mentions_browser(self):
+        with patch.object(Path, "resolve", lambda p, **kw: p), \
+             patch.object(handoff.subprocess, "check_output", return_value="C:\\Tests\\request\n"), \
+             patch.object(Path, "mkdir"), patch.object(Path, "write_bytes"), patch.object(Path, "write_text") as write:
+            handoff.prepare(self.packet, Path("/mnt/request"), surface="browser")
+        prompt = write.call_args_list[0].args[0]
+        self.assertTrue(prompt.startswith("@Browser "))
+        self.assertNotIn("@Computer", prompt)
 
 
 if __name__ == "__main__":
