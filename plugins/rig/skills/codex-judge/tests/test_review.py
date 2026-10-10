@@ -55,6 +55,12 @@ class ReviewTests(unittest.TestCase):
 import json, os, pathlib, subprocess, sys, time
 args=sys.argv[1:]
 mode=os.environ.get('REVIEW_MODE','success')
+if args[:1]==['app-server']:
+ for line in sys.stdin:
+  if json.loads(line).get('id')==2: break
+ used=100 if mode=='quota_exhausted' else 40
+ print(json.dumps({'id':2,'result':{'ordinaryUsageAllowed':used<100,'rateLimits':{'primary':{'usedPercent':used,'windowDurationMins':300,'resetsAt':int(time.time())+3600},'secondary':{'usedPercent':50,'windowDurationMins':10080,'resetsAt':int(time.time())+86400}}}}),flush=True)
+ sys.exit(0)
 if 'mcp' in args:
  assert pathlib.Path.cwd() == pathlib.Path(args[args.index('-C')+1]), 'inventory used launcher cwd'
  if mode=='mcp_failure': sys.exit(7)
@@ -144,6 +150,19 @@ print(json.dumps({'type':'turn.completed'}))
         self.assertEqual(self.run_review(), 1)
         self.assertEqual(self.status()["exit_code"], 9)
         self.assertFalse((self.out / "result.json").exists())
+
+    def test_exhausted_quota_prevents_launch(self):
+        os.environ["REVIEW_MODE"] = "quota_exhausted"
+        self.assertEqual(self.run_review(), 1)
+        status = self.status()
+        self.assertIsNone(status["exit_code"])
+        self.assertIn("not launched", status["error"])
+        self.assertTrue(status["quota"].startswith("exhausted until"))
+        self.assertFalse((self.out / "events.jsonl").exists())
+
+    def test_usable_quota_is_recorded(self):
+        self.assertEqual(self.run_review(), 0)
+        self.assertTrue(self.status()["quota"].startswith("usable: 5h 40%"))
 
     def test_malformed_and_schema_invalid_output_fail(self):
         for mode, response in [("malformed", result()), ("success", {"verdict": "survived"})]:

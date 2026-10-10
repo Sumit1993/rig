@@ -104,6 +104,15 @@ def integrations(worktree):
     return options
 
 
+def codex_quota():
+    try:
+        done = subprocess.run([sys.executable, str(HERE / "codex-quota.py"), "check", "--json"],
+                              capture_output=True, text=True, timeout=40)
+        return json.loads(done.stdout)
+    except (OSError, ValueError, subprocess.TimeoutExpired):
+        return {"line": "unknown: quota check failed", "exhausted": None}
+
+
 def run(args):
     model = getattr(args, "model", DEFAULT_MODEL)
     if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._:-]*", model):
@@ -176,6 +185,10 @@ def run(args):
     try:
         for sig in (signal.SIGINT, signal.SIGTERM):
             old_handlers[sig] = signal.signal(sig, cancelled)
+        quota = codex_quota()
+        status["quota"] = quota.get("line")
+        if quota.get("exhausted"):
+            raise RuntimeError(f"Codex quota {quota['line']}; independent review not launched")
         command[1:1] = integrations(worktree)
         save(out / "metadata.json", {"model": model, "effort": args.effort,
          "target": before, "expected": expected, "worktree": str(worktree), "packet": str(packet),
@@ -193,7 +206,9 @@ def run(args):
                 terminate(proc)
         status["exit_code"] = proc.returncode
         if proc.returncode != 0:
-            raise RuntimeError(f"Codex exited {proc.returncode}; independent review incomplete")
+            # A usage limit hit mid-run reads as a generic exit; the quota names it and its reset.
+            status["quota"] = codex_quota().get("line")
+            raise RuntimeError(f"Codex exited {proc.returncode} (quota {status['quota']}); independent review incomplete")
         if (not packet_mode and target(worktree) != before) or (packet_mode and
             hashlib.sha256((worktree / "packet.md").read_bytes()).hexdigest() != before["packet_sha256"]):
             raise ValueError("review target changed during the run")

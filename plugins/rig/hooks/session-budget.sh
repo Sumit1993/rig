@@ -1,12 +1,13 @@
 #!/bin/bash
 # SessionStart hook: one line of budget the operator used to type by hand: the 5h and 7d
-# account percent from the statusline trace, and agy's quota state per group. Refs #123.
+# account percent from the statusline trace, agy's quota state per group and Codex's usage limits. Refs #123.
 # On resume or fork, the resume-cost fields Claude Code sends (v2.1.251+) become one more sentence.
 # Rung: hook. Skipped: impossible (the harness banner does not show external quota), check (the session starts dynamically).
 set -u
 in=$(cat)
 log="${BUDGET_USAGE_LOG:-$HOME/.claude/metrics/usage.jsonl}"
 quota="${BUDGET_QUOTA_SH:-$(cd "$(dirname "$0")/.." && pwd)/skills/farm-out/agy-quota.sh}"
+codex_quota="${BUDGET_CODEX_QUOTA:-$(cd "$(dirname "$0")/.." && pwd)/skills/codex-judge/codex-quota.py}"
 
 acct="no trace yet"
 if [ -r "$log" ]; then
@@ -28,8 +29,10 @@ if [ -r "$log" ]; then
 fi
 g=$( [ -x "$quota" ] && "$quota" check gemini-3.8-flash-high 2>/dev/null | head -1 || echo "unknown")
 c=$( [ -x "$quota" ] && "$quota" check claude-sonnet-5-5-low 2>/dev/null | head -1 || echo "unknown")
+# The hook timeout is 10s; a slow app server falls back to the last Codex session log.
+x=$( [ -x "$codex_quota" ] && RIG_CODEX_QUOTA_TIMEOUT=4 "$codex_quota" check 2>/dev/null | head -1 || echo "unknown")
 
-policy="A model whose weekly cap reads critical is not spawned; scoped-cap-gate refuses it, so write the spec on the session model. Past 60% on the 5h window: Sonnet subagents only, no research fan-out, no planner respawn. A dry Gemini group moves agy lanes to claude-sonnet-5-5-low; both agy groups dry means the Sonnet handler does the task itself from the prompt file and says so."
+policy="A model whose weekly cap reads critical is not spawned; scoped-cap-gate refuses it, so write the spec on the session model. Past 60% on the 5h window: Sonnet subagents only, no research fan-out, no planner respawn. A dry Gemini group moves agy lanes to claude-sonnet-5-5-low; both agy groups dry means the Sonnet handler does the task itself from the prompt file and says so. An exhausted Codex means no codex-judge run until its reset; the judgment waits or goes to the operator, never to a Claude self-review."
 resume=""
 src=$(jq -r '.source // empty' <<<"$in" 2>/dev/null)
 gap=$(jq -r '.seconds_since_last_response // empty' <<<"$in" 2>/dev/null)
@@ -39,6 +42,6 @@ if [ -n "$gap" ] && { [ "$src" = "resume" ] || [ "$src" = "fork" ]; }; then
   [ "$cold" = "true" ] && cache="prompt cache likely expired, the first request rebuilds it" || cache="prompt cache likely warm"
   resume=" Resumed after $((gap / 60))m: ${ctx_tok} context tokens re-sent, ${cache}."
 fi
-msg="Budget: ${acct}. agy gemini: ${g}. agy claude-gpt: ${c}.${resume} ${policy}"
+msg="Budget: ${acct}. agy gemini: ${g}. agy claude-gpt: ${c}. codex: ${x}.${resume} ${policy}"
 jq -n --arg ctx "$msg" '{"hookSpecificOutput":{"hookEventName":"SessionStart","additionalContext":$ctx}}'
 exit 0
