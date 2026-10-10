@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.16.1](https://github.com/Sumit1993/rig/compare/rig-v0.16.0...rig-v0.16.1) (2026-10-10)
+
+
+### Bug Fixes
+
+* **statusline:** the status line no longer blanks on renders whose trace row is unchanged ([#184](https://github.com/Sumit1993/rig/issues/184)) ([6394054](https://github.com/Sumit1993/rig/commit/6394054419340e3f700fdf69de30e5e5ce5237cb))
+
 ## [0.16.0](https://github.com/Sumit1993/rig/compare/rig-v0.15.0...rig-v0.16.0) (2026-10-10)
 
 
