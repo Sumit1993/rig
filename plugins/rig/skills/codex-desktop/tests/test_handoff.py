@@ -29,7 +29,7 @@ class HandoffTests(unittest.TestCase):
             with patch.object(Path, "resolve", lambda p, **kw: p):
                 original = self.directory
                 self.directory = Path("/mnt") / original.relative_to("/")
-                packet = b"Observe only; do not submit.\r\n"
+                packet = b"# Settings dialog review\r\nObserve only; do not submit.\r\n"
                 self.packet.write_bytes(packet)
                 with patch.object(Path, "mkdir"), patch.object(Path, "write_bytes") as copy, \
                      patch.object(Path, "write_text") as write:
@@ -42,7 +42,11 @@ class HandoffTests(unittest.TestCase):
                 query = parse_qs(urlparse(links[0]).query)
                 self.assertEqual(query["path"], ["C:\\Tests\\request"])
                 self.assertIn("@Computer", query["prompt"][0])
-                self.assertNotIn("Observe only", links[0])
+                self.assertIn('"Settings dialog review"', query["prompt"][0])
+                self.assertIn("C:\\Tests\\request", query["prompt"][0])
+                self.assertIn("MD5", query["prompt"][0])
+                self.assertEqual(status["title"], "Settings dialog review")
+                self.assertIn("Observe only; do not submit.", query["prompt"][0])
         with patch.object(Path, "resolve", lambda p, **kw: p), \
              patch.object(handoff.subprocess, "check_output", return_value="\\\\wsl$\\Ubuntu\n"):
             with self.assertRaisesRegex(ValueError, "native drive"):
@@ -73,12 +77,22 @@ class HandoffTests(unittest.TestCase):
              patch.object(Path, "mkdir"), patch.object(Path, "write_bytes"), patch.object(Path, "write_text"), \
              patch.object(handoff.subprocess, "run") as run:
             status = handoff.prepare(self.packet, Path("/mnt/request"), True)
+        self.assertEqual(status["title"], "proposal")
         argv = run.call_args.args[0]
         self.assertEqual(argv[:3], ["powershell.exe", "-NoProfile", "-NonInteractive"])
         script = base64.b64decode(argv[-1]).decode("utf-16le")
-        self.assertTrue(script.startswith("Start-Process -FilePath 'codex://new?"))
+        self.assertEqual(script, "Start-Process -FilePath (Get-Content -Raw -LiteralPath 'C:\\Tests\\request\\open-link.txt').Trim()")
         self.assertEqual(status["state"], "open_requested")
         self.assertFalse(status["execution_verified"])
+
+    def test_browser_surface_mentions_browser(self):
+        with patch.object(Path, "resolve", lambda p, **kw: p), \
+             patch.object(handoff.subprocess, "check_output", return_value="C:\\Tests\\request\n"), \
+             patch.object(Path, "mkdir"), patch.object(Path, "write_bytes"), patch.object(Path, "write_text") as write:
+            handoff.prepare(self.packet, Path("/mnt/request"), surface="browser")
+        prompt = write.call_args_list[0].args[0]
+        self.assertTrue(prompt.startswith("@Browser "))
+        self.assertNotIn("@Computer", prompt)
 
 
 if __name__ == "__main__":

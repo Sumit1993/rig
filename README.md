@@ -17,7 +17,7 @@ Plugin `rig`, path-independent via `${CLAUDE_PLUGIN_ROOT}`:
 | `skills/coderabbit-lane` | How `coderabbitai[bot]` behaves: per-developer counter, hand admission by label, bare triggers, in-thread replies |
 | `skills/farm-out` | Antigravity CLI delegation: preflight probe, launch line, model choice, failure table, kill by PID, the runner's babysit loop |
 | `skills/codex-judge` | Codex challenges ideas, plans, specs, approaches, code and decisions; evidence-backed objections survive rebuttal rounds |
-| `skills/codex-desktop` | WSL prepares a Windows desktop experiment; user sends the prefilled app request; observed evidence returns to the judge |
+| `skills/codex-desktop` | WSL hands scoped desktop work to the Windows Codex app in threads it starts with no click; Computer Use evidence returns to the judge |
 | `agents/codex-runner` | Thin Claude handler for one bounded independent Codex review; no self-review fallback |
 | `skills/docs-drift` | Four-phase docs-drift playbook plus the illustration standard |
 | `skills/tweet` | Draft tweet options for @Desolatte from the session, voice and dedup from n8n |
@@ -186,14 +186,11 @@ python3 -m unittest discover -s plugins/rig/skills/codex-judge/tests -v
 
 ## Windows desktop tasks from WSL
 
-CC, AGY or Codex can load `rig:codex-desktop` to prepare a bounded desktop task in a native Windows handoff directory. Keep development, CC, AGY and Rig in WSL; Windows needs the signed-in Codex desktop app with Computer Use enabled. No Windows Rig clone or shared authentication files are required.
+CC or Codex load `rig:codex-desktop` to hand bounded desktop work to the Windows Codex desktop app, whose Computer Use drives the real desktop. Development, CC, AGY and Rig stay in WSL; Windows needs the signed-in app with Computer Use enabled.
 
 ```text
-CC in WSL → frozen experiment packet → handoff.py → native Windows workspace
-codex://new → prefilled composer → user sends → Computer Use observes live behavior
-report + screenshots + actual build identity → CC → fresh adversarial judgment
+packet → handoff.py → codex-lane/tasks/<slug>/ → codex_thread.py new → send → Computer Use
+report + window screenshots + MD5s + build identity → CC → fresh adversarial judgment
 ```
 
-`handoff.py --packet "$PACKET" --windows-dir "$WIN_HOME/Documents/rig-live-tests/<experiment>" --open` opens the supported composer link (`codex-desktop` §3 shows how to set `WIN_HOME`). It never claims the test ran. The user must send the request, select the model, and handle app permissions/authentication. The desktop remains unlocked and available; Windows localhost connectivity and the actual running build must be verified. Do not treat a test against the dev checkout as verification of another commit.
-
-The [desktop command reference](https://learn.chatgpt.com/docs/reference/commands) specifies that deep links prefill without sending; [Computer Use](https://learn.chatgpt.com/docs/computer-use) documents the foreground runtime and app permissions. See the skill for packet scope, report transfer and blocked-test handling. Electron UX review is one packet type; the same transport accepts other scoped desktop tasks. Unattended app dispatch remains unverified by this lane until a desktop-capable interface passes an end-to-end check.
+`codex_thread.py` starts a thread through the app's bundled app-server, mounts it with a `codex://threads/<id>` link and queues work with `codex.exe queue`: no human Send, several threads at once. This transport is undocumented and version-pinned (verified on app 26.1002); the skill's §4 lists its limits, the per-app approval prompt and the Claude Code allow rules it needs. All threads share one trusted lane folder, so the app asks for trust once. `handoff.py --open` keeps the documented composer handoff as the fallback.
