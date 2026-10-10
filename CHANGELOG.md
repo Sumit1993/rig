@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.16.0](https://github.com/Sumit1993/rig/compare/rig-v0.15.0...rig-v0.16.0) (2026-10-10)
+
+
+### Features
+
+* **codex-desktop:** start Codex desktop threads with no click and queue work to them ([#179](https://github.com/Sumit1993/rig/issues/179)) ([23eb103](https://github.com/Sumit1993/rig/commit/23eb10362b95f5b76488ac0be78d9d14b62d730b))
+* **codex-desktop:** threads can ask the dispatching Claude session; rig installs on the Windows side ([#180](https://github.com/Sumit1993/rig/issues/180)) ([8351bff](https://github.com/Sumit1993/rig/commit/8351bffe2da509db69f01866732928a45bb6070c))
+* **r2-sync:** back up Codex and Windows-side transcripts; resumed sessions no longer fail the run ([#178](https://github.com/Sumit1993/rig/issues/178)) ([13a271e](https://github.com/Sumit1993/rig/commit/13a271ed1c55a9336eee5372f8cfeafc769433aa))
+
 ## [0.15.0](https://github.com/Sumit1993/rig/compare/rig-v0.14.0...rig-v0.15.0) (2026-10-08)
 
 
