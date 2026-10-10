@@ -16,7 +16,7 @@ One seat holds the goal across every wake-up. Every other seat is disposable. Ea
 Nothing is dispatched until both exist. With no scheduled wake-up the run is one turn long.
 
 1. `CronCreate` is a deferred tool. Fetch it first: `ToolSearch("select:CronCreate,CronList,CronDelete")`. Nothing prompts you to, which is why this gets skipped.
-2. 30 minutes, off the :00 and :30 marks: `7,37 * * * *`. Never past the one-hour prompt cache (five minutes in usage overage); a tick past it rereads the whole context uncached, so a quiet tick is what keeps the cache warm (`#79 - autopilot §0: name the prompt-cache TTL as a ceiling on the cron interval`).
+2. 30 minutes, off the :00 and :30 marks: `7,37 * * * *`. Never past the one-hour prompt cache (five minutes in usage overage); a tick past it rereads the whole context uncached, so a quiet tick is what keeps the cache warm (`#79 - autopilot §0: name the prompt-cache TTL as a ceiling on the cron interval`). A warm tick still rereads the whole context at a tenth of input price, so a large session ticks expensively: compact past ~300K before arming, and delete the job once nothing is pending rather than ticking idle (`#186 - autopilot: a warm cron tick still costs a tenth of its context`).
 3. The prompt fires into this session, so ask for current state: "tick: read the plan file, check lane and PR state, then dispatch or report."
 4. `CronList` after, to confirm. A cron that failed to arm looks like a quiet run.
 5. Record the job ID in the plan file beside the condition that ends it (§3, the stall rule).
