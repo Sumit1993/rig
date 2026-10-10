@@ -7,6 +7,7 @@ WSL on Windows. `~/ai-context/` holds run material, handoffs, specs, research an
 # Writing
 - Cite an issue or PR with its title: `#279 - correlation idempotency fix`. Delegates too.
 - Cite a skill section by file, number and short name: `` `autopilot` §3, the stall rule ``. The number is the anchor, the name saves opening the file.
+- Times for the operator are IST (Asia/Kolkata): `14:30 IST`, plus the weekday or date when it is not today, and a relative hint inside a day (`14:30 IST, in 3h`). Convert the UTC that tools, GitHub and logs print; raw UTC stays only inside quoted evidence.
 
 # Issues are the record
 An issue carries the decision, its Done when, the exact commands and the excerpt of evidence the decision rests on, copied in. A link into `~/ai-context` is a broken link. Handoffs, resume state, specs and research stay there; the issue gets one line on what changed. agy logs and prompts are telemetry, never cited.

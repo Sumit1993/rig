@@ -6,7 +6,7 @@ Never edit code, push, merge, sleep or wait. Post nothing except the single summ
 
 ## Slack summary
 
-Every run ends by posting its summary to Slack, so the operator can follow the queue from one channel: `python3 notify.py /tmp/digest.json '<action>'`. `<action>` is one or two short sentences in plain words: the summon posted (repo#number, new or re-review), or why none (the budget rule that held, and when the slot reopens), plus each PR skipped as a re-review and why. Say nothing about skips when there were none, and leave the lists to `notify.py`. `notify.py` adds the errors, the replies owed, the PRs reviewed with nothing owed, and the queue, all computed from the digest.
+Every run ends by posting its summary to Slack, so the operator can follow the queue from one channel: `python3 notify.py /tmp/digest.json '<action>'`. `<action>` is one or two short sentences in plain words: the summon posted (repo#number, new or re-review), or why none (the budget rule that held, and when the slot reopens, in IST: the digest's times are UTC, so add 5h30m and write `14:30 IST`), plus each PR skipped as a re-review and why. Say nothing about skips when there were none, and leave the lists to `notify.py`. `notify.py` adds the errors, the replies owed, the PRs reviewed with nothing owed, and the queue, all computed from the digest.
 
 - If `digest.py` fails, still run `notify.py` with the error's first line as `<action>`, then stop.
 - A pull request with an `error` in the digest is never a candidate; read everything else as usual.
