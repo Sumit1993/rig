@@ -53,6 +53,8 @@ CC → packet → handoff.py → tasks/<slug>/ → codex_thread new → send →
 CC → verify hashes, provenance, build → fresh codex-judge packet → objections
 ```
 
+Both directions work mid-task. Claude reaches a thread with `codex_thread.py send`. A thread reaches the Claude session that dispatched it with the command `handoff.py` writes into every prompt from a Claude Code session: `claude -p --resume <session> --fork-session --tools "" --strict-mcp-config`, run through `wsl.exe` with the question in `question.md`. It answers from that session's context and returns the answer as output. It runs with no tools and no MCP servers ([CLI reference](https://code.claude.com/docs/en/cli-reference): `--tools`, `--strict-mcp-config`), because a thread that reads untrusted pages may ask but never make Claude act; work that needs action comes back in the report.
+
 `handoff.py --open` still opens the documented `codex://new` composer for a human Send, the fallback when the transport below breaks. Bring deciding evidence into the engineering issue; keep private proposals out of public issues.
 
 ## 4. Transport: verified, undocumented, version-pinned

@@ -101,6 +101,8 @@ if command -v codex >/dev/null 2>&1; then
   fi
 fi
 
+bash "$HERE/install-windows.sh"
+
 echo "→ settings.json (deep-merge: fragment overlays existing; permissions.allow unions)"
 if [ -f "$CLAUDE/settings.json" ]; then
   cp "$CLAUDE/settings.json" "$CLAUDE/settings.json.bak-$(date +%s)"
