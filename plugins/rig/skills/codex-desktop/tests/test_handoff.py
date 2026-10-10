@@ -74,8 +74,11 @@ class HandoffTests(unittest.TestCase):
     def test_ask_back_is_answer_only_and_absent_outside_claude(self):
         cmd = handoff.ask_back("/mnt/c/lane/tasks/x", session="sid-1", cwd="/home/u/repo")
         self.assertIn("claude -p --resume sid-1 --fork-session", cmd)
-        self.assertIn('--tools "" --strict-mcp-config', cmd)
+        self.assertIn("--tools '''' --strict-mcp-config", cmd)
         self.assertIn("< /mnt/c/lane/tasks/x/question.md", cmd)
+        spaced = handoff.ask_back("/mnt/c/my lane/x", session="sid-1", cwd="/home/u/my repo")
+        self.assertIn("cd ''/home/u/my repo'' &&", spaced)
+        self.assertIn("< ''/mnt/c/my lane/x/question.md''", spaced)
         with patch.dict(handoff.os.environ, {}, clear=True):
             self.assertEqual(handoff.ask_back("/mnt/c/x"), "")
 
@@ -89,9 +92,18 @@ class HandoffTests(unittest.TestCase):
         argv = run.call_args.args[0]
         self.assertEqual(argv[:3], ["powershell.exe", "-NoProfile", "-NonInteractive"])
         script = base64.b64decode(argv[-1]).decode("utf-16le")
-        self.assertTrue(script.startswith("Start-Process -FilePath 'codex://new?"))
+        self.assertEqual(script, "Start-Process -FilePath (Get-Content -Raw -LiteralPath 'C:\\Tests\\request\\open-link.txt').Trim()")
         self.assertEqual(status["state"], "open_requested")
         self.assertFalse(status["execution_verified"])
+
+    def test_browser_surface_mentions_browser(self):
+        with patch.object(Path, "resolve", lambda p, **kw: p), \
+             patch.object(handoff.subprocess, "check_output", return_value="C:\\Tests\\request\n"), \
+             patch.object(Path, "mkdir"), patch.object(Path, "write_bytes"), patch.object(Path, "write_text") as write:
+            handoff.prepare(self.packet, Path("/mnt/request"), surface="browser")
+        prompt = write.call_args_list[0].args[0]
+        self.assertTrue(prompt.startswith("@Browser "))
+        self.assertNotIn("@Computer", prompt)
 
 
 if __name__ == "__main__":

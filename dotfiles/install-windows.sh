@@ -26,9 +26,9 @@ if [ -n "$win_profile" ]; then
     ws="$WIN_HOME/.claude/settings.json"; [ -f "$ws" ] || echo '{}' > "$ws"
     cp "$ws" "$ws.bak-$(date +%s)"
     jq --arg p "$(wslpath -w "$cb")" --slurpfile f "$HERE/settings.fragment.json" '
-      .extraKnownMarketplaces = ((.extraKnownMarketplaces // {}) + ($f[0].extraKnownMarketplaces | del(.rig))
+      .extraKnownMarketplaces = ((.extraKnownMarketplaces // {} | del(.rig)) + ($f[0].extraKnownMarketplaces | del(.rig))
                                  + {"rig-local": {source: {source: "directory", path: $p}}})
-      | .enabledPlugins = ((.enabledPlugins // {}) + ($f[0].enabledPlugins | del(."rig@rig")) + {"rig@rig-local": true})' \
+      | .enabledPlugins = ((.enabledPlugins // {} | del(."rig@rig")) + ($f[0].enabledPlugins | del(."rig@rig")) + {"rig@rig-local": true})' \
       "$ws" > "$ws.tmp" && jq -e . "$ws.tmp" >/dev/null && mv "$ws.tmp" "$ws"
   fi
 fi

@@ -1,4 +1,5 @@
 import importlib.util
+import sys
 from pathlib import Path
 import unittest
 from unittest.mock import patch
@@ -33,6 +34,13 @@ class CodexThreadTests(unittest.TestCase):
             codex_thread.queue("t-1", "do 'it'; rm -rf /", exe="codex.exe")
         argv = run.call_args.args[0]
         self.assertEqual(argv, ["codex.exe", "queue", "--thread", "t-1", "--approve-for-me", "--message", "do 'it'; rm -rf /"])
+
+    def test_rpc_kills_a_silent_server(self):
+        real_popen = codex_thread.subprocess.Popen
+        silent = lambda argv, **kw: real_popen([sys.executable, "-c", "import time; time.sleep(30)"], **kw)
+        with patch.object(codex_thread.subprocess, "Popen", silent):
+            with self.assertRaisesRegex(RuntimeError, "deadline"):
+                codex_thread.rpc([], exe="codex.exe", deadline=0.5)
 
 
 if __name__ == "__main__":

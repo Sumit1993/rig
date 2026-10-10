@@ -5,6 +5,7 @@ import json
 import os
 from pathlib import Path
 import subprocess
+import threading
 
 
 def codex_exe():
@@ -15,10 +16,13 @@ def codex_exe():
     return str(found[-1])
 
 
-def rpc(calls, exe=None):
+def rpc(calls, exe=None, deadline=60):
     """Run JSON-RPC calls against a private stdio app-server; a call's params may be a function of earlier results."""
     proc = subprocess.Popen([exe or codex_exe(), "app-server", "--stdio"], stdin=subprocess.PIPE,
                             stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True)
+    # Killing the server ends the stdout read, so a silent app-server cannot hang `new`.
+    timer = threading.Timer(deadline, proc.kill)
+    timer.start()
 
     def send(message):
         proc.stdin.write(json.dumps(message) + "\n")
@@ -32,7 +36,7 @@ def rpc(calls, exe=None):
                 if "error" in message:
                     raise RuntimeError(f"{method}: {message['error']}")
                 return message["result"]
-        raise RuntimeError(f"{method}: app-server exited")
+        raise RuntimeError(f"{method}: app-server exited or passed the {deadline}s deadline")
 
     try:
         # The desktop app only follows threads whose originator is its own.
@@ -42,8 +46,13 @@ def rpc(calls, exe=None):
             results.append(request(i, method, params(results) if callable(params) else params))
         return results
     finally:
+        timer.cancel()
         proc.stdin.close()
-        proc.wait(timeout=30)
+        try:
+            proc.wait(timeout=30)
+        except subprocess.TimeoutExpired:
+            proc.kill()
+            proc.wait()
 
 
 def new_thread(name, workspace, exe=None, opener=subprocess.run):

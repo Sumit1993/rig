@@ -28,7 +28,7 @@ Write a self-contained Markdown packet under `~/ai-context/<repo>/<issue>-<slug>
 - Cleanup limited to what the task opened, never the operator's own windows or documents.
 
 Pick the surface by need:
-- **In-app browser** (Codex Browser plugin, `iab` backend) for browser work that needs no real login. It runs in the background off the operator's browser profile, reads the page structure rather than pixels, and costs far less quota. Ask for settled reads after a write or navigation.
+- **In-app browser** (`handoff.py --surface browser`, which mentions `@Browser`) for browser work that needs no real login. The bundled Browser plugin drives its `iab` browser through `agent.browsers`, off the operator's browser profile (`docs/tab-mentions-iab.md` in `.codex/plugins/cache/openai-bundled/browser/26.1002.52244/`). Ask for settled reads after a write or navigation.
 - **Computer Use** when the work needs a real browser session, or anything outside a browser: native apps, OS dialogs, cross-app tasks. It drives the operator's live desktop, so every app it may touch is a deliberate grant (§4).
 - **A human or Playwright** for any interaction the packet cannot verify through either surface; say so in the report rather than guess.
 
@@ -39,21 +39,21 @@ A localhost URL is a hypothesis until Windows reaches the WSL dev server; report
 One trusted lane folder holds every task, so the app asks for trust once: `$WIN_HOME/Documents/rig-live-tests/codex-lane`, each task in `tasks/<slug>/`. Every thread's workspace is the lane folder; a new folder per thread would register as a new project and ask again.
 
 ```bash
-WIN_HOME=$(wslpath "$(cmd.exe /c 'echo %USERPROFILE%' 2>/dev/null | tr -d '\r')")
+export WIN_HOME=$(wslpath "$(cmd.exe /c 'echo %USERPROFILE%' 2>/dev/null | tr -d '\r')")
 LANE="$WIN_HOME/Documents/rig-live-tests/codex-lane"; TASK="$LANE/tasks/<slug>"
-python3 "$SKILL_DIR/handoff.py" --packet "$PACKET" --windows-dir "$TASK" [--report reply-1.md]
+python3 "$SKILL_DIR/handoff.py" --packet "$PACKET" --windows-dir "$TASK"
 TID=$(python3 "$SKILL_DIR/codex_thread.py" new --name "<packet title>" --workspace "$(wslpath -w "$LANE")")
 python3 "$SKILL_DIR/codex_thread.py" send --thread "$TID" --message-file "$TASK/prompt.txt"
 ```
 
-`handoff.py` copies and hashes the packet into a new task folder and writes a prompt naming that folder, the title and the report file. `codex_thread.py new` starts a thread through the bundled app-server, persists it and mounts it in the app; `send` queues a message. Later steps go to the same `$TID` with `send`. Each task gets its own thread, so tasks run side by side. Then wait for the report file with a bounded background wait; no file means no result. A zero exit means dispatched, never passed.
+`handoff.py` copies and hashes the packet into a new task folder and writes a prompt naming that folder, the title and the report file. Add `--report reply-1.md` for a later step's report, `--surface browser` for the in-app browser. `codex_thread.py new` starts a thread through the bundled app-server, persists it and mounts it in the app; `send` queues a message. Later steps go to the same `$TID` with `send`. Each task gets its own thread, so tasks run side by side. Then wait for the report file with a bounded background wait; no file means no result. A zero exit means dispatched, never passed.
 
 ```text
 CC → packet → handoff.py → tasks/<slug>/ → codex_thread new → send → Computer Use → report + evidence/
 CC → verify hashes, provenance, build → fresh codex-judge packet → objections
 ```
 
-Both directions work mid-task. Claude reaches a thread with `codex_thread.py send`. A thread reaches the Claude session that dispatched it with the command `handoff.py` writes into every prompt from a Claude Code session: `claude -p --resume <session> --fork-session --tools "" --strict-mcp-config`, run through `wsl.exe` with the question in `question.md`. It answers from that session's context and returns the answer as output. It runs with no tools, because a thread that reads untrusted pages may ask but never make Claude act; work that needs action comes back in the report.
+Both directions work mid-task. Claude reaches a thread with `codex_thread.py send`. A thread reaches the Claude session that dispatched it with the command `handoff.py` writes into every prompt from a Claude Code session: `claude -p --resume <session> --fork-session --tools "" --strict-mcp-config`, run through `wsl.exe` with the question in `question.md`. It answers from that session's context and returns the answer as output. It runs with no tools and no MCP servers ([CLI reference](https://code.claude.com/docs/en/cli-reference): `--tools`, `--strict-mcp-config`), because a thread that reads untrusted pages may ask but never make Claude act; work that needs action comes back in the report.
 
 `handoff.py --open` still opens the documented `codex://new` composer for a human Send, the fallback when the transport below breaks. Bring deciding evidence into the engineering issue; keep private proposals out of public issues.
 
