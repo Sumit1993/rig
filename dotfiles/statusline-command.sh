@@ -37,7 +37,7 @@ if [ -n "$used" ]; then
 fi
 
 # rate_limits is absent until the first API response of the session. Fall back to the last
-# traced row so the account windows don't render blank at session start. Story: rig#<lag fix>.
+# traced row so the account windows don't render blank at session start. Story: rig#184.
 stale=""
 if [ -z "$five" ]; then
   last=$(tail -n 1 ~/.claude/metrics/usage.jsonl 2>/dev/null)
@@ -67,7 +67,7 @@ fi
 # A separate lock file gates the debounce so a killed/failed fetch doesn't lock in staleness: the
 # fetch runs under setsid, detached from this script's process group, because Claude Code reaps
 # that group the moment this script returns and would otherwise kill a backgrounded curl before it
-# finishes. Story: rig#<lag fix>.
+# finishes. Story: rig#184.
 api=~/.claude/metrics/usage-api.json
 lock=~/.claude/metrics/usage-api.lock
 if [ -z "$(find "$lock" -mmin -5 2>/dev/null)" ]; then
