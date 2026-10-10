@@ -42,19 +42,23 @@ def live():
                 msg = json.loads(line)
             except ValueError:
                 continue
-            if msg.get("id") == 2:
-                if "error" in msg:
-                    raise RuntimeError(f"app-server: {msg['error'].get('message', msg['error'])}")
-                r = msg["result"]
-                limits = r.get("rateLimits") or {}
-                return {
-                    "source": "live",
-                    "allowed": r.get("ordinaryUsageAllowed"),
-                    "reached": limits.get("rateLimitReachedType"),
-                    "plan": limits.get("planType"),
-                    "windows": [{"used": w.get("usedPercent"), "minutes": w.get("windowDurationMins"), "resets_at": w.get("resetsAt")}
-                                for w in (limits.get("primary"), limits.get("secondary")) if w],
-                }
+            if not isinstance(msg, dict) or msg.get("id") != 2:
+                continue
+            if "error" in msg:
+                error = msg["error"]
+                raise RuntimeError(f"app-server: {error.get('message', error) if isinstance(error, dict) else error}")
+            r = msg.get("result")
+            limits = (r.get("rateLimits") or {}) if isinstance(r, dict) else None
+            if not isinstance(limits, dict):
+                raise RuntimeError("app-server rate-limit answer is malformed")
+            return {
+                "source": "live",
+                "allowed": r.get("ordinaryUsageAllowed"),
+                "reached": limits.get("rateLimitReachedType"),
+                "plan": limits.get("planType"),
+                "windows": [{"used": w.get("usedPercent"), "minutes": w.get("windowDurationMins"), "resets_at": w.get("resetsAt")}
+                            for w in (limits.get("primary"), limits.get("secondary")) if w],
+            }
         raise RuntimeError("app-server gave no rate-limit answer")
     finally:
         proc.kill()
@@ -84,8 +88,10 @@ def cached():
             limits = find_limits(event)
             if not limits:
                 continue
-            stamp = event.get("timestamp")
-            at = datetime.fromisoformat(stamp.replace("Z", "+00:00")).timestamp() if stamp else path.stat().st_mtime
+            try:
+                at = datetime.fromisoformat(event["timestamp"].replace("Z", "+00:00")).timestamp()
+            except (KeyError, AttributeError, TypeError, ValueError):
+                at = path.stat().st_mtime
             return {
                 "source": "cached",
                 "age_min": int((NOW - at) // 60),
@@ -131,7 +137,7 @@ def main():
         try:
             q = verdict(source())
             break
-        except (OSError, RuntimeError, KeyError, TypeError, ValueError) as e:
+        except (OSError, RuntimeError, AttributeError, KeyError, TypeError, ValueError) as e:
             errors.append(f"{source.__name__}: {e}")
     else:
         q = {"line": "unknown: " + "; ".join(errors), "exhausted": None}

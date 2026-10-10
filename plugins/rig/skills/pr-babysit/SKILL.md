@@ -1,6 +1,6 @@
 ---
 name: pr-babysit
-description: "What happens to a PR after it is raised: by default nothing in this session, because the hourly CodeRabbit routine gets it reviewed async and the operator merges through compass. When the operator asks to hold a round here: seed seen-state, arm the reviewer and CI Monitor, route each event, then merge. Load after any gh pr create or when asked to watch or merge a PR."
+description: "What happens to a PR after it is raised: by default nothing in this session, because the hourly CodeRabbit routine gets it reviewed async and the operator merges through compass. When the operator asks to hold a round here: seed seen-state, arm the reviewer and CI watcher, route each event, then merge. Load after any gh pr create or when asked to watch or merge a PR."
 metadata:
   version: "5.0.0"
 ---
@@ -17,11 +17,9 @@ Process truth is `rig/docs/pr-review-process.html`. Whoever changes the process 
 
 Reviews arrive on their own schedule: the Claude lane in 2 to 5 minutes, CodeRabbit within the hour the routine summons it (median 3.5 hours after a burst of PRs), CI in 5 to 10. Never poll with model turns. Never wait for the user to relay an event. Arm a deterministic watcher and process deltas.
 
-Scripts sit in `${CLAUDE_PLUGIN_ROOT}/skills/pr-babysit/` when loaded as `rig:pr-babysit`; shared ones (`cr-reply.sh`, `rig-meta.sh`) in `${CLAUDE_PLUGIN_ROOT}/scripts/`. Resolve both to absolute paths before handing them to a Monitor or a background Bash, which may not inherit the variable. Watch scripts read the repo off the cwd's origin remote; `--repo owner/name` overrides.
+Scripts sit in this skill's directory; shared ones (`cr-reply.sh`, `rig-meta.sh`) in this plugin's `scripts/` directory, two levels up (`<skill-dir>/../../scripts/`). Resolve both to absolute paths before handing them to a watcher or a background process. Watch scripts read the repo off the cwd's origin remote; `--repo owner/name` overrides.
 
-Per-repo facts come from the registry, never from memory. `rig-meta.sh current` reads `data/repo-meta.json` folded with runtime observations:
-
-Current repo metadata: !`"${CLAUDE_PLUGIN_ROOT}/scripts/rig-meta.sh" current`
+Per-repo facts come from the registry, never from memory. Run `<skill-dir>/../../scripts/rig-meta.sh current` first; it reads `data/repo-meta.json` folded with runtime observations.
 
 ## Phase 0: the merge contract
 
@@ -63,14 +61,14 @@ jq -r '.[] | select(.user.login|test("claude";"i")) | .id' "$C" \
   > ~/ai-context/state/cr-watch/$KEY-pr<pr>-claude.seen
 ```
 
-Then arm the Monitor tool with `persistent: true`:
+Then arm a persistent watcher. In Claude Code that is the Monitor tool with `persistent: true`; elsewhere run the script as a background process logging to a file and read the new lines at every turn:
 
 ```
 command: <skill-dir>/watch-coderabbit.sh <pr> [<pr>...]
 description: CodeRabbit comments + CI reds on PR <pr>
 ```
 
-One monitor covers many PRs. If one is already running for this repo, TaskStop it and re-arm with the combined list; seen-state makes that free.
+One watcher covers many PRs. If one is already running for this repo, stop it (Claude Code: TaskStop) and re-arm with the combined list; seen-state makes that free.
 
 Event lines and what each one asks for are in `references/events.md` beside this file; read it when the first line arrives, not before.
 
@@ -80,7 +78,7 @@ Env knobs: `CR_WATCH_AUTORETRY=0` makes rate-limit handling detect-only, posting
 
 ## Phase 2: on each event
 
-The session that owns the Monitor is a thin router. Read the sentinel line, then SendMessage the payload path to the seat that last touched the diff, usually the reviewer agent, resumed. Never fresh-spawn a fixer when a seat already holds the diff. Never paste a comment body into the routing session. Triage per finding: line-level goes to an agy delta prompt, judgement to the resumed Claude seat.
+The session that owns the watcher is a thin router. Read the sentinel line, then hand the payload path to the seat that last touched the diff, usually the reviewer agent, resumed (Claude Code: SendMessage). Never fresh-spawn a fixer when a seat already holds the diff. Never paste a comment body into the routing session. Triage per finding: line-level goes to an agy delta prompt, judgement to the resumed Claude seat.
 
 Per-event handling is in `references/events.md`.
 
@@ -106,6 +104,6 @@ Afterward remove the lane's worktree and delete its local branch (`AGENTS.md` §
 - Rate limits are invisible on both obvious channels. CodeRabbit posts the notice as an issue comment, so `/pulls/N/comments` misses it, and the `Review rate limited` check passes by design. `watch-coderabbit.sh` polls `/issues/N/comments` for the `rate limited by coderabbit.ai` marker, deduped on `updated_at` because CodeRabbit edits one summary comment in place.
 - `~/ai-context/state/cr-watch/` is durable across sessions. Re-arming is always safe.
 - A `git checkout` under a running watcher kills it. Bash reads a script incrementally, so switching branches rewrites `watch-coderabbit.sh` beneath the running shell, usually exit 144, with no event. Re-arm after any branch change, or run the watcher from a path that is not moving.
-- A watcher dies with its task, not the session. TaskStop it the moment its PR is merged, closed or handed off. The SessionEnd hook also kills watchers and SessionStart reaps orphans; re-arming after either is free.
-- `hooks/pr-created.sh` injects a reminder whenever a PR URL appears in a Bash or Agent tool result, seeds the seen-state, and says when the new PR touches files an open draft already changes. It reminds the session that reviews run async; run Phase 1 only for a held round. It also runs on `Agent`, because an agy lane's PR URL arrives in the handler's report, not a Bash result.
-- Phase 3's cascade is a background Bash with a single completion, not a Monitor.
+- A watcher dies with its task, not the session. Stop it the moment its PR is merged, closed or handed off. In Claude Code the SessionEnd hook also kills watchers and SessionStart reaps orphans; re-arming after either is free. Elsewhere kill it by its captured PID (`no-doze`, killing safely).
+- In Claude Code, `hooks/pr-created.sh` injects a reminder whenever a PR URL appears in a Bash or Agent tool result, seeds the seen-state, and says when the new PR touches files an open draft already changes. It reminds the session that reviews run async; run Phase 1 only for a held round. It also runs on `Agent`, because an agy lane's PR URL arrives in the handler's report, not a Bash result.
+- Phase 3's cascade is a background process with a single completion, not a persistent watcher.

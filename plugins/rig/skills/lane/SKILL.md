@@ -2,7 +2,6 @@
 name: lane
 description: "Scripts that fold several agy tool calls into one: run a check to completion with a short result, commit with SHA and stat. Load when working a delegated work order headless (agy -p)."
 metadata:
-  harnesses: "agy"
   version: "0.1.0"
 ---
 

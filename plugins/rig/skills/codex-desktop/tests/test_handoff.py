@@ -105,6 +105,43 @@ class HandoffTests(unittest.TestCase):
         self.assertTrue(prompt.startswith("@Browser "))
         self.assertNotIn("@Computer", prompt)
 
+    def _prompt(self, **kwargs):
+        with patch.object(Path, "resolve", lambda p, **kw: p), \
+             patch.object(handoff.subprocess, "check_output", return_value="C:\\Tests\\request\n"), \
+             patch.object(Path, "mkdir"), patch.object(Path, "write_bytes"), patch.object(Path, "write_text") as write:
+            status = handoff.prepare(self.packet, Path("/mnt/request"), **kwargs)
+        return write.call_args_list[0].args[0], status
+
+    def test_task_surface_scopes_changes_to_named_paths(self):
+        prompt, status = self._prompt(surface="task")
+        self.assertTrue(prompt.startswith("Perform the scoped Windows task"))
+        self.assertNotIn("@Computer", prompt)
+        self.assertNotIn("Do not change source code", prompt)
+        self.assertIn("Change files only inside that folder and inside the paths the packet's allowed actions name", prompt)
+        self.assertIn("every path you changed", prompt)
+        self.assertEqual(status["surface"], "task")
+
+    def test_non_claude_dispatcher_gets_question_files(self):
+        with patch.dict(handoff.os.environ, {"CLAUDE_CODE_SESSION_ID": "sid-1"}):
+            prompt, status = self._prompt(dispatcher="codex")
+        self.assertIn("question-N.md", prompt)
+        self.assertIn("stop the turn", prompt)
+        self.assertNotIn("claude -p", prompt)
+        self.assertEqual(status["dispatcher"], "codex")
+
+    def test_claude_dispatcher_keeps_fork_callback(self):
+        with patch.dict(handoff.os.environ, {"CLAUDE_CODE_SESSION_ID": "sid-1"}):
+            prompt, _ = self._prompt()
+        self.assertIn("claude -p --resume sid-1 --fork-session", prompt)
+        self.assertNotIn("question-N.md", prompt)
+        with patch.dict(handoff.os.environ, {}, clear=True):
+            prompt, _ = self._prompt()
+        self.assertIn("question-N.md", prompt)
+
+    def test_unknown_dispatcher_refused(self):
+        with self.assertRaisesRegex(ValueError, "dispatcher"):
+            handoff.prepare(self.packet, Path("/mnt/request"), dispatcher="cursor")
+
 
 if __name__ == "__main__":
     unittest.main()

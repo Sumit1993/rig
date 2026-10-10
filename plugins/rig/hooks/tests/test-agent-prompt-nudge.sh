@@ -84,6 +84,21 @@ else
   echo "FAIL: sonnet unverified prompt (ctx=$ctx)"; fails=$((fails + 1))
 fi
 
+out=$(run_hook "sess_haiku_raw" "Agent" "haiku" "" "summarize these logs")
+ctx=$(jq -r '.hookSpecificOutput.additionalContext // ""' <<<"$out" 2>/dev/null)
+if grep -qi 'verification' <<<"$ctx"; then
+  echo "PASS: haiku prompt without a verify step prints verification nudge"
+else
+  echo "FAIL: haiku unverified prompt (ctx=$ctx)"; fails=$((fails + 1))
+fi
+
+out=$(run_hook "sess_haiku_ok" "Agent" "claude-haiku-5-5" "" "summarize these logs and confirm each line number")
+if [ -z "$out" ]; then
+  echo "PASS: haiku prompt with a verify step prints nothing"
+else
+  echo "FAIL: haiku verified prompt printed: $out"; fails=$((fails + 1))
+fi
+
 # Prompt containing paste raw output or run the tests prints nothing.
 out=$(run_hook "sess_sonnet_paste" "Agent" "sonnet" "" "rename things and paste raw output")
 if [ -z "$out" ]; then
@@ -107,6 +122,15 @@ if [ -z "$out1" ] && grep -q 'SendMessage' <<<"$ctx2"; then
   echo "PASS: second fable-planner within hour prints SendMessage nudge"
 else
   echo "FAIL: second fable-planner (out1=$out1, ctx2=$ctx2)"; fails=$((fails + 1))
+fi
+
+out1=$(run_hook "sess_plan_mix" "Agent" "" "rig:planner" "plan the task and verify")
+out2=$(run_hook "sess_plan_mix" "Agent" "" "rig:fable-planner" "plan next step and verify")
+ctx2=$(jq -r '.hookSpecificOutput.additionalContext // ""' <<<"$out2" 2>/dev/null)
+if [ -z "$out1" ] && grep -q 'SendMessage' <<<"$ctx2"; then
+  echo "PASS: planner then fable-planner within hour prints SendMessage nudge"
+else
+  echo "FAIL: planner reuse (out1=$out1, ctx2=$ctx2)"; fails=$((fails + 1))
 fi
 
 # Write a stamp older than 3600 s into $STATE/<session>.planner-at and expect nothing.

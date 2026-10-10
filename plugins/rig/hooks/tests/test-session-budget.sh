@@ -20,7 +20,21 @@ grep -q "5h window 63%, 7d 36%" <<<"$out" && echo "PASS: account percent from th
 grep -q "agy gemini: exhausted" <<<"$out" && echo "PASS: gemini group state" || { echo "FAIL: gemini ($out)"; fails=$((fails+1)); }
 grep -q "agy claude-gpt: usable" <<<"$out" && echo "PASS: claude-gpt group state" || { echo "FAIL: claude-gpt"; fails=$((fails+1)); }
 grep -q "codex: exhausted until 2026-10-10T09:00Z: 5h 100%, weekly 67%." <<<"$out" && echo "PASS: codex usage limits" || { echo "FAIL: codex ($out)"; fails=$((fails+1)); }
-grep -q "Sonnet subagents only" <<<"$out" && echo "PASS: policy line present" || { echo "FAIL: policy"; fails=$((fails+1)); }
+grep -q "Sonnet subagents only, plus Haiku for reading" <<<"$out" && echo "PASS: policy line present" || { echo "FAIL: policy"; fails=$((fails+1)); }
+grep -q "passes the adversary seat to another agent" <<<"$out" && echo "PASS: exhausted Codex passes the adversary seat" || { echo "FAIL: adversary policy ($out)"; fails=$((fails+1)); }
+
+printf '#!/bin/bash\nexit 1\n' > "$T/silent-codex"; chmod +x "$T/silent-codex"
+out=$(echo '{}' | BUDGET_USAGE_LOG="$T/usage.jsonl" BUDGET_QUOTA_SH="$T/quota.sh" BUDGET_CODEX_QUOTA="$T/silent-codex" "$HOOK" | ctx)
+grep -q "codex: unknown." <<<"$out" && echo "PASS: a checker that prints nothing reads unknown" || { echo "FAIL: empty checker ($out)"; fails=$((fails+1)); }
+
+if command -v timeout >/dev/null 2>&1; then
+  printf '#!/bin/bash\nsleep 30\n' > "$T/slow.sh"; chmod +x "$T/slow.sh"
+  s=$(date +%s)
+  out=$(echo '{}' | BUDGET_USAGE_LOG="$T/usage.jsonl" BUDGET_QUOTA_SH="$T/slow.sh" BUDGET_CODEX_QUOTA="$T/slow.sh" "$HOOK" | ctx)
+  e=$(( $(date +%s) - s ))
+  [ "$e" -lt 9 ] && grep -q "agy gemini: unknown" <<<"$out" && grep -q "codex: unknown" <<<"$out" \
+    && echo "PASS: hung probes are cut inside the 10s hook timeout (${e}s)" || { echo "FAIL: hung probes took ${e}s ($out)"; fails=$((fails+1)); }
+fi
 
 printf '{"ts":"%s","five_hour":{"used_percentage":20,"resets_at":%s},"seven_day":{"used_percentage":82},"scoped":[{"model":"Fable","percent":100,"severity":"critical","resets_at":"2026-09-15T05:00:00.2+00:00"}]}\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$(( $(date +%s) + 3600 ))" > "$T/scoped.jsonl"
 out=$(echo '{}' | BUDGET_USAGE_LOG="$T/scoped.jsonl" BUDGET_QUOTA_SH="$T/quota.sh" "$HOOK" | ctx)

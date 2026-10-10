@@ -7,7 +7,7 @@ set -u
 in=$(cat)
 log="${BUDGET_USAGE_LOG:-$HOME/.claude/metrics/usage.jsonl}"
 quota="${BUDGET_QUOTA_SH:-$(cd "$(dirname "$0")/.." && pwd)/skills/farm-out/agy-quota.sh}"
-codex_quota="${BUDGET_CODEX_QUOTA:-$(cd "$(dirname "$0")/.." && pwd)/skills/codex-judge/codex-quota.py}"
+codex_quota="${BUDGET_CODEX_QUOTA:-$(cd "$(dirname "$0")/.." && pwd)/skills/adversary/codex-quota.py}"
 
 acct="no trace yet"
 if [ -r "$log" ]; then
@@ -27,12 +27,22 @@ if [ -r "$log" ]; then
   caps=$(jq -r '[.scoped[]? | "\(.model) weekly \(.percent)% (\(.severity)), resets \(.resets_at[0:16])Z"] | join(", ")' <<<"$row" 2>/dev/null)
   [ -n "$caps" ] && acct="${acct}. ${caps}"
 fi
-g=$( [ -x "$quota" ] && "$quota" check gemini-3.8-flash-high 2>/dev/null | head -1 || echo "unknown")
-c=$( [ -x "$quota" ] && "$quota" check claude-sonnet-5-5-low 2>/dev/null | head -1 || echo "unknown")
-# The hook timeout is 10s; a slow app server falls back to the last Codex session log.
-x=$( [ -x "$codex_quota" ] && RIG_CODEX_QUOTA_TIMEOUT=4 "$codex_quota" check 2>/dev/null | head -1 || echo "unknown")
+# The hook timeout is 10s: the three probes run in parallel, each cut at 6s where timeout exists (rig#183).
+t=$(mktemp -d 2>/dev/null) || t=""
+probe() { # name, script, args...
+  local name=$1; shift
+  [ -n "$t" ] && [ -x "$1" ] || return 0
+  if command -v timeout >/dev/null 2>&1; then timeout 6 "$@"; else "$@"; fi 2>/dev/null | head -1 > "$t/$name"
+}
+probe g "$quota" check gemini-3.8-flash-high &
+probe c "$quota" check claude-sonnet-4-6 &
+( export RIG_CODEX_QUOTA_TIMEOUT=4; probe x "$codex_quota" check ) &
+wait
+read_probe() { local v=""; [ -n "$t" ] && v=$(cat "$t/$1" 2>/dev/null); echo "${v:-unknown}"; }
+g=$(read_probe g); c=$(read_probe c); x=$(read_probe x)
+[ -n "$t" ] && rm -rf "$t"
 
-policy="A model whose weekly cap reads critical is not spawned; scoped-cap-gate refuses it, so write the spec on the session model. Past 60% on the 5h window: Sonnet subagents only, no research fan-out, no planner respawn. A dry Gemini group moves agy lanes to claude-sonnet-5-5-low; both agy groups dry means the Sonnet handler does the task itself from the prompt file and says so. An exhausted Codex means no codex-judge run until its reset; the judgment waits or goes to the operator, never to a Claude self-review."
+policy="A model whose weekly cap reads critical is not spawned; scoped-cap-gate refuses Fable, so the planner seat stays on Opus. Past 60% on the 5h window: Sonnet subagents only, plus Haiku for reading and summaries; no research fan-out, no planner respawn. A dry Gemini group moves agy lanes to claude-sonnet-4-6; both agy groups dry means the Sonnet handler does the task itself from the prompt file and says so. An exhausted Codex passes the adversary seat to another agent through the launcher; never the author's own context."
 resume=""
 src=$(jq -r '.source // empty' <<<"$in" 2>/dev/null)
 gap=$(jq -r '.seconds_since_last_response // empty' <<<"$in" 2>/dev/null)

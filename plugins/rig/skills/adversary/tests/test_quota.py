@@ -53,5 +53,30 @@ class CachedQuotaTest(unittest.TestCase):
         self.assertTrue(line.startswith("unknown: "))
 
 
+    def test_invalid_timestamp_uses_file_mtime(self):
+        for stamp in [12345, "not-a-date"]:
+            with self.subTest(stamp=stamp):
+                self.rollout(40.0, 3600)
+                path = self.day / "rollout-a.jsonl"
+                lines = path.read_text().splitlines()
+                event = json.loads(lines[1])
+                event["timestamp"] = stamp
+                path.write_text(lines[0] + "\n" + json.dumps(event) + "\n")
+                code, line = check({"CODEX_HOME": str(self.home)}, "--cached")
+                self.assertEqual(code, 0)
+                self.assertIn("0m old", line)
+
+    def test_malformed_app_server_answer_is_unknown(self):
+        for answer in ['5', '{"id":2,"error":"boom"}', '{"id":2,"result":[1]}', '{"id":2,"result":{"rateLimits":"x"}}']:
+            with self.subTest(answer=answer):
+                fake = self.home / "codex"
+                fake.write_text("#!/bin/sh\nread a; read b; read c\necho '" + answer + "'\n")
+                fake.chmod(0o755)
+                code, line = check({"CODEX_HOME": str(self.home), "RIG_CODEX_BIN": str(fake),
+                                    "RIG_CODEX_QUOTA_TIMEOUT": "3"})
+                self.assertEqual(code, 2)
+                self.assertTrue(line.startswith("unknown: "), line)
+
+
 if __name__ == "__main__":
     unittest.main()
