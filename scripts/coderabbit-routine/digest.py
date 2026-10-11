@@ -173,6 +173,13 @@ def pr_facts(repo, pr):
         after = [c for c in cr_comments if c["created_at"] > last_summon["created_at"]]
         reply = after[0] if after else None
 
+    # An incremental review with nothing to add posts no review object, only a "Review finished" reply (prismalens#812).
+    done = re.compile(r"Review finished|Already reviewed the last commit")
+    finished_on_head = any(
+        done.search(next((c["body"] for c in cr_comments if c["created_at"] > s["created_at"]), ""))
+        for s in summons if s["created_at"] > head_at
+    )
+
     threads = coderabbit_threads(repo, n)
     return {
         "repo": repo,
@@ -184,7 +191,7 @@ def pr_facts(repo, pr):
         "head_age_min": age_min(head_at),
         # Ranks last, never excluded: prismalens.io's product is docs, and docs/ holds its site code (#159).
         "docs_only": bool(files) and full["changed_files"] <= 100 and all(f.endswith((".md", ".mdx")) for f in files),
-        "coderabbit_reviewed_head": any(r["commit_id"] == head for r in reviews),
+        "coderabbit_reviewed_head": finished_on_head or any(r["commit_id"] == head for r in reviews),
         "coderabbit_last_review_at": reviews[-1]["submitted_at"] if reviews else None,
         "coderabbit_reviews": [
             {"commit": r["commit_id"], "is_head": r["commit_id"] == head, "at": r["submitted_at"], "excerpt": excerpt(r["body"], 160)}
