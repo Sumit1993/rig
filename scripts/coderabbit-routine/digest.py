@@ -174,11 +174,21 @@ def pr_facts(repo, pr):
         reply = after[0] if after else None
 
     # An incremental review with nothing to add posts no review object, only a "Review finished" reply (prismalens#812).
+    # Every reply to a summon carries an invocation marker and answers the oldest unanswered summon, so pair them in order.
     done = re.compile(r"Review finished|Already reviewed the last commit")
-    finished_on_head = any(
-        done.search(next((c["body"] for c in cr_comments if c["created_at"] > s["created_at"]), ""))
-        for s in summons if s["created_at"] > head_at
+    invoked = re.compile(r"(?m)^\s*@coderabbitai (full )?review\b")
+    events = sorted(
+        [(c["created_at"], "summon", c) for c in comments if c["user"]["login"] != CR and invoked.match(c["body"])]
+        + [(c["created_at"], "reply", c) for c in cr_comments if "review command invocation:" in c["body"]],
+        key=lambda e: (e[0], e[1] == "reply"),
     )
+    pending, finished_on_head = [], False
+    for at, kind, c in events:
+        if kind == "summon":
+            pending.append(c)
+        elif pending:
+            s = pending.pop(0)
+            finished_on_head |= s["created_at"] > head_at and bool(done.search(c["body"]))
 
     threads = coderabbit_threads(repo, n)
     return {
