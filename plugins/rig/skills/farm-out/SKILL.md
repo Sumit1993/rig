@@ -74,7 +74,7 @@ A lane takes side work while the session keeps coding (`AGENTS.md` §Delegation)
 
 Bulk reading the organizer would otherwise wait on (logs, test output, a dozen files to summarize, a classification pass) goes to a Haiku subagent (`model: haiku`, Haiku 5.5) rather than into the organizer's context. Its prompt names what to read, what to return and how each claim is checked, as for Sonnet. Haiku never coordinates, never runs unattended and never calls a PR merge-ready.
 
-Write the spec to `~/ai-context/<repo>/<issue>-<slug>/spec-<lane>.md` or into the repo, never `/tmp`. Its last lines are one `` Verify: `<command>` `` line and what to return.
+Write the spec to `~/ai-context/<repo>/<issue>-<slug>/spec-<lane>.md` or into the repo, never `/tmp`. Its last lines are one `` Verify: `<command>` `` line and what to return. agy runs only the suites that line names, so for an end-to-end change it names every suite the change touches, Playwright specs and BDD `.feature` files alike.
 
 Launch it yourself with Bash `run_in_background: true`: `run-agy-watchdog.sh <worktree> <spec> ~/ai-context/agy-logs/<slug>.json <expected_commits> <timeout>`. The session spends nothing while agy works; the completion notice lands when it exits. The watchdog runs the spec's `Verify:` command itself and appends one line to `<slug>.activity.log`: `AGY_EXITED rc= status= commits= dirty= verify_rc=`.
 - `status=SUCCESS`, `commits` at least the expected count, `dirty=0` and `verify_rc=0`: read the diff against the spec and the tail of `<slug>.json.verify.log`. That is the whole review.
