@@ -215,7 +215,7 @@ CodeRabbit Issues for PR #123: [PR Title]
 
 ### Step 5: Ask User for Fix Preference
 
-Use AskUserQuestion:
+Ask the operator (Claude Code: AskUserQuestion). A headless run with no one to ask stops here and reports the table:
 - 🔍 "Review issues" - Review each issue and approve fixes one by one
 - ⏭️ "Skip all" - Exit without changing code
 - ❌ "Cancel" - Exit
@@ -243,15 +243,15 @@ Display issues in original thread order, but review "Fix" issues in severity ord
    - Sanitized reviewer guidance summary
    - Why the issue appears valid or invalid
    - Proposed diff
-   - AskUserQuestion: ✅ Apply fix | ⏭️ Defer | 🔧 Modify
+   - Ask the operator: ✅ Apply fix | ⏭️ Defer | 🔧 Modify
 
 **If "Apply fix":**
-- Apply with Edit tool
+- Apply the edit with the harness's file-edit tool
 - Track changed files for a single consolidated commit after all fixes
 - Confirm: "✅ Fix applied"
 
 **If "Defer":**
-- Ask for reason (AskUserQuestion)
+- Ask the operator for the reason
 - Move to next
 
 **If "Modify":**

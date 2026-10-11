@@ -21,6 +21,7 @@ out=$(run s1 EnterPlanMode); check "2nd occurrence silent" no "$out" $?
 out=$(run s1 AskUserQuestion); check "3rd occurrence silent" no "$out" $?
 out=$(run s1 AskUserQuestion); check "4th occurrence fires again" yes "$out" $?
 out=$(run s2 Agent rig:fable-planner); check "fable-planner spawn fires in a new session" yes "$out" $?
+out=$(run s7 Agent rig:planner); check "planner spawn fires in a new session" yes "$out" $?
 out=$(run s3 Agent general-purpose); check "other agent spawn silent" no "$out" $?
 out=$(run s4 Bash); check "unrelated tool silent" no "$out" $?
 out=$(jq -n '{"session_id":"s5","tool_name":"AskUserQuestion"}' | "$HOOK"); check "fires without tool_input" yes "$out" $?

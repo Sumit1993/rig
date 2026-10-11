@@ -6,7 +6,7 @@ Each tool call costs a full model turn of about 5 seconds, and every turn resend
 1. Read files with `view_file`, not `cat` or `sed`: shell output is cut at about 4 KB, `view_file` shows 800 lines. When you need several files, put all the `view_file` calls in one response. Read each file once.
 2. Chain related short shell steps in one `run_command` with `&&`, for example `git status --short && git log --oneline -3 && git diff --stat`.
 3. Run tests, typechecks and builds through `~/.gemini/config/plugins/rig/skills/lane/scripts/run.sh "<cmd>"` with `WaitMsBeforeAsync` set to 600000. It blocks until the command ends and prints `rc=` plus a short tail.
-4. Never poll a background task with `manage_task` and never `schedule` a check. If a command did go to the background, end your turn; agy wakes you when it finishes.
+4. Never poll a background task with `manage_task` and never `schedule` a check. If a command did go to the background, end your turn; agy wakes you when it finishes. Never start a second test, build or browser run while one is still going: each Playwright run starts its own browsers, and stacked runs exceed the lane's 4 GB memory cap.
 5. Every command runs non-interactively: add `< /dev/null`, `--yes`, `--no-pager` or `CI=1` as the tool needs.
 6. Commit with `~/.gemini/config/plugins/rig/skills/lane/scripts/commit.sh "<message>" [paths]`. It prints the SHA and the diff stat, so do not follow it with `git status`, `git show` or `git rev-parse`. Both scripts work as described here; do not read them.
 

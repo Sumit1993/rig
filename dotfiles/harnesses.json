@@ -1,0 +1,60 @@
+{
+  "$comment": "What each harness gets from plugins/rig. Read by build-lib.sh, the build-*-plugin.sh scripts and install.sh --check. #169 - rig declares and installs every harness's plugins and MCP servers, and reports drift.",
+  "targets": {
+    "claude": {
+      "$comment": "WSL Claude Code. The plugin loads from the GitHub marketplace as a whole directory, so this target lists everything; nothing is built.",
+      "install": "marketplace",
+      "skills": ["adversary", "autofix", "autopilot", "claude-review-lane", "codex-desktop", "codex-judge", "coderabbit-lane", "compass", "docs-drift", "farm-out", "lane", "no-comments", "no-doze", "pr-babysit", "triage", "tweet"],
+      "hooks": ["agent-prompt-nudge.sh", "budget-nudge.sh", "delegate-check.sh", "draft-posted-nudge.sh", "gh-body-no-scratch.sh", "gh-body-stamp.sh", "gh-write-nudge.sh", "issue-create-nudge.sh", "limit-log.sh", "merge-gate.sh", "no-broad-agy-kill.sh", "no-haiku.sh", "outside-view-nudge.sh", "pr-created.sh", "protected-edit-gate.sh", "reap-watchers.sh", "release-docs-gate.sh", "review-debt.sh", "scoped-cap-gate.sh", "session-budget.sh", "summon-gate.sh"],
+      "agents": ["agy-runner", "codex-runner", "comment-sicko", "fable-planner", "planner"],
+      "runtime": ["hooks/lib/gh-command.sh", "hooks/lib/json.sh", "hooks/lib/report-guard.sh", "scripts/ai-context-sweep.sh", "scripts/cr-reply.sh", "scripts/lint-skill-docs.sh", "scripts/rig-meta.sh", "data/repo-meta.json"],
+      "doctrine": {"mode": "import", "overlay": "harness/claude.md"}
+    },
+    "codex": {
+      "$comment": "WSL Codex CLI as an organizer. autopilot stays out: its first step arms a scheduled wake-up that Codex has no tool for. no-comments stays out: it spawns a named Claude subagent.",
+      "install": "codex-plugin",
+      "skills": ["adversary", "autofix", "claude-review-lane", "codex-desktop", "codex-judge", "coderabbit-lane", "compass", "docs-drift", "farm-out", "no-doze", "pr-babysit", "triage", "tweet"],
+      "hooks": ["delegate-check.sh", "gh-body-no-scratch.sh", "gh-body-stamp.sh", "issue-create-nudge.sh", "merge-gate.sh", "no-broad-agy-kill.sh", "outside-view-nudge.sh", "release-docs-gate.sh", "summon-gate.sh"],
+      "hook_events": {"PreToolUse": {"AskUserQuestion|EnterPlanMode|Agent": "Agent"}},
+      "agents": [],
+      "runtime": ["hooks/lib/gh-command.sh", "hooks/lib/json.sh", "hooks/lib/report-guard.sh", "scripts/cr-reply.sh", "scripts/rig-meta.sh", "data/repo-meta.json"],
+      "allow_refs": {"no-doze": {"autopilot": "the scheduled-tick aside is labeled Claude Code; the skill says what to do without a scheduler"}},
+      "doctrine": {"mode": "generate", "overlay": "harness/codex.md"}
+    },
+    "codex-desktop": {
+      "$comment": "Windows Codex desktop app: a delegated thread that works one packet. Hooks stay out, being bash scripts that read WSL paths.",
+      "install": "codex-plugin",
+      "skills": ["codex-desktop"],
+      "hooks": [],
+      "hook_events": {},
+      "agents": [],
+      "runtime": [],
+      "doctrine": {"mode": "generate", "overlay": "harness/codex-desktop.md"}
+    },
+    "claude-windows": {
+      "$comment": "Windows Claude Code: no agy, so farm-out, lane and agy-runner stay out, and autopilot with them since it routes lanes through farm-out; no hooks, being bash scripts that read WSL paths.",
+      "install": "claude-directory-marketplace",
+      "skills": ["adversary", "autofix", "claude-review-lane", "codex-desktop", "codex-judge", "coderabbit-lane", "compass", "docs-drift", "no-comments", "no-doze", "pr-babysit", "triage", "tweet"],
+      "hooks": [],
+      "agents": ["codex-runner", "comment-sicko", "fable-planner", "planner"],
+      "runtime": ["scripts/cr-reply.sh", "scripts/rig-meta.sh", "data/repo-meta.json"],
+      "allow_refs": {"no-doze": {"autopilot": "the scheduled-tick aside; the skill says what to do without it", "farm-out": "a pointer to a worked kill example; the rule stands without it"}},
+      "doctrine": {"mode": "none"}
+    },
+    "agy": {
+      "$comment": "Antigravity CLI, a lane worker first. GEMINI.md is the lane contract; ~/.gemini/AGENTS.md carries the neutral core plus the agy overlay, whose first line gives a lane run's work order precedence.",
+      "install": "agy-plugin",
+      "skills": ["lane"],
+      "hooks": [],
+      "agents": [],
+      "runtime": [],
+      "doctrine": {"mode": "generate", "overlay": "harness/agy.md", "file": "GEMINI.md"}
+    }
+  },
+  "unshipped": {
+    "$comment": "An artifact in no target must be named here with the reason, or every build fails.",
+    "skills": {},
+    "hooks": {},
+    "agents": {}
+  }
+}

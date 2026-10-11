@@ -26,13 +26,13 @@ for i in $(seq 1 N); do grep -q DONE "$LOG" && exit 0; sleep 15; done; echo WATC
 ```
 
 - `N` is `expected_minutes * 4 + 40`. The loop length is the timeout. `WATCH_TIMEOUT` in the log means stop waiting and salvage.
-- Main session: background, started right after launch. Its completion fires one notification and the session is there to receive it.
+- Organizer: background, started right after launch, where the harness wakes the session when a background command ends (Claude Code's background Bash fires one notification and the session is there to receive it). A harness with no such notice waits in the foreground, like a handler.
 - Handler subagent: foreground, repeated bounded Bash calls. A handler never ends a turn while its run is alive. A backgrounded loop plus an ended turn destroys the context the wake would land in, the run goes unwatched, and the parent gets a completion notice for a handler that did nothing.
-- The Monitor tool is banned for "did this finish". Gated on `pgrep` or timers it sleeps through wake after wake. Monitor is for open-ended watching only: new PR comments, a file that may change.
+- A streaming watch tool (Claude Code: Monitor) is banned for "did this finish". Gated on `pgrep` or timers it sleeps through wake after wake. It is for open-ended watching only: new PR comments, a file that may change.
 
 ### Evidence only an MCP tool can read
 
-When no shell can reach the evidence, the one poll left is a cron tick firing back into the session so the model calls the tool itself (`autopilot` §0, arm the wake-up).
+When no shell can reach the evidence, the one poll left is a scheduled tick firing back into the session so the model calls the tool itself (Claude Code: `autopilot` §0, arm the wake-up). A harness with no scheduler has no such poll; say the evidence is unwatched and tell the operator.
 
 - Do not call it a monitor. In the plan file it is "cron tick every N min, calls `<tool>`". Latency is the full interval and nothing fires between ticks.
 - Set N from how fast the watched thing moves, and record the number beside the watch.
@@ -85,7 +85,7 @@ Wake once, at the end. Agent-per-step is where dozing lives.
 Any `pgrep -f` or `pkill -f` whose pattern appears in your own shell's command line kills your own shell, exit 144.
 
 - Kill by PID. Capture `PID=$!` at launch and keep it. The rest is for a lost PID.
-- The bracket trick (`"issue39[-]rca"`) is necessary and not sufficient. Every Bash tool call runs as `bash -c 'eval <your whole command>'`, so an `echo`, a `printf` or a filename in the same call holding the unbracketed string defeats it.
+- The bracket trick (`"issue39[-]rca"`) is necessary and not sufficient. A harness runs each shell call inside a wrapper shell (Claude Code: `bash -c 'eval <your whole command>'`), so an `echo`, a `printf` or a filename in the same call holding the unbracketed string defeats it.
 - Generate the marker at runtime: `SLUG="run-$(date +%s)"` cannot be in any ancestor's command line.
 - Never build the pattern in the same Bash call that mentions the string. The kill gets its own call.
 - `kill -9 "$PID"` preferred. `kill -9 $(pgrep -f "$SLUG")` as fallback, marker generated this run.

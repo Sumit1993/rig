@@ -14,6 +14,10 @@ check "fable-planner blocked while Fable is critical" "$(run '{"subagent_type":"
 grep -q "until .*Z" "$T/err" && echo "PASS: block names the reset time" || { echo "FAIL: reset time ($(cat "$T/err"))"; fails=$((fails+1)); }
 check "model fable blocked while Fable is critical" "$(run '{"model":"fable","prompt":"x"}')" 2
 check "sonnet spawn allowed" "$(run '{"model":"sonnet","prompt":"x"}')" 0
+check "planner on its Opus frontmatter allowed while Fable is critical" "$(run '{"subagent_type":"rig:planner","prompt":"x"}')" 0
+check "planner with model opus allowed" "$(run '{"subagent_type":"planner","model":"opus","prompt":"x"}')" 0
+check "planner with model fable blocked" "$(run '{"subagent_type":"rig:planner","model":"fable","prompt":"x"}')" 2
+check "fable-planner with model opus allowed" "$(run '{"subagent_type":"rig:fable-planner","model":"opus","prompt":"x"}')" 0
 check "no model and no planner allowed" "$(run '{"subagent_type":"general-purpose","prompt":"x"}')" 0
 
 usage 64 normal "$future"

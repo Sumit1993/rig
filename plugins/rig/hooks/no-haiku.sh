@@ -1,8 +1,8 @@
 #!/bin/bash
 # mage:rig/guard/no-haiku
-# PreToolUse(Agent) hook: never Haiku for real work.
+# PreToolUse(Agent) hook: never a Haiku 4.x id; bare `haiku` resolves to Haiku 5.5 and passes.
 # Absence of model is out of jurisdiction; runtime defaults are unblocked.
-# See issue #77.
+# See issue #77 and AGENTS.md §Models.
 # Rung: hook. Skipped: impossible (no deny rule restricts subagent model selection), check (the model exists only at spawn time).
 set -u
 in=$(cat)
@@ -25,8 +25,8 @@ fi
 [ -z "$model" ] && exit 0
 
 case "${model,,}" in
-  *haiku*)
-    echo "Blocked by routing doctrine (dotfiles/AGENTS.md): never use Haiku. Pick sonnet or above." >&2
+  *haiku-4*)
+    echo "Blocked by routing doctrine (dotfiles/AGENTS.md §Models): Haiku 4.x is not used. Pick haiku (Haiku 5.5) or above." >&2
     echo "mage:rig/guard/no-haiku" >&2
     tool=$(json_get "$in" "Agent" .tool_name)
     report_guard "rig/guard/no-haiku" "$tool" "$model"

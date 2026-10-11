@@ -3,7 +3,8 @@
 # PreToolUse(Bash) hook: docs-drift release gate. Merging a release PR on a
 # repo whose registry entry has a `docs` block requires a docs audit
 # (rig-meta observed docs_audit_at) within the last 14 days — the rig
-# docs-drift skill's Phase 1 records the marker. Fail-open everywhere.
+# docs-drift skill's Phase 1 records the marker. A merge it cannot judge, because
+# rig-meta.sh, its registry or json.sh is missing or will not run, is blocked (#169).
 # Escape hatch (user-approved only): DOCS_GATE=skip in the merge command.
 # Rung: hook. Skipped: impossible (branch protection cannot read local audit timestamps), check (the merge command exists only at call time).
 set -u
@@ -12,19 +13,33 @@ in=$(cat)
 _jlib="${CLAUDE_PLUGIN_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}/hooks/lib/json.sh"
 [ -f "$_jlib" ] || _jlib="$(cd "$(dirname "$0")" && pwd)/lib/json.sh"
 [ -f "$_jlib" ] && . "$_jlib"
-type json_get >/dev/null 2>&1 || json_get() { return 1; }
 KIT_META="${CLAUDE_PLUGIN_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}/scripts/rig-meta.sh"
 _lib="${CLAUDE_PLUGIN_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}/hooks/lib/report-guard.sh"
 [ -f "$_lib" ] || _lib="$(cd "$(dirname "$0")" && pwd)/lib/report-guard.sh"
 [ -f "$_lib" ] && . "$_lib"
 type report_guard >/dev/null 2>&1 || report_guard() { :; }
+blind() { # <what failed>: block the merge rather than wave it through
+  echo "Release gate cannot check this merge: $1. Reinstall rig so the hook gets its runtime files (install.sh --check names what is missing), or, if the user explicitly approved skipping the docs audit, include DOCS_GATE=skip in the merge command." >&2
+  echo "mage:rig/guard/release-docs-gate" >&2
+  report_guard "rig/guard/release-docs-gate" "Bash" "gate blind: $1"
+  exit 2
+}
+if ! type json_get >/dev/null 2>&1; then
+  grep -qE 'gh[[:space:]]+pr[[:space:]]+merge' <<<"$in" && ! grep -q 'DOCS_GATE=skip' <<<"$in" && blind "hooks/lib/json.sh is missing"
+  exit 0
+fi
 cmd=$(json_get "$in" "" .tool_input.command) || exit 0
 grep -qE 'gh[[:space:]]+pr[[:space:]]+merge' <<<"$cmd" || exit 0
 grep -q 'DOCS_GATE=skip' <<<"$cmd" && exit 0
+[ -f "$KIT_META" ] || blind "$KIT_META is missing"
+[ -f "$(dirname "$KIT_META")/../data/repo-meta.json" ] || blind "the registry data/repo-meta.json is missing"
 cwd=$(json_get "$in" "" .cwd)
 [ -d "$cwd" ] || exit 0
 cd "$cwd" || exit 0
-repo=$(json_get "$("$KIT_META" current 2>/dev/null)" "" .repo)
+meta=$("$KIT_META" current 2>/dev/null); rc=$?
+# 126/127: the script or a tool it needs (jq) cannot run; 1 is a cwd with no GitHub origin.
+[ "$rc" -ge 126 ] && blind "$KIT_META will not run (rc=$rc)"
+repo=$(json_get "$meta" "" .repo)
 [ -n "$repo" ] || exit 0
 "$KIT_META" get "$repo" docs >/dev/null 2>&1 || exit 0
 pr=$(grep -oE 'merge[[:space:]]+[0-9]+' <<<"$cmd" | grep -oE '[0-9]+' | head -1)

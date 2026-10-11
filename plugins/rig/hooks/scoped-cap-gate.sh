@@ -14,8 +14,13 @@ type report_guard >/dev/null 2>&1 || report_guard() { :; }
 
 model=$(jq -r '.tool_input.model // ""' <<<"$in" 2>/dev/null) || exit 0
 agent=$(jq -r '.tool_input.subagent_type // ""' <<<"$in" 2>/dev/null) || exit 0
-case "${model,,} ${agent,,}" in
-  fable*|*fable-planner*) want=fable ;;
+# The spawn's model wins; else a rig agent's frontmatter model, so the planner seat on Opus never meets Fable's cap.
+if [ -z "$model" ] && [ -n "$agent" ]; then
+  af="${SCOPED_CAP_AGENTS:-$(cd "$(dirname "$0")/.." && pwd)/agents}/${agent#rig:}.md"
+  [ -r "$af" ] && model=$(awk 'NR>1 && /^---/{exit} /^model:/{print $2; exit}' "$af")
+fi
+case "${model,,}" in
+  fable*|claude-fable*) want=fable ;;
   *) exit 0 ;;
 esac
 [ -r "$cache" ] || exit 0
@@ -27,7 +32,7 @@ row=$(jq -c --arg m "$want" --argjson now "$(date +%s)" '
 [ -n "$row" ] || exit 0
 
 pct=$(jq -r '.percent' <<<"$row"); reset=$(jq -r '.resets_at[0:16]' <<<"$row")
-echo "Blocked by rig/guard/scoped-cap-gate: Fable's weekly cap is at ${pct}% (critical) until ${reset}Z. Write the spec or ruling on the session model instead, and say so in the report." >&2
+echo "Blocked by rig/guard/scoped-cap-gate: Fable's weekly cap is at ${pct}% (critical) until ${reset}Z. Spawn the planner seat on Opus (agent planner) instead, and say so in the report." >&2
 echo "mage:rig/guard/scoped-cap-gate" >&2
 report_guard "rig/guard/scoped-cap-gate" "Agent" "${model:-$agent}"
 exit 2

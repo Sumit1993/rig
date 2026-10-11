@@ -13,11 +13,11 @@ metadata:
 
 The hourly CodeRabbit routine (`scripts/coderabbit-routine/` in Sumit1993/rig, `Sumit1993/rig#150`) is the admission mechanism, in every repo. `auto_review` is off everywhere, so opening a PR or marking it ready spends nothing by itself. Each hour the routine summons CodeRabbit on at most one PR: first a re-review, a PR whose head moved past its last review and whose CodeRabbit threads all carry a reply, then new PRs oldest first. A re-review is skipped when the model judges the new commits to be only fixes that CodeRabbit already confirmed in-thread, since reviewing a fix only finds a smaller nit in it. A draft is never summoned, so a PR stays a draft while commits are still coming.
 
-The routine never merges. Merging is a local session's job when the operator asks for it (`compass` Step 0, `pr-babysit` Phase 3). Each run's report, in the routine's run history at claude.ai/code/routines, lists what was summoned and what waits. Its summons carry a hidden `<!-- summoned-by: coderabbit-routine -->` line, so a summon without it came from a session or by hand. Its off switch is pausing the routine.
+The routine never merges. Merging is a local session's job when the operator asks for it (`compass` Step 0, `pr-babysit` Phase 3). The routine is a Claude Code routine; each run's report, in its run history at claude.ai/code/routines, lists what was summoned and what waits. Its summons carry a hidden `<!-- summoned-by: coderabbit-routine -->` line, so a summon without it came from a session or by hand. Its off switch is pausing the routine.
 
 ## 2. When to summon by hand
 
-Only when the operator says so for that PR. A hand summon takes the slot the routine schedules, and two summons within the hour collide: the second is refused as rate-limited (`prismalens/gh-workflows#213`). `summon-gate.sh` blocks a summon unless the command carries `CR_SUMMON_OK=<pr>`, the operator's word for that PR, never carried forward. Post it bare with the marker: `CR_SUMMON_OK=<pr> gh pr comment <pr> --body $'@coderabbitai review\n\n<!-- summoned-by: session -->'`. The routine sees it as pending and does not repeat it.
+Only when the operator says so for that PR. A hand summon takes the slot the routine schedules, and two summons within the hour collide: the second is refused as rate-limited (`prismalens/gh-workflows#213`). Where rig's hooks run (Claude Code; Codex once its hooks are trusted), `summon-gate.sh` blocks a summon unless the command carries `CR_SUMMON_OK=<pr>`, the operator's word for that PR, never carried forward. Elsewhere the rule is yours to keep. Post it bare with the marker: `CR_SUMMON_OK=<pr> gh pr comment <pr> --body $'@coderabbitai review\n\n<!-- summoned-by: session -->'`. The routine sees it as pending and does not repeat it.
 
 `.coderabbit.yaml` path instructions still shape review quality and the Claude lane cannot see them, so they stay worth writing.
 
@@ -58,10 +58,10 @@ Essentials was formerly called Pro, and Team was formerly called Pro+.
 
 ## 5. In-thread replies
 
-Replies go in-thread, to satisfy `required_review_thread_resolution`:
+Replies go in-thread, to satisfy `required_review_thread_resolution`. `cr-reply.sh` is in this plugin's `scripts/` directory, two levels above this skill's directory:
 
 ```bash
-"${CLAUDE_PLUGIN_ROOT}/scripts/cr-reply.sh" <pr> <root_id> "@coderabbitai Fixed in <sha>: <what changed>. Please verify."
+"<skill-dir>/../../scripts/cr-reply.sh" <pr> <root_id> "@coderabbitai Fixed in <sha>: <what changed>. Please verify."
 ```
 
 - Never write the word "resolve" in a reply. CodeRabbit parses it as a command and returns boilerplate ("Post `@coderabbitai resolve` as a new top-level PR comment"), resolving nothing.

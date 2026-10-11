@@ -1,18 +1,17 @@
 ---
 name: codex-desktop
-description: "Hand scoped desktop or browser work from WSL to the Windows Codex desktop app (in-app browser or Computer Use), in threads started with no click. Load for app reviews, QA or any desktop task from CC or Codex."
+description: "Hand any scoped task that needs Windows from WSL to the Windows Codex desktop app, in threads started with no click: Computer Use, the in-app browser, or plain Windows work. Load for app reviews, QA, desktop or Windows tasks from any organizer, or inside a delegated Windows thread."
 metadata:
-  harnesses: "claude codex"
-  version: "2.0.0"
+  version: "2.1.0"
 ---
 
 # Codex desktop tasks
 
 ## 1. Boundary and setup
 
-The WSL judge and Windows desktop tester are separate lanes. The desktop lane performs a scoped task and records observations; `codex-judge` challenges conclusions. A CLI installation does not supply the desktop app's Computer Use runtime.
+The WSL adversary seat and the Windows desktop lane are separate. The desktop lane performs a scoped task and records observations; the adversary seat challenges conclusions. A CLI installation does not supply the desktop app's Computer Use runtime.
 
-Keep CC, AGY, Rig and development repos in WSL. Install/sign into the Windows Codex desktop app with the existing account, enable its Computer Use plugin/skill, and use a native Windows workspace for the handoff. No Windows Rig clone, Windows CC/AGY setup, new subscription, secret copying or shared Codex home is required. Windows and WSL Codex configurations/authentication are independent. Verify availability in the app; a trial or CLI entitlement alone does not establish Computer Use availability.
+Keep CC, AGY, Rig and development repos in WSL. Install/sign into the Windows Codex desktop app with the existing account, enable its Computer Use plugin/skill, and use a native Windows workspace for the handoff. No Windows Rig clone, Windows CC/AGY setup, new subscription, secret copying or shared Codex home is required: a thread that needs a planner, adversary or other seat asks its dispatcher, which reaches the seat from WSL. Windows and WSL Codex configurations/authentication are independent. Verify availability in the app; a trial or CLI entitlement alone does not establish Computer Use availability.
 
 The Windows desktop must be unlocked and available to the test; Computer Use takes foreground control. The user handles authentication and permission dialogs. Follow the installed Computer Use skill and confirmation policy; never bypass its rules or automate the Codex app to press Send. The judge's read-only MCP restrictions remain intact.
 
@@ -28,6 +27,7 @@ Write a self-contained Markdown packet under `~/ai-context/<repo>/<issue>-<slug>
 - Cleanup limited to what the task opened, never the operator's own windows or documents.
 
 Pick the surface by need:
+- **Task** (`handoff.py --surface task`) for Windows work with no UI to drive: a Windows build or test run, a file or registry inspection, a Windows-only tool. The thread changes files only inside its task folder and the paths the packet's allowed actions name, so name every path it may write.
 - **In-app browser** (`handoff.py --surface browser`, which mentions `@Browser`) for browser work that needs no real login. The bundled Browser plugin drives its `iab` browser through `agent.browsers`, off the operator's browser profile (`docs/tab-mentions-iab.md` in `.codex/plugins/cache/openai-bundled/browser/26.1002.52244/`). Ask for settled reads after a write or navigation.
 - **Computer Use** when the work needs a real browser session, or anything outside a browser: native apps, OS dialogs, cross-app tasks. It drives the operator's live desktop, so every app it may touch is a deliberate grant (§4).
 - **A human or Playwright** for any interaction the packet cannot verify through either surface; say so in the report rather than guess.
@@ -46,14 +46,16 @@ TID=$(python3 "$SKILL_DIR/codex_thread.py" new --name "<packet title>" --workspa
 python3 "$SKILL_DIR/codex_thread.py" send --thread "$TID" --message-file "$TASK/prompt.txt"
 ```
 
-`handoff.py` copies and hashes the packet into a new task folder and writes a prompt naming that folder, the title and the report file. Add `--report reply-1.md` for a later step's report, `--surface browser` for the in-app browser. `codex_thread.py new` starts a thread through the bundled app-server, persists it and mounts it in the app; `send` queues a message. Later steps go to the same `$TID` with `send`. Each task gets its own thread, so tasks run side by side. Then wait for the report file with a bounded background wait; no file means no result. A zero exit means dispatched, never passed.
+`handoff.py` copies and hashes the packet into a new task folder and writes a prompt naming that folder, the title and the report file. Add `--report reply-1.md` for a later step's report, `--surface browser` for the in-app browser, `--surface task` for non-UI work, and `--dispatcher codex|other` when the dispatching session is not Claude Code. `codex_thread.py new` starts a thread through the bundled app-server, persists it and mounts it in the app; `send` queues a message. Later steps go to the same `$TID` with `send`. Each task gets its own thread, so tasks run side by side. Then wait for the report file with a bounded background wait; no file means no result. A zero exit means dispatched, never passed.
 
 ```text
-CC → packet → handoff.py → tasks/<slug>/ → codex_thread new → send → Computer Use → report + evidence/
-CC → verify hashes, provenance, build → fresh codex-judge packet → objections
+organizer → packet → handoff.py → tasks/<slug>/ → codex_thread new → send → thread works → report + evidence/
+organizer → verify hashes, provenance, build → adversary seat → objections
 ```
 
-Both directions work mid-task. Claude reaches a thread with `codex_thread.py send`. A thread reaches the Claude session that dispatched it with the command `handoff.py` writes into every prompt from a Claude Code session: `claude -p --resume <session> --fork-session --tools "" --strict-mcp-config`, run through `wsl.exe` with the question in `question.md`. It answers from that session's context and returns the answer as output. It runs with no tools and no MCP servers ([CLI reference](https://code.claude.com/docs/en/cli-reference): `--tools`, `--strict-mcp-config`), because a thread that reads untrusted pages may ask but never make Claude act; work that needs action comes back in the report.
+Both directions work mid-task. The organizer reaches a thread with `codex_thread.py send`. How a thread asks back depends on `--dispatcher`:
+- `claude` (the default) from inside a Claude Code session: the prompt names `claude -p --resume <session> --fork-session --tools "" --strict-mcp-config`, run through `wsl.exe` with the question in `question.md`. It answers from that session's context and returns the answer as output. It runs with no tools and no MCP servers ([CLI reference](https://code.claude.com/docs/en/cli-reference): `--tools`, `--strict-mcp-config`), because a thread that reads untrusted pages may ask but never make Claude act; work that needs action comes back in the report.
+- `codex`, `other`, or `claude` outside a session: the thread writes `question-N.md` in its task folder and stops the turn. Check the task folder for a new question file whenever you check for the report, answer it in a file, and send that file with `codex_thread.py send --thread "$TID" --message-file <answer>`; the thread resumes on it. A seat request (planner, adversary) is a question like any other: hold the seat from WSL and send its result back.
 
 `handoff.py --open` still opens the documented `codex://new` composer for a human Send, the fallback when the transport below breaks. Bring deciding evidence into the engineering issue; keep private proposals out of public issues.
 
@@ -70,7 +72,7 @@ Limits:
 - openai/codex#49458: Windows tasks started remotely lacked Computer Use. Threads started this way did not hit it.
 - Fallback if `queue` breaks: a [Stop hook](https://developers.openai.com/codex/hooks) returning `{"decision":"block","reason":"<next instruction>"}` continues a turn. Whether desktop turns run hooks is unverified.
 
-Claude Code auto mode refuses the thread-start step and long wait loops as [Create Unsafe Agents]. Running unattended needs the operator's allow rules, exact paths with no inner `*`:
+Claude Code only: auto mode refuses the thread-start step and long wait loops as [Create Unsafe Agents]. Running unattended needs the operator's allow rules, exact paths with no inner `*`:
 
 ```json
 "Bash(python3 <SKILL_DIR>/codex_thread.py:*)",
@@ -81,12 +83,16 @@ The `<hash>` folder changes with each app update.
 
 Read: [Computer Use](https://learn.chatgpt.com/docs/computer-use), [desktop deep links](https://learn.chatgpt.com/docs/reference/commands), [Windows app](https://learn.chatgpt.com/docs/windows/windows-app), [WSL setup](https://learn.chatgpt.com/docs/windows/wsl).
 
-This skill is exported to Claude and Codex. Windows receives the portable request, not Linux hooks or imported WSL policy. The app's installed Computer Use skill owns desktop execution.
+`dotfiles/harnesses.json` decides which harnesses get this skill. The Windows app receives the portable request and its own global AGENTS.md (the neutral core plus the codex-desktop overlay), never Linux hooks. The app's installed Computer Use skill owns desktop execution.
 
 ## 5. What to hand over
 
-Codex's Computer Use is stronger than CC's, and CC is stronger at code, so hand over any scoped desktop or browser work: app reviews and QA, reproductions, comparisons, data inspection, cross-app tasks. Name the question the work answers and observable completion criteria. A browser-only result is not evidence about native window behavior.
+Hand over any scoped task that needs Windows: app reviews and QA, reproductions, comparisons, data inspection, cross-app tasks, Windows builds and tools. Codex's Computer Use and in-app browser are the common reasons, not the limit. Name the question the work answers and observable completion criteria. A browser-only result is not evidence about native window behavior.
 
 ## 6. CLI notes
 
-`codex exec` runs noninteractive prompts in its own process, without the desktop app's Computer Use; `-p` is `--profile`, not a prompt mode (`codex exec --help`). The judge's JSON events, schema output and read-only ephemeral runs do not inherit AGY's constraints. Desktop work goes through §3.
+`codex exec` runs noninteractive prompts in its own process, without the desktop app's Computer Use; `-p` is `--profile`, not a prompt mode (`codex exec --help`). The adversary launcher's JSON events, schema output and read-only ephemeral runs do not inherit AGY's constraints. Desktop work goes through §3.
+
+## 7. Inside a delegated thread
+
+A Windows thread works one packet. Stay inside the task folder and the paths the packet names; write the report file the prompt names, with evidence, even when blocked. Ask the dispatcher the way the prompt says, never by guessing; a decision outside the packet is a question, not a judgement call. Post, push or merge only what the packet's allowed actions name.

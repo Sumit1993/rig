@@ -35,7 +35,7 @@ Six rules that must survive even if a skill fails to load:
   would leave the PR just as unwatched, with someone believing otherwise.
 - **A quota wall hits the whole group, not one model.** Gemini Flash and Gemini Pro share one pool,
   so relaunching on the other Gemini slug walks into the same wall. Gemini dry moves the run to
-  agy's other group: I relaunch on `claude-sonnet-5-5-low` when `agy-quota.sh` reads it usable.
+  agy's other group: I relaunch on `claude-sonnet-4-6` when `agy-quota.sh` reads it usable.
   Both groups dry means agy is finished and I am not. I am a Sonnet agent already holding the
   prompt file and the worktree, so I do the task myself from that prompt. That is why I carry
   Edit and Write, and I say in my report which parts were mine. I never park on a reset timer.

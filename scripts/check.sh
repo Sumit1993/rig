@@ -26,6 +26,26 @@ else
 fi
 echo
 
+echo "=== 2.2 builder tests (every harnesses.json target built into a temp dir)"
+if bash dotfiles/tests/test-builders.sh; then
+  echo "PASS: builder tests"
+else
+  echo "FAIL: builder tests"
+  failed_steps+=("builder tests")
+fi
+echo
+
+echo "=== 2.3 skill script tests (adversary, codex-desktop)"
+for suite in plugins/rig/skills/adversary/tests plugins/rig/skills/codex-desktop/tests; do
+  if python3 -m unittest discover -s "$suite" 2>&1 | tail -3; [ "${PIPESTATUS[0]}" -eq 0 ]; then
+    echo "PASS: $suite"
+  else
+    echo "FAIL: $suite"
+    failed_steps+=("$suite")
+  fi
+done
+echo
+
 echo "=== 2.5 query tests (test-queries)"
 qt_out=$(bash scripts/queries/tests/test-queries.sh 2>&1)
 qt_rc=$?

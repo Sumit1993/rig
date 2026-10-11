@@ -26,16 +26,16 @@ Name the passage and the form. "`<file>:<line>`: the `<name>` resolution order i
 
 ## Phase 1: audit (read-only, parallel)
 
-Three agents, merged into one ranked queue; the first two overlap and both will flag the CLI reference.
+Three parallel readers (subagents where the harness has them, else three passes), merged into one ranked queue; the first two overlap and both will flag the CLI reference.
 
 1. Feature-docs gap review. For recent major features, survey every doc surface: the registry's `docs.surfaces` plus anything it missed, docs-site pages, every README (root and per package; a package whose siblings have READMEs and it does not is a gap), CONTRIBUTING, CLI `usage()` and `--help` strings, task-runner `desc:` lines, header comments describing file layouts. Per gap: file:line, what it says now (one line), what it should say (one line), priority (high = actively wrong, medium = incomplete, low = nice to have).
 2. Merged-PR docs-miss sweep. `gh pr list --state merged --limit 20`, skip docs-only and dependabot, and for each PR find what operator-facing surface changed and whether any doc surface mentions it.
 3. Illustration-gap review. Same surfaces, judged against the standard above. Give the agent the three-or-more threshold and the four forms. Same per-gap shape, with "what it should say" naming the form. The agent also lists the pages it rejected as below threshold, so the queue does not fill with decoration findings.
 
-On completion record the marker that opens the release gate:
+On completion record the marker that opens the release gate. `rig-meta.sh` is in this plugin's `scripts/` directory, two levels above this skill's directory:
 
 ```bash
-"${CLAUDE_PLUGIN_ROOT}/scripts/rig-meta.sh" observe <owner/repo> docs_audit_at "$(date +%s)"
+"<skill-dir>/../../scripts/rig-meta.sh" observe <owner/repo> docs_audit_at "$(date +%s)"
 ```
 
 ## Phase 2: fix (one docs-refresh PR)
@@ -77,6 +77,6 @@ Audit, then the docs-refresh PR, then retrofit and nets in parallel, then merge 
 
 ## Release gate
 
-The rig hook `release-docs-gate.sh` blocks `gh pr merge` of a release PR (title matching `release`) on any registry repo with a `docs` block unless `docs_audit_at` is within 14 days. Phase 1 records the marker. `DOCS_GATE=skip` in the merge command overrides, user-approved only.
+The rig hook `release-docs-gate.sh` (Claude Code, and Codex once its hooks are trusted) blocks `gh pr merge` of a release PR (title matching `release`) on any registry repo with a `docs` block unless `docs_audit_at` is within 14 days. Phase 1 records the marker. `DOCS_GATE=skip` in the merge command overrides, user-approved only.
 
 Reference implementations: sreforge PRs #59 (docs refresh) and #61 (nets); prismalens PRs #205 (docs refresh) and #204 (nets). Rollout evidence is in the prismalens and sreforge hub notes (`docs-governance-playbook-*`, `build-specs-must-name-docs-surfaces`).
