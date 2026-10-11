@@ -44,7 +44,8 @@ win_home() {
   p=$(grep -qi microsoft /proc/version 2>/dev/null && cmd.exe /c 'echo %USERPROFILE%' 2>/dev/null | tr -d '\r' || true)
   [ -n "$p" ] && wslpath "$p"
 }
-newest_dir() { ls -dt "$@" 2>/dev/null | head -1; }
+# Highest version, not newest mtime: a client may touch an old cache dir after installing the new one.
+newest_dir() { ls -d "$@" 2>/dev/null | sort -V | tail -1; }
 
 # ---------------------------------------------------------------------------------------------- --check
 check() {

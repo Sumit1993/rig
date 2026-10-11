@@ -7,7 +7,8 @@
           {
             "type": "command",
             "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/release-docs-gate.sh\"",
-            "timeout": 20
+            "timeout": 20,
+            "statusMessage": "release-docs-gate"
           }
         ]
       },
@@ -17,7 +18,8 @@
           {
             "type": "command",
             "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/no-haiku.sh\"",
-            "timeout": 5
+            "timeout": 5,
+            "statusMessage": "no-haiku"
           }
         ]
       },
@@ -27,7 +29,8 @@
           {
             "type": "command",
             "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/delegate-check.sh\"",
-            "timeout": 5
+            "timeout": 5,
+            "statusMessage": "delegate-check"
           }
         ]
       },
@@ -37,7 +40,8 @@
           {
             "type": "command",
             "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/no-broad-agy-kill.sh\"",
-            "timeout": 5
+            "timeout": 5,
+            "statusMessage": "no-broad-agy-kill"
           }
         ]
       },
@@ -47,7 +51,8 @@
           {
             "type": "command",
             "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/gh-body-no-scratch.sh\"",
-            "timeout": 10
+            "timeout": 10,
+            "statusMessage": "gh-body-no-scratch"
           }
         ]
       },
@@ -57,7 +62,8 @@
           {
             "type": "command",
             "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/gh-body-stamp.sh\"",
-            "timeout": 10
+            "timeout": 10,
+            "statusMessage": "gh-body-stamp"
           }
         ]
       },
@@ -67,7 +73,8 @@
           {
             "type": "command",
             "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/issue-create-nudge.sh\"",
-            "timeout": 5
+            "timeout": 5,
+            "statusMessage": "issue-create-nudge"
           }
         ]
       },
@@ -77,7 +84,8 @@
           {
             "type": "command",
             "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/outside-view-nudge.sh\"",
-            "timeout": 5
+            "timeout": 5,
+            "statusMessage": "outside-view-nudge"
           }
         ]
       },
@@ -87,7 +95,8 @@
           {
             "type": "command",
             "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/scoped-cap-gate.sh\"",
-            "timeout": 10
+            "timeout": 10,
+            "statusMessage": "scoped-cap-gate"
           }
         ]
       },
@@ -97,7 +106,8 @@
           {
             "type": "command",
             "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/gh-write-nudge.sh\"",
-            "timeout": 10
+            "timeout": 10,
+            "statusMessage": "gh-write-nudge"
           }
         ]
       },
@@ -107,7 +117,8 @@
           {
             "type": "command",
             "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/merge-gate.sh\"",
-            "timeout": 10
+            "timeout": 10,
+            "statusMessage": "merge-gate"
           }
         ]
       },
@@ -117,7 +128,8 @@
           {
             "type": "command",
             "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/summon-gate.sh\"",
-            "timeout": 10
+            "timeout": 10,
+            "statusMessage": "summon-gate"
           }
         ]
       },
@@ -127,7 +139,8 @@
           {
             "type": "command",
             "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/protected-edit-gate.sh\"",
-            "timeout": 5
+            "timeout": 5,
+            "statusMessage": "protected-edit-gate"
           }
         ]
       },
@@ -137,7 +150,8 @@
           {
             "type": "command",
             "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/agent-prompt-nudge.sh\"",
-            "timeout": 5
+            "timeout": 5,
+            "statusMessage": "agent-prompt-nudge"
           }
         ]
       }
@@ -148,7 +162,8 @@
           {
             "type": "command",
             "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/reap-watchers.sh\" end",
-            "timeout": 10
+            "timeout": 10,
+            "statusMessage": "reap-watchers"
           }
         ]
       }
@@ -159,7 +174,8 @@
           {
             "type": "command",
             "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/reap-watchers.sh\" start",
-            "timeout": 10
+            "timeout": 10,
+            "statusMessage": "reap-watchers"
           }
         ]
       },
@@ -168,7 +184,8 @@
           {
             "type": "command",
             "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/session-budget.sh\"",
-            "timeout": 10
+            "timeout": 10,
+            "statusMessage": "session-budget"
           }
         ]
       },
@@ -177,7 +194,8 @@
           {
             "type": "command",
             "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/review-debt.sh\"",
-            "timeout": 10
+            "timeout": 10,
+            "statusMessage": "review-debt"
           }
         ]
       }
@@ -189,7 +207,8 @@
           {
             "type": "command",
             "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/pr-created.sh\"",
-            "timeout": 30
+            "timeout": 30,
+            "statusMessage": "pr-created"
           }
         ]
       },
@@ -199,7 +218,8 @@
           {
             "type": "command",
             "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/draft-posted-nudge.sh\"",
-            "timeout": 10
+            "timeout": 10,
+            "statusMessage": "draft-posted-nudge"
           }
         ]
       },
@@ -209,7 +229,8 @@
           {
             "type": "command",
             "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/pr-created.sh\"",
-            "timeout": 30
+            "timeout": 30,
+            "statusMessage": "pr-created"
           }
         ]
       },
@@ -218,7 +239,8 @@
           {
             "type": "command",
             "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/budget-nudge.sh\"",
-            "timeout": 10
+            "timeout": 10,
+            "statusMessage": "budget-nudge"
           }
         ]
       }
@@ -230,7 +252,8 @@
           {
             "type": "command",
             "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/limit-log.sh\"",
-            "timeout": 5
+            "timeout": 5,
+            "statusMessage": "limit-log"
           }
         ]
       }
@@ -242,7 +265,8 @@
           {
             "type": "command",
             "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/limit-log.sh\"",
-            "timeout": 5
+            "timeout": 5,
+            "statusMessage": "limit-log"
           }
         ]
       }
