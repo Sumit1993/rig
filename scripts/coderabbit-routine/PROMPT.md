@@ -17,13 +17,13 @@ The scripts are fixed in a local session, never in this run.
 
 ## 1. Read the digest
 
-Run `python3 digest.py > /tmp/digest.json` from this directory. It lists every open pull request in the six repos. Pull requests marked `excluded` (Dependabot, release-please, other authors, drafts) are never summoned.
+Run `python3 digest.py > /tmp/digest.json` from this directory, with the Bash timeout set to 600000: when the slot opens within 8 minutes, the digest sleeps until it does and then reads everything again (`waited_s` says how long). It lists every open pull request in the six repos. Pull requests marked `excluded` (Dependabot, release-please, other authors, drafts) are never summoned.
 
 ## 2. Budget
 
 Post nothing this run in either of these cases:
 - A CodeRabbit comment anywhere in the digest, read by its `updated_at`, is a rate-limit notice whose stated wait has not yet passed.
-- `slot_open` is false. `digest.py` sets `slot_opens_at` to the later of the last accepted review plus 57 minutes (CodeRabbit's hourly window runs from the review it accepted) and the time the last routine summon stamped in its marker.
+- `slot_open` is false. `digest.py` sets `slot_opens_at` to the later of the times the routine's summons stamped in their markers and the last review no stamped summon produced, plus 57 minutes.
 - `operator_last_summon.age_min` is under 57 and that summon has no CodeRabbit reply yet.
 
 ## 3. Pick one

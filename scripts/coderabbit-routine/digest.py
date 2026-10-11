@@ -8,6 +8,7 @@ import json
 import re
 import os
 import sys
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -29,6 +30,11 @@ CR = "coderabbitai[bot]"
 MARKER = "<!-- summoned-by: coderabbit-routine"
 NOW = datetime.now(timezone.utc)
 SLOT_MIN = 57
+# CodeRabbit's window runs 60 minutes from accepting a summon, about 10 s after it is posted; a stamp 57 minutes
+# from the digest missed prismalens#814 by 24 s. The digest sleeps out a slot this close (Sumit1993/rig#159).
+STAMP_S = 3625
+WAIT_MAX_S = 480
+DIGEST_PATH = "/tmp/digest.json"
 
 
 def marker(**state):
@@ -212,19 +218,19 @@ def closed_floors(repo):
         if len(recent) < len(batch) or len(batch) < 50:
             break
         page += 1
-    ats = [
+    reviews = [
         r["submitted_at"]
         for pr in closed
         for r in gh(f"repos/{repo}/pulls/{pr['number']}/reviews?per_page=100", paginate=True)
         if r["user"]["login"] == CR and (r["body"] or "").strip()
     ]
-    stamps = [
-        marker_state(c["body"])["slot_opens_at"]
+    stamped = [
+        {"at": c["created_at"], "slot_opens_at": marker_state(c["body"])["slot_opens_at"]}
         for pr in closed
         for c in gh(f"repos/{repo}/issues/{pr['number']}/comments?per_page=100", paginate=True)
         if c["user"]["login"] == OPERATOR and "slot_opens_at" in marker_state(c["body"])
     ]
-    return {"last_review_at": max(ats) if ats else None, "slot_opens_at": max(stamps) if stamps else None}
+    return {"reviews": reviews, "stamped_summons": stamped}
 
 
 def safe_pr_facts(repo, pr):
@@ -244,7 +250,7 @@ def repo_digest(repo):
     return repo, facts
 
 
-def main():
+def build():
     with ThreadPoolExecutor(len(REPOS)) as pool:
         repos = dict(pool.map(repo_digest, REPOS))
     summons = [
@@ -252,27 +258,44 @@ def main():
         for r in repos.values() for p in r.get("pull_requests", []) if p.get("last_summon")
     ]
     reviewed = [p["coderabbit_last_review_at"] for r in repos.values() for p in r.get("pull_requests", []) if p.get("coderabbit_last_review_at")]
-    reviewed += [r["closed"]["last_review_at"] for r in repos.values() if (r.get("closed") or {}).get("last_review_at")]
-    last_review = max(reviewed) if reviewed else None
-    last = max(summons) if summons else None
-    # CodeRabbit's hourly window runs from the last review it accepted, not from the summon;
-    # a routine summon's stamped slot_opens_at is the other floor.
-    floors = [ts(last_review) + timedelta(minutes=SLOT_MIN)] if last_review else []
-    floors += [
-        ts(p["last_summon"]["state"]["slot_opens_at"])
+    reviewed += [at for r in repos.values() for at in (r.get("closed") or {}).get("reviews", [])]
+    stamped = [
+        {"at": p["last_summon"]["at"], "slot_opens_at": p["last_summon"]["state"]["slot_opens_at"]}
         for r in repos.values() for p in r.get("pull_requests", [])
         if (p.get("last_summon") or {}).get("state", {}).get("slot_opens_at")
     ]
-    floors += [ts(r["closed"]["slot_opens_at"]) for r in repos.values() if (r.get("closed") or {}).get("slot_opens_at")]
+    stamped += [s for r in repos.values() for s in (r.get("closed") or {}).get("stamped_summons", [])]
+    last_review = max(reviewed) if reviewed else None
+    last = max(summons) if summons else None
+    # A review a stamped summon produced is already covered by its stamp; its later submit time would push
+    # the slot past the next run. Any other review holds the window from its submit time.
+    unstamped = [
+        at for at in reviewed
+        if not any(timedelta(0) <= ts(at) - ts(s["at"]) <= timedelta(minutes=30) for s in stamped)
+    ]
+    floors = [ts(max(unstamped)) + timedelta(minutes=SLOT_MIN)] if unstamped else []
+    floors += [ts(s["slot_opens_at"]) for s in stamped]
     opens = max(floors) if floors else None
-    json.dump({
+    return opens, {
         "now": NOW.strftime("%Y-%m-%dT%H:%M:%SZ"),
         "operator_last_summon": last and {"pr": last[1], "at": last[0], "age_min": age_min(last[0])},
         "coderabbit_last_review": last_review and {"at": last_review, "age_min": age_min(last_review)},
         "slot_opens_at": opens and opens.strftime("%Y-%m-%dT%H:%M:%SZ"),
         "slot_open": not opens or opens <= NOW,
         "repos": repos,
-    }, sys.stdout, indent=1)
+    }
+
+
+def main():
+    global NOW
+    opens, digest = build()
+    wait = opens and (opens - NOW).total_seconds()
+    if wait and 0 < wait <= WAIT_MAX_S:
+        time.sleep(wait + 5)
+        NOW = datetime.now(timezone.utc)
+        opens, digest = build()
+        digest["waited_s"] = int(wait + 5)
+    json.dump(digest, sys.stdout, indent=1)
     print()
 
 
