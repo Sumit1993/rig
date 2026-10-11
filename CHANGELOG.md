@@ -1,5 +1,29 @@
 # Changelog
 
+## [0.17.1](https://github.com/Sumit1993/rig/compare/rig-v0.17.0...rig-v0.17.1) (2026-10-11)
+
+
+### Bug Fixes
+
+* **coderabbit-routine:** the digest sleeps out a slot that opens within 8 minutes, then reads again ([5fd4369](https://github.com/Sumit1993/rig/commit/5fd4369b21a0b28cb22e76fce2d0dfac508951fe))
+* **coderabbit-routine:** the slot stamp counts from the post, and a run sleeps out a slot that opens within 8 minutes ([20ccbf1](https://github.com/Sumit1993/rig/commit/20ccbf13be840e7da1d3dcdf3e7d2fca7b1c0889))
+* **coderabbit-routine:** the slot stamp counts from the post, and a run sleeps out a slot that opens within 8 minutes ([#191](https://github.com/Sumit1993/rig/issues/191)) ([20ccbf1](https://github.com/Sumit1993/rig/commit/20ccbf13be840e7da1d3dcdf3e7d2fca7b1c0889))
+* **coderabbit-routine:** the slot stamp counts from the post, and act.py waits out a slot that opens within 5 minutes ([b9b3260](https://github.com/Sumit1993/rig/commit/b9b326060f0b2831d95b9c4cd02be97943aecfd8))
+* **hooks:** every hook carries its script name, and install --check reads the highest plugin version ([506fb63](https://github.com/Sumit1993/rig/commit/506fb6305d7d46ebc68555dab05eccde3ab8b8dd))
+* **hooks:** every hook carries its script name, and install --check reads the highest plugin version ([795e390](https://github.com/Sumit1993/rig/commit/795e390007928d092c688e7c1730055203e8a69e))
+* **hooks:** every hook carries its script name, and install --check reads the highest plugin version ([#190](https://github.com/Sumit1993/rig/issues/190)) ([506fb63](https://github.com/Sumit1993/rig/commit/506fb6305d7d46ebc68555dab05eccde3ab8b8dd))
+
+
+### Continuous Integration
+
+* bump actions/setup-python from 6 to 7 ([cec958d](https://github.com/Sumit1993/rig/commit/cec958ded4136d5cd8700841d2a50854a3e1f65d))
+* bump actions/setup-python from 6 to 7 ([#176](https://github.com/Sumit1993/rig/issues/176)) ([cec958d](https://github.com/Sumit1993/rig/commit/cec958ded4136d5cd8700841d2a50854a3e1f65d))
+
+
+### Miscellaneous Chores
+
+* **coderabbit-routine:** drop a stray test stub committed by mistake ([8524fde](https://github.com/Sumit1993/rig/commit/8524fdefc6eb9a051da701499c2df6c09306ebee))
+
 ## [0.17.0](https://github.com/Sumit1993/rig/compare/rig-v0.16.0...rig-v0.17.0) (2026-10-11)
 
 
