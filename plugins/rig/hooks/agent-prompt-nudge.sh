@@ -1,8 +1,8 @@
 #!/bin/bash
 # PreToolUse(Agent) hook: three prompt-shape nudges from AGENTS.md §Models and farm-out §Dispatch,
 # once per session each. reasoning: Fable or Opus told to echo or show its reasoning
-# (declined as reasoning_extraction). verify: a Sonnet prompt with no verification step. planner: a second fable-planner
-# inside the prompt-cache hour, where SendMessage to the first is cheaper.
+# (declined as reasoning_extraction). verify: a Sonnet or Haiku prompt with no verification step. planner: a second
+# planner or fable-planner inside the prompt-cache hour, where SendMessage to the first is cheaper.
 # Refs #123, #79. Rung: hook. Skipped: check (prompts exist only at spawn time), rule (in AGENTS.md, ignored).
 set -u
 in=$(cat)
@@ -19,7 +19,7 @@ mkdir -p "$state_dir" 2>/dev/null || exit 0
 once() { [ -e "$state_dir/$session.$1" ] && return 1; : > "$state_dir/$session.$1" 2>/dev/null; }
 
 planner="no"
-grep -qE '(^|:)fable-planner$' <<<"$st" && planner="yes"
+grep -qE '(^|:)(fable-)?planner$' <<<"$st" && planner="yes"
 msgs=()
 
 if { [ "$planner" = "yes" ] || grep -qiE '^(fable|opus)' <<<"$model"; } \
@@ -27,8 +27,8 @@ if { [ "$planner" = "yes" ] || grep -qiE '^(fable|opus)' <<<"$model"; } \
   once reasoning && msgs+=("AGENTS.md §Models: never ask Opus 5.5 or Fable 5.1 to echo or show its reasoning; both decline it as reasoning_extraction. Cut that line and ask for evidence instead.")
 fi
 
-if grep -qiE '^sonnet' <<<"$model" && ! grep -qiE 'verif|confirm|paste (the )?(raw )?output|run .*(test|check)' <<<"$prompt"; then
-  once verify && msgs+=("AGENTS.md §Models: Sonnet needs explicit verification steps. Name the commands to run and say to paste their raw output; a Sonnet prompt without them returns claims.")
+if grep -qiE '^(claude-)?(sonnet|haiku)' <<<"$model" && ! grep -qiE 'verif|confirm|paste (the )?(raw )?output|run .*(test|check)' <<<"$prompt"; then
+  once verify && msgs+=("AGENTS.md §Models: Sonnet and Haiku need explicit verification steps. Name the commands to run and say to paste their raw output; a prompt without them returns claims.")
 fi
 
 if [ "$planner" = "yes" ]; then
@@ -39,7 +39,7 @@ if [ "$planner" = "yes" ]; then
     case "$last" in ''|*[!0-9]*) last=0 ;; esac
     age=$((now - last))
     if [ "$age" -lt 3600 ]; then
-      once planner && msgs+=("A fable-planner was spawned $((age / 60)) min ago, inside the prompt-cache hour. SendMessage it the next spec instead; a fresh planner pays for the whole context again (farm-out §Dispatch, #79).")
+      once planner && msgs+=("A planner was spawned $((age / 60)) min ago, inside the prompt-cache hour. SendMessage it the next spec instead; a fresh planner pays for the whole context again (farm-out §Dispatch, #79).")
     fi
   fi
   echo "$now" > "$stamp" 2>/dev/null

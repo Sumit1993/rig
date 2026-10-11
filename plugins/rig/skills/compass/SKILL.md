@@ -2,7 +2,6 @@
 name: compass
 description: "Where a repo stands and what to work on next, read from GitHub itself: review debt on open PRs first, then the version milestone, its open issues by priority and surface, blocked skipped. Load when a session picks up work cold, is asked \"what's next\" or \"where are we\", must rank a queue, or merges on the operator's word. Also the frozen label and milestone vocabulary."
 metadata:
-  harnesses: "claude codex"
   version: "1.1.0"
 ---
 
@@ -26,7 +25,7 @@ Never create, rename or delete a label or a milestone. If the vocabulary lacks s
 
 ## Step 0: review debt
 
-Reviews land hours after a PR is marked ready, long after its session ended (`Sumit1993/rig#150`). Findings on the operator's open PRs in this repo come before any new pick. Debt is per repo: other repos' debt waits for a session there, and none here is reported as none, never widened. The SessionStart hook prints them as `Review debt in <repo>: ...`; without the hook:
+Reviews land hours after a PR is marked ready, long after its session ended (`Sumit1993/rig#150`). Findings on the operator's open PRs in this repo come before any new pick. Debt is per repo: other repos' debt waits for a session there, and none here is reported as none, never widened. In Claude Code the SessionStart hook prints them as `Review debt in <repo>: ...`; without the hook, in any harness:
 
 ```
 repo=$(gh repo view --json nameWithOwner -q .nameWithOwner)

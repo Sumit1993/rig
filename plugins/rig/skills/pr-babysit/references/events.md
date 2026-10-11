@@ -25,7 +25,7 @@ PR#N <MERGED|CLOSED> — dropped from watch
 - `RATE-LIMITED`, `ANSWERED AS CHAT` and `RE-TRIGGER FAILED` mean no review ran. The diff is unreviewed.
 - `AUTO-PAUSED` is not in that group. With `auto_pause_after_reviewed_commits: 1` the pause follows a completed review, so the head that triggered it was reviewed. Read the settled comment body; the pause blocks the next push's review, not the one that landed.
 - `ALREADY REVIEWED` is the opposite: a refused trigger because this head is reviewed and no further review is coming. Only `@coderabbitai full review` reruns it, from the same budget, so spend it only with reason to doubt the first pass. Reading this as "no review ran" inverts the truth at a merge decision (`coderabbit-lane` §4, triggers).
-- The monitor emits pointers, not payloads. The body is at the `payload` path. Route the path; never fetch a body into the session that owns the Monitor.
+- The monitor emits pointers, not payloads. The body is at the `payload` path. Route the path; never fetch a body into the session that owns the watcher.
 
 ## On each event
 

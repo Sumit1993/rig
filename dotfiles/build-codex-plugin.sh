@@ -1,71 +1,34 @@
 #!/bin/bash
-# Codex plugin from plugins/rig: codex-tagged skills and the hooks proven on Codex payloads.
-# hooks.json is filtered from the Claude file so commands never drift (#141).
+# Codex plugin for one harnesses.json target (codex: WSL CLI, codex-desktop: the Windows app).
+# hooks.json is filtered from the Claude file so commands never drift (#141); the manifest decides the rest.
 set -euo pipefail
-SRC="$(cd "$(dirname "$0")/../plugins/rig" && pwd)"
-OUT="${1:?usage: build-codex-plugin.sh <out-dir>}"
-
-ALLOWED_HOOKS=(
-  gh-body-stamp.sh gh-body-no-scratch.sh issue-create-nudge.sh no-broad-agy-kill.sh release-docs-gate.sh
-  delegate-check.sh outside-view-nudge.sh
-)
-# Every hook is in exactly one list; a new hook fails the build until someone rules on it (#141).
-CLAUDE_ONLY=(
-  "no-haiku.sh: guards Claude model ids" "scoped-cap-gate.sh: Anthropic weekly caps"
-  "session-budget.sh: Anthropic usage limits" "budget-nudge.sh: Anthropic usage limits"
-  "review-debt.sh: SessionStart event Codex lacks"
-  "limit-log.sh: StopFailure and Notification, events Codex lacks"
-  "pr-created.sh: Claude watcher tools" "reap-watchers.sh: Claude watcher tools"
-  "agent-prompt-nudge.sh: Claude prompt conventions"
-  "draft-posted-nudge.sh: post-tool cleanup in Claude sessions"
-  "gh-write-nudge.sh: gh write conventions in Claude sessions"
-  "merge-gate.sh: per-merge permission in Claude sessions"
-  "summon-gate.sh: CodeRabbit summons in Claude sessions"
-  "protected-edit-gate.sh: protects ~/.claude and dotfiles paths"
-)
-for f in "$SRC"/hooks/*.sh; do
-  b=$(basename "$f")
-  printf '%s\n' "${ALLOWED_HOOKS[@]}" "${CLAUDE_ONLY[@]%%:*}" | grep -qx "$b" \
-    || { echo "build-codex-plugin: $b is in neither ALLOWED_HOOKS nor CLAUDE_ONLY" >&2; exit 1; }
-done
+. "$(dirname "$0")/build-lib.sh"
+OUT="${1:?usage: build-codex-plugin.sh <out-dir> [codex|codex-desktop]}"
+TARGET="${2:-codex}"
+[ "$(rig_field "$TARGET" install)" = codex-plugin ] || { echo "build-codex-plugin: $TARGET is not a codex-plugin target" >&2; exit 1; }
+rig_check_all "$TARGET" || { echo "build-codex-plugin: $TARGET failed the manifest checks above" >&2; exit 1; }
 
 rm -rf "$OUT"
-mkdir -p "$OUT/skills" "$OUT/hooks/lib" "$OUT/.codex-plugin" "$OUT/.claude-plugin"
-
-version=$(jq -r .version "$SRC/.claude-plugin/plugin.json")
-description=$(jq -r .description "$SRC/.claude-plugin/plugin.json")
-jq -n --arg v "$version" --arg d "$description" \
+mkdir -p "$OUT/.codex-plugin" "$OUT/.claude-plugin"
+jq -n --arg v "$(jq -r .version "$RIG_SRC/.claude-plugin/plugin.json")" --arg d "$(jq -r .description "$RIG_SRC/.claude-plugin/plugin.json")" \
   '{name: "rig", version: $v, description: $d}' > "$OUT/.codex-plugin/plugin.json"
+rig_copy_target "$TARGET" "$OUT"
 
-for skill in "$SRC"/skills/*/SKILL.md; do
-  dir=$(dirname "$skill")
-  awk '/^---$/{n++; next} n==1' "$skill" | grep -qE '^[[:space:]]+harnesses:.*\bcodex\b' || continue
-  cp -r "$dir" "$OUT/skills/"
-done
-
-for h in "${ALLOWED_HOOKS[@]}"; do
-  cp "$SRC/hooks/$h" "$OUT/hooks/$h"
-done
-cp "$SRC/hooks/lib/gh-command.sh" "$SRC/hooks/lib/report-guard.sh" "$OUT/hooks/lib/"
-
-hook_re='gh-body-stamp\.sh|gh-body-no-scratch\.sh|issue-create-nudge\.sh|no-broad-agy-kill\.sh|release-docs-gate\.sh|delegate-check\.sh|outside-view-nudge\.sh'
-# Codex has no AskUserQuestion or EnterPlanMode, so outside-view-nudge crosses on Agent only (#141).
-jq --arg re "$hook_re" '
-  {
-    hooks: {
-      PreToolUse: [
-        .hooks.PreToolUse[]
-        | select(.matcher == "Bash" or .matcher == "Edit|Write|NotebookEdit" or .matcher == "Agent" or .matcher == "AskUserQuestion|EnterPlanMode|Agent")
-        | select(.hooks[0].command | test($re))
-        | if .matcher == "AskUserQuestion|EnterPlanMode|Agent" then .matcher = "Agent" else . end
-      ]
-    }
-  }' "$SRC/hooks/hooks.json" > "$OUT/hooks/hooks.json"
+# Entries under the target's events whose script the target ships; a matcher map renames CC-only tool names.
+hooks=$(rig_list "$TARGET" hooks | jq -R . | jq -s .)
+events=$(jq --arg t "$TARGET" '.targets[$t].hook_events // {}' "$RIG_MANIFEST")
+if [ "$hooks" != "[]" ]; then
+  jq --argjson keep "$hooks" --argjson ev "$events" '
+    {hooks: (.hooks | with_entries(select($ev[.key] != null) | .key as $e
+      | .value |= [.[] | select((.hooks[0].command | capture("hooks/(?<s>[^\"/ ]+\\.sh)").s) as $s | $keep | index($s))
+                  | .matcher = ($ev[$e][.matcher // ""] // .matcher)])
+      | with_entries(select(.value | length > 0)))}' "$RIG_SRC/hooks/hooks.json" > "$OUT/hooks/hooks.json"
+fi
 
 # codex plugin marketplace add reads .claude-plugin/marketplace.json, not a root file (CLI 0.154.0, #141).
 jq -n \
   '{name: "rig-local", interface: {displayName: "rig (local)"}, plugins: [
     {name: "rig", source: {source: "local", path: "./"}, policy: {installation: "AVAILABLE", authentication: "ON_INSTALL"}, category: "Productivity"}
   ]}' > "$OUT/.claude-plugin/marketplace.json"
-
+rig_stamp "$TARGET" "$OUT"
 ls "$OUT/skills"

@@ -55,6 +55,12 @@ class ReviewTests(unittest.TestCase):
 import json, os, pathlib, subprocess, sys, time
 args=sys.argv[1:]
 mode=os.environ.get('REVIEW_MODE','success')
+if args[:1]==['app-server']:
+ for line in sys.stdin:
+  if json.loads(line).get('id')==2: break
+ used=100 if mode=='quota_exhausted' else 40
+ print(json.dumps({'id':2,'result':{'ordinaryUsageAllowed':used<100,'rateLimits':{'primary':{'usedPercent':used,'windowDurationMins':300,'resetsAt':int(time.time())+3600},'secondary':{'usedPercent':50,'windowDurationMins':10080,'resetsAt':int(time.time())+86400}}}}),flush=True)
+ sys.exit(0)
 if 'mcp' in args:
  assert pathlib.Path.cwd() == pathlib.Path(args[args.index('-C')+1]), 'inventory used launcher cwd'
  if mode=='mcp_failure': sys.exit(7)
@@ -63,7 +69,7 @@ if 'mcp' in args:
  sys.exit(0)
 required=['--no-daemon','--search','--ask-for-approval','never','exec','--ephemeral','read-only','model_reasoning_effort=high','--json','features.plugins=false','features.apps=false','features.enable_mcp_apps=false','mcp_servers.fixture.enabled=false']
 assert all(value in args for value in required), args
-assert sys.stdin.read().startswith('You are the independent adversarial judge')
+assert sys.stdin.read().startswith('<role>')
 mode=os.environ.get('REVIEW_MODE','success')
 if mode=='quota':
  print('quota exhausted',file=sys.stderr);sys.exit(9)
@@ -76,16 +82,39 @@ if mode=='changed':
  pathlib.Path(wt,'source.txt').write_text('changed')
 if mode=='changed_packet':
  pathlib.Path(args[args.index('-C')+1], 'packet.md').write_text('changed')
+if mode=='refusal':
+ print(json.dumps({'type':'error','message':'refused','codex_error_info':'content_filter'}))
+if mode!='no_tools':
+ print(json.dumps({'type':'item.completed','item':{'type':'command_execution','command':'/bin/bash -lc "cat fixture.py"','exit_code':0}}))
 p=pathlib.Path(args[args.index('-o')+1])
 p.write_text('{broken' if mode=='malformed' else os.environ['REVIEW_RESULT'])
 print(json.dumps({'type':'turn.completed'}))
 ''')
         fake.chmod(0o755)
+        fake_claude = self.bin / "claude"
+        fake_claude.write_text('''#!/usr/bin/env python3
+import json, os, pathlib, sys
+args=sys.argv[1:]
+pathlib.Path(os.environ['CLAUDE_ARGV']).write_text(json.dumps({'argv':args,'cwd':os.getcwd()}))
+assert sys.stdin.read().startswith('<role>')
+mode=os.environ.get('REVIEW_MODE','success')
+def emit(e): print(json.dumps(e))
+emit({'type':'system','subtype':'init','model':'claude-opus-5-5'})
+if mode!='no_tools':
+ emit({'type':'assistant','message':{'content':[{'type':'tool_use','id':'t1','name':'Read','input':{'file_path':'fixture.py'}}]}})
+ emit({'type':'user','message':{'content':[{'type':'tool_result','tool_use_id':'t1','content':'x'}]}})
+out=json.loads(os.environ['REVIEW_RESULT'])
+emit({'type':'assistant','message':{'content':[{'type':'tool_use','id':'t2','name':'StructuredOutput','input':out}]}})
+emit({'type':'result','subtype':'success','is_error':False,'structured_output':out,'modelUsage':{'claude-opus-5-5':{}}})
+''')
+        fake_claude.chmod(0o755)
+        self.claude_argv = self.root / "claude-argv.json"
         self.addCleanup(patch.stopall)
         patch.object(judge, "AI_CONTEXT", self.history).start()
         patch.dict(os.environ, {"PATH": str(self.bin) + os.pathsep + os.environ["PATH"],
                                "REVIEW_RESULT": json.dumps(result()),
-                               "REVIEW_MODE": "success"}).start()
+                               "REVIEW_MODE": "success",
+                               "CLAUDE_ARGV": str(self.root / "claude-argv.json")}).start()
 
     def git(self, *args):
         return subprocess.run(["git", "-C", str(self.repo), *args], check=True,
@@ -144,6 +173,19 @@ print(json.dumps({'type':'turn.completed'}))
         self.assertEqual(self.run_review(), 1)
         self.assertEqual(self.status()["exit_code"], 9)
         self.assertFalse((self.out / "result.json").exists())
+
+    def test_exhausted_quota_prevents_launch(self):
+        os.environ["REVIEW_MODE"] = "quota_exhausted"
+        self.assertEqual(self.run_review(), 1)
+        status = self.status()
+        self.assertIsNone(status["exit_code"])
+        self.assertIn("not launched", status["error"])
+        self.assertTrue(status["quota"].startswith("exhausted until"))
+        self.assertFalse((self.out / "events.jsonl").exists())
+
+    def test_usable_quota_is_recorded(self):
+        self.assertEqual(self.run_review(), 0)
+        self.assertTrue(self.status()["quota"].startswith("usable: 5h 40%"))
 
     def test_malformed_and_schema_invalid_output_fail(self):
         for mode, response in [("malformed", result()), ("success", {"verdict": "survived"})]:
@@ -279,6 +321,107 @@ print(json.dumps({'type':'turn.completed'}))
         response["verdict"] = "blocked"
         with self.assertRaisesRegex(ValueError, "empty evidence"):
             judge.validate(response)
+
+
+    def run_holder(self, holder, worktree=None):
+        with contextlib.redirect_stdout(io.StringIO()):
+            return judge.run(argparse.Namespace(packet=self.packet, worktree=worktree,
+                run_dir=self.out, effort="high", timeout=5, base=self.head if worktree else None,
+                head=self.head if worktree else None, previous_result=None, holder=holder))
+
+    def test_worktree_outside_claude_worktrees_is_accepted(self):
+        other = self.root / "elsewhere"
+        self.git("worktree", "add", "-q", "--detach", str(other))
+        self.assertEqual(self.run_review(worktree=other), 0)
+        self.assertEqual(self.status()["state"], "completed")
+
+    def test_zero_tool_run_fails(self):
+        os.environ["REVIEW_MODE"] = "no_tools"
+        self.assertEqual(self.run_review(), 1)
+        self.assertEqual(self.status()["state"], "failed")
+        self.assertIn("zero tool calls", self.status()["error"])
+        self.assertFalse((self.out / "result.json").exists())
+
+    def test_refusal_event_fails(self):
+        os.environ["REVIEW_MODE"] = "refusal"
+        self.assertEqual(self.run_review(), 1)
+        self.assertIn("content_filter", self.status()["error"])
+        self.assertFalse((self.out / "result.json").exists())
+
+    def test_survived_with_empty_sources_is_invalid(self):
+        response = {**result(), "sources": {"inside": [], "outside": []}}
+        with self.assertRaisesRegex(ValueError, "names no sources"):
+            judge.validate(response)
+        judge.validate({**response, "verdict": "incomplete", "coverage_complete": False})
+
+    def test_unmatched_source_downgrades_survived(self):
+        response = {**result(), "sources": {"inside": ["fixture.py:1", "/nowhere/invented.py:9"],
+                                            "outside": ["https://example.invalid/never-fetched"]}}
+        os.environ["REVIEW_RESULT"] = json.dumps(response)
+        self.assertEqual(self.run_review(), 1)
+        status = self.status()
+        self.assertEqual(status["state"], "incomplete")
+        self.assertEqual(status["verdict"], "incomplete")
+        self.assertIn("downgraded", status)
+        self.assertEqual(len(status["unmatched_sources"]), 2)
+        self.assertTrue((self.out / "result.json").exists())
+
+    def test_matched_sources_are_not_flagged(self):
+        self.assertEqual(self.run_review(), 0)
+        self.assertEqual(self.status()["unmatched_sources"], [])
+
+    def test_claude_holder_argv_and_envelope(self):
+        self.assertEqual(self.run_holder("claude"), 0)
+        call = json.loads(self.claude_argv.read_text())
+        argv = call["argv"]
+        self.assertEqual(argv[:5], ["-p", "--model", "opus", "--effort", "high"])
+        for flag, value in [("--tools", judge.CLAUDE_TOOLS), ("--output-format", "stream-json")]:
+            self.assertEqual(argv[argv.index(flag) + 1], value)
+        self.assertIn("--strict-mcp-config", argv)
+        schema = json.loads(argv[argv.index("--json-schema") + 1])
+        self.assertEqual(schema, json.loads((judge.HERE / "result.schema.json").read_text()))
+        self.assertEqual(Path(call["cwd"]), self.out / "evidence")
+        meta = json.loads((self.out / "metadata.json").read_text())
+        self.assertEqual((meta["holder"], meta["model"], meta["effort"]), ("claude", "opus", "high"))
+        self.assertEqual(meta["resolved_model"], ["claude-opus-5-5"])
+        status = self.status()
+        self.assertEqual((status["holder"], status["state"]), ("claude", "completed"))
+        self.assertNotIn("quota", status)
+        self.assertEqual(json.loads((self.out / "result.json").read_text()), result())
+
+    def test_claude_holder_repo_mode_runs_in_worktree(self):
+        self.assertEqual(self.run_holder("claude", worktree=self.worktree), 0)
+        self.assertEqual(Path(json.loads(self.claude_argv.read_text())["cwd"]), self.worktree)
+
+    def test_claude_holder_zero_tools_and_bad_envelope_fail(self):
+        os.environ["REVIEW_MODE"] = "no_tools"
+        self.assertEqual(self.run_holder("claude"), 1)
+        self.assertIn("zero tool calls", self.status()["error"])
+        self.out = self.history / "invalid"
+        os.environ["REVIEW_MODE"] = "success"
+        os.environ["REVIEW_RESULT"] = json.dumps({"verdict": "survived"})
+        self.assertEqual(self.run_holder("claude"), 1)
+        self.assertFalse((self.out / "result.json").exists())
+
+    def test_effort_env_override_and_default(self):
+        seen = []
+        argv = ["run-review.py", "--packet", str(self.packet), "--run-dir", str(self.out)]
+        with patch.object(judge, "run", lambda args: seen.append(args.effort) or 0), \
+                patch("sys.argv", argv):
+            os.environ.pop("RIG_ADVERSARY_EFFORT", None)
+            judge.main()
+            os.environ["RIG_ADVERSARY_EFFORT"] = "xhigh"
+            judge.main()
+        self.assertEqual(seen, ["high", "xhigh"])
+        os.environ["RIG_ADVERSARY_EFFORT"] = "low"
+        with patch("sys.argv", argv), contextlib.redirect_stderr(io.StringIO()):
+            self.assertEqual(judge.main(), 2)
+
+    def test_quota_output_not_a_dict_is_unknown(self):
+        for stdout in ["[1]", "null", '"text"']:
+            done = subprocess.CompletedProcess([], 0, stdout=stdout, stderr="")
+            with patch.object(judge.subprocess, "run", return_value=done):
+                self.assertIsNone(judge.codex_quota()["exhausted"])
 
 
 if __name__ == "__main__":

@@ -2,17 +2,18 @@
 name: tweet
 description: Draft a tweet for @Desolatte about something cool from the current work session. Use when the user says "/tweet", "tweet this", "this is tweetable", or asks to share a finding/idea on X/Twitter.
 metadata:
-  harnesses: "claude codex"
   version: "1.0.0"
 ---
 
 # Tweet drafting for @Desolatte
 
-Live context from the X Context Provider n8n workflow (voice spec, recent posts for dedup, current trending):
+First fetch live context from the X Context Provider n8n workflow (voice spec, recent posts for dedup, current trending). The token file defaults to `~/.claude/secrets/x-context-token`; `X_CONTEXT_TOKEN_FILE` overrides it. The call needs network access.
 
-!`curl -sf -m 30 -H "X-Context-Token: $(cat ~/.claude/secrets/x-context-token)" "https://n8n.sfun.cloud/webhook/x-context-73826577" | jq '{voice, recentSummary, mentionsProductRecently, trendingSummary, historyFreshAt}'`
+```bash
+curl -sf -m 30 -H "X-Context-Token: $(cat "${X_CONTEXT_TOKEN_FILE:-$HOME/.claude/secrets/x-context-token}")" "https://n8n.sfun.cloud/webhook/x-context-73826577" | jq '{voice, recentSummary, mentionsProductRecently, trendingSummary, historyFreshAt}'
+```
 
-If the block above is empty or errored, say so and stop. Do not draft without voice + dedup context. (Check the token file exists and the n8n workflow "X Context Provider" is active.)
+If the output is empty or errored, say so and stop. Do not draft without voice + dedup context. (Check the token file exists and the n8n workflow "X Context Provider" is active.)
 
 ## 1. Gather the material
 
@@ -26,7 +27,7 @@ Tweet-worthy = surprising, concrete, useful to other builders. Not tweet-worthy 
 
 ## 2. Draft
 
-Follow the injected `voice` spec EXACTLY. It is the single source of truth, edited only in the n8n workflow, never here. Apply the injected dedup rules:
+Follow the fetched `voice` spec EXACTLY. It is the single source of truth, edited only in the n8n workflow, never here. Apply the fetched dedup rules:
 
 - Do not repeat any joke, phrasing, or theme visible in `recentSummary`.
 - If `mentionsProductRecently` is true, no mage-memory mention in any option.

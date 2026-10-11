@@ -1,18 +1,14 @@
 #!/bin/bash
-# Builds the agy plugin from the Claude plugin: a root plugin.json and only the skills whose frontmatter
-# names agy in `harnesses`. Hooks and agents never cross, because agy's hook contract and agent
-# frontmatter differ from Claude Code's. Untagged means Claude-only. Story: rig#134.
+# agy plugin from the agy target in harnesses.json: a root plugin.json and the target's skills. Hooks and agents
+# stay out: agy's hook payload and agent frontmatter differ from Claude Code's. Story: rig#134.
 set -euo pipefail
-SRC="$(cd "$(dirname "$0")/../plugins/rig" && pwd)"
+. "$(dirname "$0")/build-lib.sh"
 OUT="${1:?usage: build-agy-plugin.sh <out-dir>}"
+rig_check_all agy || { echo "build-agy-plugin: agy failed the manifest checks above" >&2; exit 1; }
 
 rm -rf "$OUT"; mkdir -p "$OUT/skills"
-jq -n --arg d "$(jq -r .description "$SRC/.claude-plugin/plugin.json")" \
+jq -n --arg d "$(jq -r .description "$RIG_SRC/.claude-plugin/plugin.json")" \
   '{"$schema": "https://antigravity.google/schemas/v1/plugin.json", name: "rig", description: $d}' > "$OUT/plugin.json"
-
-for skill in "$SRC"/skills/*/SKILL.md; do
-  dir=$(dirname "$skill")
-  awk '/^---$/{n++; next} n==1' "$skill" | grep -qE '^[[:space:]]+harnesses:.*\bagy\b' || continue
-  cp -r "$dir" "$OUT/skills/"
-done
+rig_copy_target agy "$OUT"
+rig_stamp agy "$OUT"
 ls "$OUT/skills"

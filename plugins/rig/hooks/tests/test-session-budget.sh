@@ -12,12 +12,29 @@ cat > "$T/quota.sh" <<'Q'
 case "$2" in gemini*) echo "exhausted: gemini until 2026-09-11T00:00Z";; *) echo "usable: $2 has no quota record";; esac
 Q
 chmod +x "$T/quota.sh"
+printf '#!/bin/bash\necho "exhausted until 2026-10-10T09:00Z: 5h 100%%, weekly 67%%"\n' > "$T/codex-quota"; chmod +x "$T/codex-quota"
+export BUDGET_CODEX_QUOTA="$T/codex-quota"
 
 out=$(echo '{"session_id":"s"}' | BUDGET_USAGE_LOG="$T/usage.jsonl" BUDGET_QUOTA_SH="$T/quota.sh" "$HOOK" | ctx)
 grep -q "5h window 63%, 7d 36%" <<<"$out" && echo "PASS: account percent from the trace" || { echo "FAIL: account ($out)"; fails=$((fails+1)); }
 grep -q "agy gemini: exhausted" <<<"$out" && echo "PASS: gemini group state" || { echo "FAIL: gemini ($out)"; fails=$((fails+1)); }
 grep -q "agy claude-gpt: usable" <<<"$out" && echo "PASS: claude-gpt group state" || { echo "FAIL: claude-gpt"; fails=$((fails+1)); }
-grep -q "Sonnet subagents only" <<<"$out" && echo "PASS: policy line present" || { echo "FAIL: policy"; fails=$((fails+1)); }
+grep -q "codex: exhausted until 2026-10-10T09:00Z: 5h 100%, weekly 67%." <<<"$out" && echo "PASS: codex usage limits" || { echo "FAIL: codex ($out)"; fails=$((fails+1)); }
+grep -q "Sonnet subagents only, plus Haiku for reading" <<<"$out" && echo "PASS: policy line present" || { echo "FAIL: policy"; fails=$((fails+1)); }
+grep -q "passes the adversary seat to another agent" <<<"$out" && echo "PASS: exhausted Codex passes the adversary seat" || { echo "FAIL: adversary policy ($out)"; fails=$((fails+1)); }
+
+printf '#!/bin/bash\nexit 1\n' > "$T/silent-codex"; chmod +x "$T/silent-codex"
+out=$(echo '{}' | BUDGET_USAGE_LOG="$T/usage.jsonl" BUDGET_QUOTA_SH="$T/quota.sh" BUDGET_CODEX_QUOTA="$T/silent-codex" "$HOOK" | ctx)
+grep -q "codex: unknown." <<<"$out" && echo "PASS: a checker that prints nothing reads unknown" || { echo "FAIL: empty checker ($out)"; fails=$((fails+1)); }
+
+if command -v timeout >/dev/null 2>&1; then
+  printf '#!/bin/bash\nsleep 30\n' > "$T/slow.sh"; chmod +x "$T/slow.sh"
+  s=$(date +%s)
+  out=$(echo '{}' | BUDGET_USAGE_LOG="$T/usage.jsonl" BUDGET_QUOTA_SH="$T/slow.sh" BUDGET_CODEX_QUOTA="$T/slow.sh" "$HOOK" | ctx)
+  e=$(( $(date +%s) - s ))
+  [ "$e" -lt 9 ] && grep -q "agy gemini: unknown" <<<"$out" && grep -q "codex: unknown" <<<"$out" \
+    && echo "PASS: hung probes are cut inside the 10s hook timeout (${e}s)" || { echo "FAIL: hung probes took ${e}s ($out)"; fails=$((fails+1)); }
+fi
 
 printf '{"ts":"%s","five_hour":{"used_percentage":20,"resets_at":%s},"seven_day":{"used_percentage":82},"scoped":[{"model":"Fable","percent":100,"severity":"critical","resets_at":"2026-09-15T05:00:00.2+00:00"}]}\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$(( $(date +%s) + 3600 ))" > "$T/scoped.jsonl"
 out=$(echo '{}' | BUDGET_USAGE_LOG="$T/scoped.jsonl" BUDGET_QUOTA_SH="$T/quota.sh" "$HOOK" | ctx)
@@ -26,8 +43,8 @@ grep -q "Fable weekly 100% (critical), resets 2026-09-15T05:00Z" <<<"$out" && ec
 out=$(echo '{}' | BUDGET_USAGE_LOG="$T/stale.jsonl" BUDGET_QUOTA_SH="$T/quota.sh" "$HOOK" | ctx)
 grep -q "5h window 0%, 7d 79%" <<<"$out" && echo "PASS: a 5h window whose resets_at passed reads 0, not the stale percent" || { echo "FAIL: stale window ($out)"; fails=$((fails+1)); }
 
-out=$(echo '{}' | BUDGET_USAGE_LOG="$T/none.jsonl" BUDGET_QUOTA_SH="$T/missing.sh" "$HOOK" | ctx)
-grep -q "no trace yet" <<<"$out" && grep -q "unknown" <<<"$out" && echo "PASS: missing trace and quota script degrade to words" || { echo "FAIL: missing inputs ($out)"; fails=$((fails+1)); }
+out=$(echo '{}' | BUDGET_USAGE_LOG="$T/none.jsonl" BUDGET_QUOTA_SH="$T/missing.sh" BUDGET_CODEX_QUOTA="$T/missing-codex" "$HOOK" | ctx)
+grep -q "no trace yet" <<<"$out" && grep -q "codex: unknown" <<<"$out" && echo "PASS: missing trace and quota script degrade to words" || { echo "FAIL: missing inputs ($out)"; fails=$((fails+1)); }
 
 out=$(echo '{"source":"resume","seconds_since_last_response":5400,"context_tokens":91000,"prompt_cache_likely_expired":true}' | BUDGET_USAGE_LOG="$T/usage.jsonl" BUDGET_QUOTA_SH="$T/quota.sh" "$HOOK" | ctx)
 grep -q "Resumed after 90m: 91000 context tokens re-sent, prompt cache likely expired" <<<"$out" && echo "PASS: resume cost line from the SessionStart fields" || { echo "FAIL: resume ($out)"; fails=$((fails+1)); }

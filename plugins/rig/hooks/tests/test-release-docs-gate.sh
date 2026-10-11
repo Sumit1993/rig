@@ -10,7 +10,8 @@ CWD=$(mktemp -d)
 cleanup() { rm -rf "$FAKEROOT" "$FAKEBIN" "$CWD"; }
 trap cleanup EXIT
 
-mkdir -p "$FAKEROOT/scripts"
+mkdir -p "$FAKEROOT/scripts" "$FAKEROOT/data"
+echo '{}' > "$FAKEROOT/data/repo-meta.json"
 cat > "$FAKEROOT/scripts/rig-meta.sh" <<'EOF'
 #!/bin/bash
 case "$1" in
@@ -68,6 +69,21 @@ check "non-release PR passes"          0 "gh pr merge 42 --squash"
 FAKE_PR_TITLE="chore: release 1.0.0"
 FAKE_DOCS_AUDIT_AT=$(date +%s)
 check "recent docs audit passes"       0 "gh pr merge 42 --squash"
+
+# Fails closed: a merge the gate cannot judge is blocked; other commands and the skip marker still pass.
+mv "$FAKEROOT/scripts/rig-meta.sh" "$FAKEROOT/scripts/rig-meta.off"
+check "missing rig-meta.sh blocks a merge"          2 "gh pr merge 42 --squash"
+check "missing rig-meta.sh passes a non-merge"      0 "git status"
+check "missing rig-meta.sh passes DOCS_GATE=skip"   0 "gh pr merge 42 --squash DOCS_GATE=skip"
+mv "$FAKEROOT/scripts/rig-meta.off" "$FAKEROOT/scripts/rig-meta.sh"
+chmod -x "$FAKEROOT/scripts/rig-meta.sh"
+check "unrunnable rig-meta.sh blocks a merge"       2 "gh pr merge 42 --squash"
+chmod +x "$FAKEROOT/scripts/rig-meta.sh"
+mv "$FAKEROOT/data/repo-meta.json" "$FAKEROOT/data/off.json"
+check "missing registry blocks a merge"             2 "gh pr merge 42 --squash"
+mv "$FAKEROOT/data/off.json" "$FAKEROOT/data/repo-meta.json"
+FAKE_DOCS_AUDIT_AT=$(date +%s)
+check "runtime restored, recent audit passes"       0 "gh pr merge 42 --squash"
 
 # Guard reporting: when blocking, exits 2 even with mage absent, and stderr contains guard id
 FAKE_HAS_DOCS=1 FAKE_DOCS_AUDIT_AT=0 FAKE_PR_TITLE="chore: release 1.0.0"

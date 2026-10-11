@@ -2,7 +2,6 @@
 name: triage
 description: "Before any gh issue create, comment, edit or close: search what already exists, fold or file, shape the body, link and close it right."
 metadata:
-  harnesses: "claude codex"
   version: "1.0.0"
 ---
 
@@ -33,7 +32,7 @@ Findings on one surface are one umbrella issue, not one issue each. When an issu
 
 ## 3. Shape
 
-Title is the outcome. The body has three sections, plus the agent marker line `gh-body-stamp.sh` requires:
+Title is the outcome. The body has three sections, plus the agent marker line `gh-body-stamp.sh` requires where rig's hooks run, and that every agent post carries anyway:
 
 ```
 ## Goal

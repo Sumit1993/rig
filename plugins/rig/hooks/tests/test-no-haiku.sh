@@ -1,6 +1,6 @@
 #!/bin/bash
 # Regression suite for no-haiku.sh (PreToolUse Agent).
-# Blocks deliberate choice of Haiku; allows other models and unstated models.
+# Blocks Haiku 4.x ids; allows Haiku 5.5 (bare haiku), other models and unstated models.
 set -u
 HOOK="$(cd "$(dirname "$0")/.." && pwd)/no-haiku.sh"
 fails=0
@@ -23,13 +23,15 @@ check() { # name expected_rc json [expected_stderr_lines]
   echo "PASS: $name"
 }
 
-echo "-- blocked: deliberate haiku choices"
-check "haiku blocks" 2 '{"tool_input":{"model":"haiku"}}'
+echo "-- blocked: Haiku 4.x ids"
 check "claude-haiku-4-5-20251001 blocks" 2 '{"tool_input":{"model":"claude-haiku-4-5-20251001"}}'
-check "Haiku blocks" 2 '{"tool_input":{"model":"Haiku"}}'
-check "HAIKU blocks" 2 '{"tool_input":{"model":"HAIKU"}}'
+check "claude-haiku-4-5 blocks" 2 '{"tool_input":{"model":"claude-haiku-4-5"}}'
+check "Haiku-4.5 blocks" 2 '{"tool_input":{"model":"Haiku-4.5"}}'
 
-echo "-- allowed: non-haiku models"
+echo "-- allowed: Haiku 5.5 and non-haiku models"
+check "haiku does not block" 0 '{"tool_input":{"model":"haiku"}}'
+check "HAIKU does not block" 0 '{"tool_input":{"model":"HAIKU"}}'
+check "claude-haiku-5-5 does not block" 0 '{"tool_input":{"model":"claude-haiku-5-5"}}'
 check "sonnet does not block" 0 '{"tool_input":{"model":"sonnet"}}'
 check "opus does not block" 0 '{"tool_input":{"model":"opus"}}'
 check "fable does not block" 0 '{"tool_input":{"model":"fable"}}'
@@ -45,7 +47,7 @@ echo "-- allowed with stderr warning: junk stdin"
 check "junk stdin does not block and emits one stderr line" 0 'junk' 1
 
 # Guard reporting: when blocking, exits 2 even with mage absent, and stderr contains guard id
-err=$(printf '{"tool_input":{"model":"haiku"}}' | PATH=/usr/bin:/bin "$HOOK" 2>&1 >/dev/null)
+err=$(printf '{"tool_input":{"model":"claude-haiku-4-5"}}' | PATH=/usr/bin:/bin "$HOOK" 2>&1 >/dev/null)
 rc=$?
 if [ "$rc" -eq 2 ] && grep -q '^mage:rig/guard/no-haiku$' <<<"$err"; then
   echo "PASS: blocks with exit 2 and guard id on stderr when mage absent"

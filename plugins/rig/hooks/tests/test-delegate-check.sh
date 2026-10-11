@@ -46,6 +46,8 @@ check "antigravity also counts as considered" 0 \
 check "agy-runner is never blocked" 0 \
   '{"tool_input":{"subagent_type":"agy-runner","prompt":"run ~/ai-context/agy-prompts/x.md"}}'
 check "purpose-built agents encode their own routing" 0 \
+  '{"tool_input":{"subagent_type":"planner","description":"Implement to spec"}}'
+check "the Fable planner alias is purpose-built too" 0 \
   '{"tool_input":{"subagent_type":"fable-planner","description":"Implement to spec"}}'
 check "judgment work is not delegable" 0 \
   '{"tool_input":{"subagent_type":"general-purpose","description":"Adjudicate two conflicting reviews"}}'

@@ -72,7 +72,7 @@ Check a PR body's claims against its file list; a body that contradicts its diff
 
 ## 6. Ask the planner seat when the call is a judgement
 
-Architecture, security and crypto, product semantics, and any dilemma where two rules point opposite ways go to `fable-planner` with the decision, the constraints and the options, not the whole run.
+Architecture, security and crypto, product semantics, and any dilemma where two rules point opposite ways go to the planner seat with the decision, the constraints and the options, not the whole run. The seat is the `planner` agent, Opus 5.5 at effort high; `fable-planner` holds it only when the operator has allowed Fable. An organizer outside Claude Code reaches it with `claude -p --agent rig:planner --output-format json`.
 
 - Frame the consult around the subsystem, not the hole in front of you (§7, flip the setting).
 - Reuse the same planner inside the prompt-cache hour; past it, start a new one.
