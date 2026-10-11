@@ -8,6 +8,7 @@ import json
 import re
 import os
 import sys
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -30,9 +31,9 @@ MARKER = "<!-- summoned-by: coderabbit-routine"
 NOW = datetime.now(timezone.utc)
 SLOT_MIN = 57
 # CodeRabbit's window runs 60 minutes from accepting a summon, about 10 s after it is posted; a stamp 57 minutes
-# from the digest missed prismalens#814 by 24 s. act.py waits out a slot this close (Sumit1993/rig#159).
+# from the digest missed prismalens#814 by 24 s. The digest sleeps out a slot this close (Sumit1993/rig#159).
 STAMP_S = 3625
-WAIT_MAX_S = 300
+WAIT_MAX_S = 480
 DIGEST_PATH = "/tmp/digest.json"
 
 
@@ -249,7 +250,7 @@ def repo_digest(repo):
     return repo, facts
 
 
-def main():
+def build():
     with ThreadPoolExecutor(len(REPOS)) as pool:
         repos = dict(pool.map(repo_digest, REPOS))
     summons = [
@@ -275,14 +276,26 @@ def main():
     floors = [ts(max(unstamped)) + timedelta(minutes=SLOT_MIN)] if unstamped else []
     floors += [ts(s["slot_opens_at"]) for s in stamped]
     opens = max(floors) if floors else None
-    json.dump({
+    return opens, {
         "now": NOW.strftime("%Y-%m-%dT%H:%M:%SZ"),
         "operator_last_summon": last and {"pr": last[1], "at": last[0], "age_min": age_min(last[0])},
         "coderabbit_last_review": last_review and {"at": last_review, "age_min": age_min(last_review)},
         "slot_opens_at": opens and opens.strftime("%Y-%m-%dT%H:%M:%SZ"),
-        "slot_open": not opens or opens <= NOW + timedelta(seconds=WAIT_MAX_S),
+        "slot_open": not opens or opens <= NOW,
         "repos": repos,
-    }, sys.stdout, indent=1)
+    }
+
+
+def main():
+    global NOW
+    opens, digest = build()
+    wait = opens and (opens - NOW).total_seconds()
+    if wait and 0 < wait <= WAIT_MAX_S:
+        time.sleep(wait + 5)
+        NOW = datetime.now(timezone.utc)
+        opens, digest = build()
+        digest["waited_s"] = int(wait + 5)
+    json.dump(digest, sys.stdout, indent=1)
     print()
 
 
