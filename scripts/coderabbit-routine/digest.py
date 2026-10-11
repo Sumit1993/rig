@@ -202,8 +202,8 @@ def pr_facts(repo, pr):
     }
 
 
-def last_review_on_closed(repo):
-    # A PR closed since its review still holds the hourly window; open PRs alone would miss it.
+def closed_floors(repo):
+    # A PR closed since its review or its routine summon still holds the hourly window; open PRs alone would miss it.
     closed, page = [], 1
     while True:
         batch = gh(f"repos/{repo}/pulls?state=closed&sort=updated&direction=desc&per_page=50&page={page}")
@@ -218,7 +218,13 @@ def last_review_on_closed(repo):
         for r in gh(f"repos/{repo}/pulls/{pr['number']}/reviews?per_page=100", paginate=True)
         if r["user"]["login"] == CR and (r["body"] or "").strip()
     ]
-    return max(ats) if ats else None
+    stamps = [
+        marker_state(c["body"])["slot_opens_at"]
+        for pr in closed
+        for c in gh(f"repos/{repo}/issues/{pr['number']}/comments?per_page=100", paginate=True)
+        if c["user"]["login"] == OPERATOR and "slot_opens_at" in marker_state(c["body"])
+    ]
+    return {"last_review_at": max(ats) if ats else None, "slot_opens_at": max(stamps) if stamps else None}
 
 
 def safe_pr_facts(repo, pr):
@@ -232,7 +238,7 @@ def safe_pr_facts(repo, pr):
 def repo_digest(repo):
     try:
         prs = gh(f"repos/{repo}/pulls?state=open&per_page=100", paginate=True)
-        facts = {"pull_requests": [safe_pr_facts(repo, pr) for pr in prs], "closed_last_review_at": last_review_on_closed(repo)}
+        facts = {"pull_requests": [safe_pr_facts(repo, pr) for pr in prs], "closed": closed_floors(repo)}
     except RuntimeError as e:
         facts = {"error": str(e)}
     return repo, facts
@@ -246,7 +252,7 @@ def main():
         for r in repos.values() for p in r.get("pull_requests", []) if p.get("last_summon")
     ]
     reviewed = [p["coderabbit_last_review_at"] for r in repos.values() for p in r.get("pull_requests", []) if p.get("coderabbit_last_review_at")]
-    reviewed += [r["closed_last_review_at"] for r in repos.values() if r.get("closed_last_review_at")]
+    reviewed += [r["closed"]["last_review_at"] for r in repos.values() if (r.get("closed") or {}).get("last_review_at")]
     last_review = max(reviewed) if reviewed else None
     last = max(summons) if summons else None
     # CodeRabbit's hourly window runs from the last review it accepted, not from the summon;
@@ -257,6 +263,7 @@ def main():
         for r in repos.values() for p in r.get("pull_requests", [])
         if (p.get("last_summon") or {}).get("state", {}).get("slot_opens_at")
     ]
+    floors += [ts(r["closed"]["slot_opens_at"]) for r in repos.values() if (r.get("closed") or {}).get("slot_opens_at")]
     opens = max(floors) if floors else None
     json.dump({
         "now": NOW.strftime("%Y-%m-%dT%H:%M:%SZ"),
