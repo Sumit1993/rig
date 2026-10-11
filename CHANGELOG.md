@@ -1,5 +1,29 @@
 # Changelog
 
+## [0.17.0](https://github.com/Sumit1993/rig/compare/rig-v0.16.0...rig-v0.17.0) (2026-10-11)
+
+
+### Features
+
+* **coderabbit-routine:** the summon marker carries slot_opens_at, and the digest decides the budget slot ([1df26ad](https://github.com/Sumit1993/rig/commit/1df26ad9245f9bb7252ad1f7c7c7151e5818d17d))
+* **coderabbit-routine:** the summon marker carries slot_opens_at, and the digest decides the budget slot ([87fd91e](https://github.com/Sumit1993/rig/commit/87fd91e8de2d0c1f28f63c2619582c2b2df6a4d5))
+* **coderabbit-routine:** the summon marker carries slot_opens_at, and the digest decides the budget slot ([#182](https://github.com/Sumit1993/rig/issues/182)) ([1df26ad](https://github.com/Sumit1993/rig/commit/1df26ad9245f9bb7252ad1f7c7c7151e5818d17d))
+* **codex-judge:** Codex usage limits are checked before a judgment and shown at session start ([d30e963](https://github.com/Sumit1993/rig/commit/d30e96380fce3ed4169a8351337a3dd561b750a4))
+* seats instead of fixed models, and rig installs per harness ([c057429](https://github.com/Sumit1993/rig/commit/c05742946fde9ed84b15ee4dba73e277d42f664e))
+* seats instead of fixed models, and rig installs per harness ([e631830](https://github.com/Sumit1993/rig/commit/e6318301f285e5423c81b6b9a61cbbbca18926d0))
+* seats instead of fixed models, and rig installs per harness ([#183](https://github.com/Sumit1993/rig/issues/183)) ([c057429](https://github.com/Sumit1993/rig/commit/c05742946fde9ed84b15ee4dba73e277d42f664e))
+
+
+### Bug Fixes
+
+* **coderabbit-routine:** a closed PR's routine summon still holds the slot ([7b28b4e](https://github.com/Sumit1993/rig/commit/7b28b4e8a66fea3f0fe8c9eb973dc3d5a055acb1))
+* **statusline:** the status line no longer blanks on renders whose trace row is unchanged ([#184](https://github.com/Sumit1993/rig/issues/184)) ([6394054](https://github.com/Sumit1993/rig/commit/6394054419340e3f700fdf69de30e5e5ce5237cb))
+
+
+### Documentation
+
+* stacked PRs wait for MERGED; agy lanes run one suite at a time and e2e Verify names every suite ([18a1e6f](https://github.com/Sumit1993/rig/commit/18a1e6f53789829a58cd1dd96ad34f3de6a941ed))
+
 ## [0.16.0](https://github.com/Sumit1993/rig/compare/rig-v0.15.0...rig-v0.16.0) (2026-10-10)
 
 
