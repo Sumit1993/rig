@@ -23,7 +23,7 @@ Run `python3 digest.py > /tmp/digest.json` from this directory. It lists every o
 
 Post nothing this run in either of these cases:
 - A CodeRabbit comment anywhere in the digest, read by its `updated_at`, is a rate-limit notice whose stated wait has not yet passed.
-- `coderabbit_last_review.age_min` is under 57. CodeRabbit's hourly window runs from the last review it accepted.
+- `slot_open` is false. `digest.py` sets `slot_opens_at` to the later of the last accepted review plus 57 minutes (CodeRabbit's hourly window runs from the review it accepted) and the time the last routine summon stamped in its marker.
 - `operator_last_summon.age_min` is under 57 and that summon has no CodeRabbit reply yet.
 
 ## 3. Pick one
@@ -37,7 +37,7 @@ A candidate is a **re-review** if CodeRabbit reviewed an earlier commit. It qual
 
 A re-review also has to buy something. Every review of a fix commit finds a smaller nit in the fix, so summoning on each fix loops forever (prismalens/gh-workflows#222). Read `since_coderabbit_review` against `coderabbit_threads` and judge whether the commits after the last review carry work CodeRabbit has not seen. A commit that answers a thread (`operator_reply` names it) and that CodeRabbit confirmed in `coderabbit_after_reply` is already verified: skip the PR if that is all there is. Summon when a commit adds anything beyond those fixes, such as a new feature, a refactor, or files that no thread touches, or when CodeRabbit disputed a fix or has not replied to one. A small diff confined to the threaded files leans toward skip. When unsure, summon. Name each skipped PR and its reason in the report.
 
-Pick re-reviews first, ordered by the oldest `head_committed_at`. Then pick new ones, ordered by the oldest `created_at`. A `docs_only` candidate goes after every other candidate, in the same order, so prose takes the slot only when no code waits. Summon the pick with `python3 act.py <repo> <n> '@coderabbitai review'`. `act.py` adds the hidden `summoned-by` marker. Never post `full review`: it spends the same slot to re-read commits that were already reviewed.
+Pick re-reviews first, ordered by the oldest `head_committed_at`. Then pick new ones, ordered by the oldest `created_at`. A `docs_only` candidate goes after every other candidate, in the same order, so prose takes the slot only when no code waits. Summon the pick with `python3 act.py <repo> <n> '@coderabbitai review'`. `act.py` adds the hidden `summoned-by` marker, stamped with `slot_opens_at`; the digest reads it back as `last_summon.state`. Never post `full review`: it spends the same slot to re-read commits that were already reviewed.
 
 ## 4. Post the summary, then report
 
