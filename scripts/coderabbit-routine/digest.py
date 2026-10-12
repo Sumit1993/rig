@@ -173,6 +173,23 @@ def pr_facts(repo, pr):
         after = [c for c in cr_comments if c["created_at"] > last_summon["created_at"]]
         reply = after[0] if after else None
 
+    # An incremental review with nothing to add posts no review object, only a "Review finished" reply (prismalens#812).
+    # Every reply to a summon carries an invocation marker and answers the oldest unanswered summon, so pair them in order.
+    done = re.compile(r"Review finished|Already reviewed the last commit")
+    invoked = re.compile(r"(?m)^\s*@coderabbitai (full )?review\b")
+    events = sorted(
+        [(c["created_at"], "summon", c) for c in comments if c["user"]["login"] != CR and invoked.match(c["body"])]
+        + [(c["created_at"], "reply", c) for c in cr_comments if "review command invocation:" in c["body"]],
+        key=lambda e: (e[0], e[1] == "reply"),
+    )
+    pending, finished_on_head = [], False
+    for at, kind, c in events:
+        if kind == "summon":
+            pending.append(c)
+        elif pending:
+            s = pending.pop(0)
+            finished_on_head |= s["created_at"] > head_at and bool(done.search(c["body"]))
+
     threads = coderabbit_threads(repo, n)
     return {
         "repo": repo,
@@ -184,7 +201,7 @@ def pr_facts(repo, pr):
         "head_age_min": age_min(head_at),
         # Ranks last, never excluded: prismalens.io's product is docs, and docs/ holds its site code (#159).
         "docs_only": bool(files) and full["changed_files"] <= 100 and all(f.endswith((".md", ".mdx")) for f in files),
-        "coderabbit_reviewed_head": any(r["commit_id"] == head for r in reviews),
+        "coderabbit_reviewed_head": finished_on_head or any(r["commit_id"] == head for r in reviews),
         "coderabbit_last_review_at": reviews[-1]["submitted_at"] if reviews else None,
         "coderabbit_reviews": [
             {"commit": r["commit_id"], "is_head": r["commit_id"] == head, "at": r["submitted_at"], "excerpt": excerpt(r["body"], 160)}
