@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.17.2](https://github.com/Sumit1993/rig/compare/rig-v0.17.1...rig-v0.17.2) (2026-10-12)
+
+
+### Bug Fixes
+
+* **coderabbit-routine:** a Review finished reply to a summon after head counts as reviewing head ([de2a2e0](https://github.com/Sumit1993/rig/commit/de2a2e0f050dec3b639fbcdeb7c6104ae498e0ca))
+* **coderabbit-routine:** a Review finished reply to a summon after head counts as reviewing head ([4b5c6a3](https://github.com/Sumit1993/rig/commit/4b5c6a3a3567b39dfe7b7b4914e440b592ce7e03))
+* **coderabbit-routine:** pair each summon with its own invocation reply before counting Review finished on head ([315e351](https://github.com/Sumit1993/rig/commit/315e3516c16180e8f8f3b5a86be426cffc5ea929))
+
 ## [0.17.1](https://github.com/Sumit1993/rig/compare/rig-v0.17.0...rig-v0.17.1) (2026-10-11)
 
 
