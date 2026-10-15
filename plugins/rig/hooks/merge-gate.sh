@@ -19,49 +19,45 @@ _report_lib="${CLAUDE_PLUGIN_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}/hooks/lib/
 [ -f "$_report_lib" ] && . "$_report_lib"
 type report_guard >/dev/null 2>&1 || report_guard() { :; }
 
-pr="" prefix="" api="no"
-gh_re='gh\s+pr\s+merge\b'
-if printf '%s' "$cmd" | gh_scan prefix "$gh_re" >/dev/null 2>&1; then
-  prefix=$(printf '%s' "$cmd" | gh_scan prefix "$gh_re")
-  words=()
-  while IFS= read -r -d '' w; do words+=("$w"); done < <(printf '%s' "$cmd" | gh_scan words "$gh_re")
+# Every merge's token is an assignment on that same call (`MERGE_OK=<n> gh pr merge <n>`): a token
+# anywhere else in a compound command can belong to another merge or never be set when the merge runs (#196).
+merges=() asgs=()
+while IFS= read -r -d $'\x1e' rec; do
+  asg=${rec%%$'\x1f'*}; rest=${rec#*$'\x1f'}
+  IFS=$'\x1d' read -r -d '' -a words < <(printf '%s' "${rest%$'\x1d'}") || true
+  pr=""
   for ((i = 3; i < ${#words[@]}; i++)); do
-    w=${words[i]}
-    case "$w" in
-      [0-9]*) [[ "$w" =~ ^[0-9]+$ ]] && pr=$w ;;
-      https://github.com/*/pull/*) pr=${w##*/pull/}; pr=${pr%%[!0-9]*} ;;
+    case "${words[i]}" in
+      [0-9]*) [[ "${words[i]}" =~ ^[0-9]+$ ]] && pr=${words[i]} ;;
+      https://github.com/*/pull/*) pr=${words[i]##*/pull/}; pr=${pr%%[!0-9]*} ;;
     esac
   done
-elif printf '%s' "$cmd" | gh_scan prefix 'gh\s+api\b' >/dev/null 2>&1; then
-  gh_re='gh\s+api\b'
-  words=()
-  while IFS= read -r -d '' w; do words+=("$w"); done < <(printf '%s' "$cmd" | gh_scan words "$gh_re")
-  for w in "${words[@]}"; do
-    if [[ "$w" =~ pulls/([0-9]+)/merge ]]; then
-      pr="${BASH_REMATCH[1]}"
-      api="yes"
-      prefix=$(printf '%s' "$cmd" | gh_scan prefix "$gh_re")
-      break
-    fi
-  done
-  [ "$api" = "yes" ] || exit 0
-else
-  exit 0
+  merges+=("pr:$pr"); asgs+=("$asg")
+done < <(printf '%s' "$cmd" | gh_scan calls 'gh\s+pr\s+merge\b')
+if grep -qE 'pulls/[0-9]+/merge' <<<"$cmd"; then
+  while IFS= read -r -d $'\x1e' rec; do
+    asg=${rec%%$'\x1f'*}; rest=${rec#*$'\x1f'}
+    [[ "$rest" =~ pulls/([0-9]+)/merge ]] || continue
+    merges+=("api:${BASH_REMATCH[1]}"); asgs+=("$asg")
+  done < <(printf '%s' "$cmd" | gh_scan calls 'gh\s+api\b')
 fi
+[ "${#merges[@]}" -eq 0 ] && exit 0
 
-# The token can sit as an env prefix on the gh call or anywhere earlier in the command.
-token=$(grep -oE '(^|[;&|[:space:]])MERGE_OK=[^[:space:];&|]+' <<<"${prefix:-$cmd}" | tail -1 | sed -E 's/.*MERGE_OK=//; s/^["'"'"']//; s/["'"'"']$//')
-[ -n "$token" ] || token=$(grep -oE '(^|[;&|[:space:]])MERGE_OK=[^[:space:];&|]+' <<<"$cmd" | tail -1 | sed -E 's/.*MERGE_OK=//; s/^["'"'"']//; s/["'"'"']$//')
-
-# A merge that names no PR is blocked even with a token: the token must name the PR it merges.
-[ -n "$token" ] && [ -n "$pr" ] && [ "$token" = "$pr" ] && exit 0
-
-which="PR ${pr:-<current branch>}"
-[ "$api" = "yes" ] && which="pulls/${pr:-?}/merge via gh api"
+why=""
+for k in "${!merges[@]}"; do
+  kind=${merges[k]%%:*} pr=${merges[k]#*:}
+  token=$(grep -oE '(^|[[:space:]])MERGE_OK=[^[:space:]]+' <<<"${asgs[k]}" | tail -1 | sed -E 's/.*MERGE_OK=//; s/^["'"'"']//; s/["'"'"']$//')
+  # A merge that names no PR is blocked even with a token: the token must name the PR it merges.
+  [ -n "$token" ] && [ -n "$pr" ] && [ "$token" = "$pr" ] && continue
+  which="PR ${pr:-<current branch>}"; [ "$kind" = "api" ] && which="pulls/${pr:-?}/merge via gh api"
+  why="merging $which needs the operator's word for this PR"
+  break
+done
+[ -z "${why:-}" ] && exit 0
 cat >&2 <<MSG
-Blocked by rig/guard/merge-gate: merging $which needs the operator's word for this PR (AGENTS.md §Reporting and
-merging: merge is a per-merge permission, never carried forward). Ask, then record it on the
-same command: MERGE_OK=${pr:-<pr>} gh pr merge ${pr:-<pr>} ... The token must name this PR${token:+; it names $token}.
+Blocked by rig/guard/merge-gate: $why (AGENTS.md §Reporting and merging: merge is a per-merge permission,
+never carried forward). Ask, then record it on the merge itself: MERGE_OK=${pr:-<pr>} gh pr merge ${pr:-<pr>} ...
+The token must name this PR${token:+; it names $token}.
 MSG
 report_guard "rig/guard/merge-gate" "Bash" "pr ${pr:-current}"
 exit 2

@@ -146,5 +146,41 @@ else
   echo "FAIL: echo gh pr merge (rc=$rc, out=$out)"; fails=$((fails + 1))
 fi
 
+# A merge after a shell reserved word or a brace is still in command position.
+for c in 'for p in 5; do gh pr merge $p; done' 'if true; then gh pr merge 5; fi' \
+  'if false; then :; else gh pr merge 5; fi' '{ gh pr merge 5; }' '! gh pr merge 5' \
+  'while true; do
+  gh pr merge 5
+done'; do
+  run_hook "$c" >/dev/null 2>&1
+  rc=$?
+  if [ "$rc" -eq 2 ]; then echo "PASS: blocks after reserved word: ${c%%$'\n'*}"
+  else echo "FAIL: missed after reserved word (rc=$rc): $c"; fails=$((fails + 1)); fi
+done
+for c in 'echo done; gh pr view 5' 'git commit -m "then gh pr merge 5"' 'do_thing gh pr merge 5'; do
+  run_hook "$c" >/dev/null 2>&1
+  rc=$?
+  if [ "$rc" -eq 0 ]; then echo "PASS: no false block: $c"
+  else echo "FAIL: false block (rc=$rc): $c"; fails=$((fails + 1)); fi
+done
+
+# Every merge in a command needs its own token; a literal brace argument is not a brace group.
+for c in 'MERGE_OK=5 gh pr merge 5; gh pr merge 6' 'MERGE_OK=5 gh pr merge 5 && gh pr merge 6' \
+  'echo { MERGE_OK=5 gh pr merge 5; gh pr merge 6' 'MERGE_OK=5 gh pr merge 5; gh api -X PUT repos/o/r/pulls/6/merge' \
+  'for p in 41 42; do MERGE_OK=$p gh pr merge $p; done' \
+  'gh pr merge 6; MERGE_OK=6 true' 'gh pr merge 7 --disable-auto && MERGE_OK=7 gh pr merge 7 --auto' "echo 'doc MERGE_OK=6 '; gh pr merge 6" 'MERGE_OK=6 true | gh pr merge 6' \
+  '( MERGE_OK=6 true ); gh pr merge 6' $'cat <<\'DOC\' | arr=( { MERGE_OK=5 gh pr merge 5 )\n\'\nDOC\ngh pr merge 6'; do
+  run_hook "$c" >/dev/null 2>&1
+  rc=$?
+  if [ "$rc" -eq 2 ]; then echo "PASS: second merge or unbound token blocked: ${c%%$'\n'*}"
+  else echo "FAIL: merge not checked (rc=$rc): $c"; fails=$((fails + 1)); fi
+done
+for c in 'MERGE_OK=5 gh pr merge 5; MERGE_OK=6 gh pr merge 6' 'MERGE_OK=5 gh pr merge 5 2>&1 | tail -2; MERGE_OK=6 gh pr merge 6' 'printf "%s\n" { gh pr merge 5' 'MERGE_OK=7 gh pr merge 7 --squash' 'arr=( { gh pr merge 5 )' \
+  'MERGE_OK=8 gh pr merge 8 --squash -R prismalens/prismalens --delete-branch' 'cd ~/x && MERGE_OK=9 gh pr merge 9 --match-head-commit abc1234'; do
+  run_hook "$c" >/dev/null 2>&1
+  rc=$?
+  if [ "$rc" -eq 0 ]; then echo "PASS: allowed: $c"
+  else echo "FAIL: false block (rc=$rc): $c"; fails=$((fails + 1)); fi
+done
 [ "$fails" -eq 0 ] && echo && echo "all merge-gate hook tests passed"
 exit "$fails"
