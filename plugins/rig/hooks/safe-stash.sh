@@ -29,9 +29,9 @@ grep -qE '\bgit\b' <<<"$cmd" || exit 0
 grep -qE '\bstash\b' <<<"$cmd" || exit 0
 
 cur="$cmd"
-while printf '%s' "$cur" | gh_scan words 'git(?:\s+-[Cc]\s+\S+)*\s+stash\b' >/dev/null 2>&1; do
+while printf '%s' "$cur" | gh_scan words 'git(?:\s+(?:-[Cc]\s+\S+|--(?:git-dir|work-tree|namespace)\s+\S+|-[A-Za-z]|--[A-Za-z][\w-]*(?:=\S+)?))*\s+stash\b' >/dev/null 2>&1; do
   words=()
-  while IFS= read -r -d '' w; do words+=("$w"); done < <(printf '%s' "$cur" | gh_scan words 'git(?:\s+-[Cc]\s+\S+)*\s+stash\b')
+  while IFS= read -r -d '' w; do words+=("$w"); done < <(printf '%s' "$cur" | gh_scan words 'git(?:\s+(?:-[Cc]\s+\S+|--(?:git-dir|work-tree|namespace)\s+\S+|-[A-Za-z]|--[A-Za-z][\w-]*(?:=\S+)?))*\s+stash\b')
   
   has_msg=0
   subcmd=""
@@ -85,7 +85,7 @@ MSG
     exit 2
   fi
 
-  tail=$(printf '%s' "$cur" | gh_scan tail 'git(?:\s+-[Cc]\s+\S+)*\s+stash\b') || break
+  tail=$(printf '%s' "$cur" | gh_scan tail 'git(?:\s+(?:-[Cc]\s+\S+|--(?:git-dir|work-tree|namespace)\s+\S+|-[A-Za-z]|--[A-Za-z][\w-]*(?:=\S+)?))*\s+stash\b') || break
   cur=${tail#*stash}
 done
 
