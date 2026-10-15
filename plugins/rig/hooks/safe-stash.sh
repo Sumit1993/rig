@@ -29,13 +29,15 @@ grep -qE '\bgit\b' <<<"$cmd" || exit 0
 grep -qE '\bstash\b' <<<"$cmd" || exit 0
 
 cur="$cmd"
-while printf '%s' "$cur" | gh_scan words 'git\s+stash\b' >/dev/null 2>&1; do
+while printf '%s' "$cur" | gh_scan words 'git(?:\s+-[Cc]\s+\S+)*\s+stash\b' >/dev/null 2>&1; do
   words=()
-  while IFS= read -r -d '' w; do words+=("$w"); done < <(printf '%s' "$cur" | gh_scan words 'git\s+stash\b')
+  while IFS= read -r -d '' w; do words+=("$w"); done < <(printf '%s' "$cur" | gh_scan words 'git(?:\s+-[Cc]\s+\S+)*\s+stash\b')
   
   has_msg=0
   subcmd=""
-  for ((i = 2; i < ${#words[@]}; i++)); do
+  start=2
+  for ((k = 1; k < ${#words[@]}; k++)); do [ "${words[k]}" = stash ] && { start=$((k + 1)); break; }; done
+  for ((i = start; i < ${#words[@]}; i++)); do
     w="${words[i]}"
     case "$w" in
       -m|--message)
@@ -83,7 +85,7 @@ MSG
     exit 2
   fi
 
-  tail=$(printf '%s' "$cur" | gh_scan tail 'git\s+stash\b') || break
+  tail=$(printf '%s' "$cur" | gh_scan tail 'git(?:\s+-[Cc]\s+\S+)*\s+stash\b') || break
   cur=${tail#*stash}
 done
 
