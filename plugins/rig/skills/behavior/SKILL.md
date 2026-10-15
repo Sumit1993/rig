@@ -2,7 +2,7 @@
 name: behavior
 description: "Turn \"I want the agent to always/never do X\" into a landed behavior in rig: pick the strongest form that can carry it (setting, check, hook, rule, skill), build it for every harness target in dotfiles/harnesses.json, test it, and leave a draft PR. Load when the operator asks for a new behavior, a correction keeps repeating, or a memory or note describes something the agent should do or refuse."
 metadata:
-  version: "0.1.0"
+  version: "0.2.0"
 ---
 
 # Behavior: from a wish to a landed, tested behavior
@@ -17,11 +17,15 @@ Write three lines before anything else:
 - **Action:** block with a message, rewrite, or add context.
 - **Exception:** what must still pass. A behavior with no exception blocks real work.
 
-If the trigger is not a tool call, an event, or a prompt the operator types, the behavior cannot be enforced. Make it a rule line (§2, rule) and say so.
+If the trigger is not a tool call, an event, or a prompt the operator types, the behavior cannot be enforced. Make it a rule line (§3, rule) and say so.
 
-## 2. Pick the strongest form
+## 2. Check what already enforces it
 
-Take the first one that applies, and record one reason for each form you skipped. The reasons go in the hook header or the PR body.
+Before building anything, search for existing coverage: `permissions.deny` and `allow` in `dotfiles/settings.fragment.json`, every hook header in `plugins/rig/hooks/*.sh` (`grep -l` the trigger's verb), and `dotfiles/AGENTS.md`. If something already enforces the behavior, stop: report what covers it and change nothing. A second guard for the same trigger is a duplicate to maintain, not extra safety.
+
+## 3. Pick the strongest forms, layered
+
+Start at the top of the table and take every form that covers part of the behavior. A form that covers only some paths still lands; the next form down covers the rest. Example: "never read .env" is a `Read` deny rule (setting) for the Read tool, plus a hook on `Bash` for `cat`/`source`, plus nothing more. Record one reason for each form you skipped. The reasons go in the hook header or the PR body.
 
 | Form | Use when | Lands in |
 |---|---|---|
@@ -31,7 +35,7 @@ Take the first one that applies, and record one reason for each form you skipped
 | rule | the agent must judge it, or no harness exposes the trigger | one line in `dotfiles/AGENTS.md` or an overlay in `dotfiles/harness/` |
 | skill | it is a procedure the operator invokes by asking | `plugins/rig/skills/<slug>/SKILL.md` |
 
-## 3. Map it onto every target
+## 4. Map it onto every target
 
 Read `dotfiles/harnesses.json`. For each target, write one line: native form, fallback, or none, with the reason.
 
@@ -42,7 +46,7 @@ Read `dotfiles/harnesses.json`. For each target, write one line: native form, fa
 
 Add the hook to `hooks/hooks.json` and to each target's `hooks` list in `harnesses.json`. Leave a target out only with a reason in its `$comment`.
 
-## 4. Build a hook the rig way
+## 5. Build a hook the rig way
 
 Copy the shape of `hooks/no-haiku.sh`:
 
@@ -51,7 +55,7 @@ Copy the shape of `hooks/no-haiku.sh`:
 - If the input is unreadable, warn on stderr and exit 0. A broken hook must never block everything.
 - To block, print `Blocked by rig/guard/<slug>: <why>. <what to do instead>` on stderr, then the guard id line, call `report_guard`, and exit 2. The message is for the agent: it must say how to proceed.
 
-## 5. Test it
+## 6. Test it
 
 Write `hooks/tests/test-<slug>.sh` in the `check()` style of `test-no-haiku.sh`, with these cases:
 
@@ -63,7 +67,7 @@ Write `hooks/tests/test-<slug>.sh` in the `check()` style of `test-no-haiku.sh`,
 
 Run `bash plugins/rig/hooks/tests/run-all.sh` and paste the summary into the PR.
 
-## 6. Prove it fires live
+## 7. Prove it fires live
 
 Unit tests pass a hook that never fires (wrong matcher, wrong path, missing exec bit). From a scratch git repo with no remote, run:
 
@@ -75,13 +79,13 @@ claude -p "Run exactly: <trigger command>. Reply with the exact error text." \
 
 `--setting-sources project` keeps the installed rig plugin out, so a block can only come from the worktree copy. Pick a trigger that is harmless if the hook fails to fire. For Codex, report the live check as pending the operator's trust step; do not bypass hook trust.
 
-## 7. Land it
+## 8. Land it
 
 Branch from `origin/master`, commit the hook, its test, `hooks.json` and `harnesses.json`, and open a draft PR. The body holds:
 
 - the three lines from §1;
 - the chosen form, each skipped form with its reason;
-- the per-target table from §3;
-- the test summary and the live-check line from §6.
+- the per-target table from §4;
+- the test summary and the live-check line from §7.
 
 Never mark it ready and never install it. The operator merges, then runs `dotfiles/install.sh`.
