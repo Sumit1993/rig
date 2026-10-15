@@ -165,6 +165,17 @@
             "statusMessage": "safe-stash"
           }
         ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/no-thread-resolve.sh\"",
+            "timeout": 10,
+            "statusMessage": "no-thread-resolve"
+          }
+        ]
       }
     ],
     "SessionEnd": [
