@@ -40,7 +40,7 @@ Start at the top of the table and take every form that covers part of the behavi
 Read `dotfiles/harnesses.json`. For each target, write one line: native form, fallback, or none, with the reason.
 
 - Claude Code (WSL): every PreToolUse tool. Matchers must name a tool in `hooks/tests/check-wiring.sh` `KNOWN`.
-- Codex (WSL): PreToolUse fires for `Bash`, `apply_patch` and `Agent`. Input cannot be rewritten. Edits arrive as `apply_patch`, so an `Edit|Write` hook does not fire there. New or changed hooks run only after the operator trusts them: Codex stores a per-hook `trusted_hash` and skips untrusted hooks in headless runs. Say in the PR that the operator must approve the hook in Codex once.
+- Codex (WSL): PreToolUse fires for `Bash`, `apply_patch` and `Agent`; Codex's hooks docs describe `updatedInput` rewrites for `Bash` and `apply_patch`, so check `codex --version` against them before relying on a rewrite. Edits arrive as `apply_patch`, so an `Edit|Write` hook does not fire there. New or changed hooks run only after the operator trusts them: Codex stores a per-hook `trusted_hash` and skips untrusted hooks in headless runs. Say in the PR that the operator must approve the hook in Codex once.
 - Windows targets: no hooks, because the hooks are bash reading WSL paths. The fallback is the rule line, if the behavior matters there.
 - agy: hooks only where `harnesses.json` lists them for agy.
 
@@ -51,7 +51,7 @@ Add the hook to `hooks/hooks.json` and to each target's `hooks` list in `harness
 Copy the shape of `hooks/no-haiku.sh`:
 
 - Header: `# mage:rig/guard/<slug>`, one line on what it blocks, the issue, and `Rung: hook. Skipped: <form> (<reason>), ...`.
-- Read stdin once. Source `lib/json.sh` and `lib/report-guard.sh` with the fallbacks those hooks use. For a `gh` command, use `lib/gh-command.sh` (`gh_scan`), not a hand-written regex: it handles prefixes, quoting and `env` wrappers.
+- Read stdin once. Source `lib/json.sh` and `lib/report-guard.sh` with the fallbacks those hooks use. For a `gh` command, use `lib/gh-command.sh` (`gh_scan`), not a hand-written regex: it handles assignment prefixes, quoting and heredocs. It does not see a call behind `env`, `command`, `xargs` or `bash -c`; add those to your match if the behavior needs them, and test them.
 - If the input is unreadable, warn on stderr and exit 0. A broken hook must never block everything.
 - To block, print `Blocked by rig/guard/<slug>: <why>. <what to do instead>` on stderr, then the guard id line, call `report_guard`, and exit 2. The message is for the agent: it must say how to proceed.
 
@@ -59,7 +59,7 @@ Copy the shape of `hooks/no-haiku.sh`:
 
 Write `hooks/tests/test-<slug>.sh` in the `check()` style of `test-no-haiku.sh`, with these cases:
 
-- every blocked form of the trigger;
+- every blocked form of the trigger, including the indirect ones: a heredoc or variable carrying the payload, a wrapper (`env gh ...`), global options before the subcommand (`git -C <path> --no-pager stash`);
 - the exception, and a near miss that must pass (the same verb on a different subcommand, the word inside a quoted string);
 - junk stdin: exits 0;
 - blocking with mage absent (`PATH=/usr/bin:/bin`): exits 2 and prints the guard id line;
