@@ -90,5 +90,11 @@ else
   echo "FAIL: guard report check failed (rc=$rc, err=$err)"; fails=$((fails + 1))
 fi
 
+# Prose that names the mutation next to an unrelated gh api call must pass.
+for c in 'git commit -qam "the read before resolveReviewThread" && gh api repos/o/r/pulls/1/comments' \
+  'gh api repos/o/r/issues/1/comments -f body="we never call resolveReviewThread"'; do
+  rc=0; printf '%s' "$(jq -nc --arg c "$c" '{tool_name:"Bash",tool_input:{command:$c}}')" | bash "$HOOK" >/dev/null 2>&1 || rc=$?
+  if [ "$rc" -eq 0 ]; then echo "PASS: prose mention passes: ${c:0:40}"; else echo "FAIL: prose mention blocked (rc=$rc): $c"; fails=$((fails + 1)); fi
+done
 [ "$fails" -eq 0 ] && echo && echo "all no-thread-resolve hook tests passed"
 exit "$fails"

@@ -29,7 +29,14 @@ _ghlib="${CLAUDE_PLUGIN_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}/hooks/lib/gh-co
 [ -f "$_ghlib" ] || _ghlib="$(cd "$(dirname "$0")" && pwd)/lib/gh-command.sh"
 if [ -f "$_ghlib" ]; then
   . "$_ghlib"
-  printf '%s' "$cmd" | gh_scan prefix 'gh\s+api\b' >/dev/null 2>&1 || exit 0
+  # The mutation must sit in a gh api graphql call's own words, not in a commit message or a grep.
+  hit=0 cur="$cmd"
+  while printf '%s' "$cur" | gh_scan words 'gh\s+api\s+graphql\b' >/dev/null 2>&1; do
+    if printf '%s' "$cur" | gh_scan words 'gh\s+api\s+graphql\b' | tr '\0' '\n' | grep -q 'resolveReviewThread'; then hit=1; break; fi
+    tail=$(printf '%s' "$cur" | gh_scan tail 'gh\s+api\s+graphql\b') || break
+    cur=${tail#*graphql}
+  done
+  [ "$hit" -eq 1 ] || exit 0
 else
   grep -qE '(^|[;&|[:space:]])gh[[:space:]]+api\b' <<<"$cmd" || exit 0
 fi
