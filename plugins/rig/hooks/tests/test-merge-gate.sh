@@ -164,5 +164,20 @@ for c in 'echo done; gh pr view 5' 'git commit -m "then gh pr merge 5"' 'do_thin
   else echo "FAIL: false block (rc=$rc): $c"; fails=$((fails + 1)); fi
 done
 
+# Every merge in a command needs its own token; a literal brace argument is not a brace group.
+for c in 'MERGE_OK=5 gh pr merge 5; gh pr merge 6' 'MERGE_OK=5 gh pr merge 5 && gh pr merge 6' \
+  'echo { MERGE_OK=5 gh pr merge 5; gh pr merge 6' 'MERGE_OK=5 gh pr merge 5; gh api -X PUT repos/o/r/pulls/6/merge' \
+  'for p in 41 42; do MERGE_OK=$p gh pr merge $p; done'; do
+  run_hook "$c" >/dev/null 2>&1
+  rc=$?
+  if [ "$rc" -eq 2 ]; then echo "PASS: second merge or unbound token blocked: $c"
+  else echo "FAIL: merge not checked (rc=$rc): $c"; fails=$((fails + 1)); fi
+done
+for c in 'MERGE_OK=5 gh pr merge 5; MERGE_OK=6 gh pr merge 6' 'printf "%s\n" { gh pr merge 5' 'MERGE_OK=7 gh pr merge 7 --squash'; do
+  run_hook "$c" >/dev/null 2>&1
+  rc=$?
+  if [ "$rc" -eq 0 ]; then echo "PASS: allowed: $c"
+  else echo "FAIL: false block (rc=$rc): $c"; fails=$((fails + 1)); fi
+done
 [ "$fails" -eq 0 ] && echo && echo "all merge-gate hook tests passed"
 exit "$fails"
