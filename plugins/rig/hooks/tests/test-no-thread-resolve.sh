@@ -90,6 +90,16 @@ else
   echo "FAIL: guard report check failed (rc=$rc, err=$err)"; fails=$((fails + 1))
 fi
 
+# The mutation reaches gh through a heredoc, a variable or an env wrapper; a mutation that only quotes the word passes.
+for c in "q='mutation{resolveReviewThread(input:{threadId:\"x\"}){clientMutationId}}'; gh api graphql -f query=\"\$q\"" \
+  $'gh api graphql -F query=@- <<EOF\nmutation { resolveReviewThread(input:{threadId:"x"}) { clientMutationId } }\nEOF' \
+  "env GH_HOST=x gh api graphql -f query='mutation{resolveReviewThread(input:{threadId:\"x\"}){clientMutationId}}'"; do
+  rc=0; printf '%s' "$(jq -nc --arg c "$c" '{tool_name:"Bash",tool_input:{command:$c}}')" | bash "$HOOK" >/dev/null 2>&1 || rc=$?
+  if [ "$rc" -eq 2 ]; then echo "PASS: indirect mutation blocked: ${c:0:40}"; else echo "FAIL: indirect mutation passed (rc=$rc): $c"; fails=$((fails + 1)); fi
+done
+c="gh api graphql -f query='mutation{addComment(input:{subjectId:\"x\",body:\"we never resolveReviewThread\"}){clientMutationId}}'"
+rc=0; printf '%s' "$(jq -nc --arg c "$c" '{tool_name:"Bash",tool_input:{command:$c}}')" | bash "$HOOK" >/dev/null 2>&1 || rc=$?
+if [ "$rc" -eq 0 ]; then echo "PASS: addComment naming the word passes"; else echo "FAIL: addComment blocked (rc=$rc)"; fails=$((fails + 1)); fi
 # Prose that names the mutation next to an unrelated gh api call must pass.
 for c in 'git commit -qam "the read before resolveReviewThread" && gh api repos/o/r/pulls/1/comments' \
   'gh api repos/o/r/issues/1/comments -f body="we never call resolveReviewThread"'; do
