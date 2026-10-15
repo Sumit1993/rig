@@ -146,5 +146,23 @@ else
   echo "FAIL: echo gh pr merge (rc=$rc, out=$out)"; fails=$((fails + 1))
 fi
 
+# A merge after a shell reserved word or a brace is still in command position.
+for c in 'for p in 5; do gh pr merge $p; done' 'if true; then gh pr merge 5; fi' \
+  'if false; then :; else gh pr merge 5; fi' '{ gh pr merge 5; }' '! gh pr merge 5' \
+  'while true; do
+  gh pr merge 5
+done'; do
+  run_hook "$c" >/dev/null 2>&1
+  rc=$?
+  if [ "$rc" -eq 2 ]; then echo "PASS: blocks after reserved word: ${c%%$'\n'*}"
+  else echo "FAIL: missed after reserved word (rc=$rc): $c"; fails=$((fails + 1)); fi
+done
+for c in 'echo done; gh pr view 5' 'git commit -m "then gh pr merge 5"' 'do_thing gh pr merge 5'; do
+  run_hook "$c" >/dev/null 2>&1
+  rc=$?
+  if [ "$rc" -eq 0 ]; then echo "PASS: no false block: $c"
+  else echo "FAIL: false block (rc=$rc): $c"; fails=$((fails + 1)); fi
+done
+
 [ "$fails" -eq 0 ] && echo && echo "all merge-gate hook tests passed"
 exit "$fails"

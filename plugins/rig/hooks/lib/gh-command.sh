@@ -86,7 +86,8 @@ while ($i < $n) {
   if (my $h = heredoc_at($i)) { push @pend, $h->[0]; $i = $h->[1]; next }
   $i++;
 }
-exit 1 unless $m =~ /(?:^|[;&|(`])[ \t]*(?:[A-Za-z_]\w*=\S*[ \t]+)*($re)/m;
+# Command position also follows a brace group, `!`, and the reserved words that open a command list.
+exit 1 unless $m =~ /(?:^|[;&|(`{])[ \t]*(?:(?:do|then|else|elif|time|!)[ \t]+)*(?:[A-Za-z_]\w*=\S*[ \t]+)*($re)/m;
 my $off = $-[1];
 
 if ($mode eq 'prefix') { print substr($s, 0, $off); exit 0 }
