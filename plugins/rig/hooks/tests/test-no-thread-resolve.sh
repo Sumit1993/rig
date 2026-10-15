@@ -97,9 +97,13 @@ for c in "q='mutation{resolveReviewThread(input:{threadId:\"x\"}){clientMutation
   rc=0; printf '%s' "$(jq -nc --arg c "$c" '{tool_name:"Bash",tool_input:{command:$c}}')" | bash "$HOOK" >/dev/null 2>&1 || rc=$?
   if [ "$rc" -eq 2 ]; then echo "PASS: indirect mutation blocked: ${c:0:40}"; else echo "FAIL: indirect mutation passed (rc=$rc): $c"; fails=$((fails + 1)); fi
 done
-c="gh api graphql -f query='mutation{addComment(input:{subjectId:\"x\",body:\"we never resolveReviewThread\"}){clientMutationId}}'"
-rc=0; printf '%s' "$(jq -nc --arg c "$c" '{tool_name:"Bash",tool_input:{command:$c}}')" | bash "$HOOK" >/dev/null 2>&1 || rc=$?
-if [ "$rc" -eq 0 ]; then echo "PASS: addComment naming the word passes"; else echo "FAIL: addComment blocked (rc=$rc)"; fails=$((fails + 1)); fi
+# Fail closed: a graphql call that only names the mutation is blocked too; other flags and GraphQL comments do not hide it.
+for c in "gh api graphql -f query='mutation{addComment(input:{subjectId:\"x\",body:\"we never resolveReviewThread\"}){clientMutationId}}'" \
+  "gh api -X POST graphql -f query='mutation{resolveReviewThread(input:{threadId:\"x\"}){clientMutationId}}'" \
+  $'gh api graphql -f query=\'mutation{resolveReviewThread # note\n(input:{threadId:"x"}){clientMutationId}}\''; do
+  rc=0; printf '%s' "$(jq -nc --arg c "$c" '{tool_name:"Bash",tool_input:{command:$c}}')" | bash "$HOOK" >/dev/null 2>&1 || rc=$?
+  if [ "$rc" -eq 2 ]; then echo "PASS: graphql naming the mutation blocked: ${c:0:40}"; else echo "FAIL: graphql naming the mutation passed (rc=$rc): $c"; fails=$((fails + 1)); fi
+done
 # Prose that names the mutation next to an unrelated gh api call must pass.
 for c in 'git commit -qam "the read before resolveReviewThread" && gh api repos/o/r/pulls/1/comments' \
   'gh api repos/o/r/issues/1/comments -f body="we never call resolveReviewThread"'; do

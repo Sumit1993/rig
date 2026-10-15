@@ -29,11 +29,10 @@ _ghlib="${CLAUDE_PLUGIN_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}/hooks/lib/gh-co
 [ -f "$_ghlib" ] || _ghlib="$(cd "$(dirname "$0")" && pwd)/lib/gh-command.sh"
 if [ -f "$_ghlib" ]; then
   . "$_ghlib"
-  # The command runs gh api graphql and carries the mutation call itself, `resolveReviewThread(`, anywhere:
-  # in -f query, a heredoc or here-string fed to `-F query=@-`, or a variable set earlier. Prose naming the
-  # mutation without its argument list passes. A query file (--input FILE) is not read.
-  printf '%s' "$cmd" | gh_scan prefix '(?:env(?:\s+[A-Za-z_]\w*=\S*)*\s+|command\s+)?gh\s+api\s+graphql\b' >/dev/null 2>&1 || exit 0
-  grep -qE 'resolveReviewThread[[:space:]]*\(' <<<"$cmd" || exit 0
+  # Fail closed: any gh api call in a command that names resolveReviewThread and graphql is blocked, wherever the
+  # query sits (flags, heredoc, variable, GraphQL comments). A command that only mentions it splits the text out.
+  printf '%s' "$cmd" | gh_scan prefix '(?:env(?:\s+[A-Za-z_]\w*=\S*)*\s+|command\s+)?gh\s+api\b' >/dev/null 2>&1 || exit 0
+  grep -q 'graphql' <<<"$cmd" || exit 0
 else
   grep -qE '(^|[;&|[:space:]])gh[[:space:]]+api\b' <<<"$cmd" || exit 0
 fi
@@ -41,6 +40,7 @@ fi
 cat >&2 <<MSG
 Blocked by rig/guard/no-thread-resolve: The session must never resolve a reviewer's review thread; only the reviewer that opened it resolves it (AGENTS.md §Reporting and merging).
 Instead: fix findings, commit, push, and reply inside the review thread. The reviewer resolves its own thread once verified.
+If this command only mentions the mutation (a comment or commit body), move that text to a file and pass it with -F body=@file.
 mage:rig/guard/no-thread-resolve
 MSG
 tool=$(json_get "$in" "Bash" .tool_name)

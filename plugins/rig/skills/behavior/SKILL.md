@@ -40,7 +40,7 @@ Start at the top of the table and take every form that covers part of the behavi
 Read `dotfiles/harnesses.json`. For each target, write one line: native form, fallback, or none, with the reason.
 
 - Claude Code (WSL): every PreToolUse tool. Matchers must name a tool in `hooks/tests/check-wiring.sh` `KNOWN`.
-- Codex (WSL): PreToolUse fires for `Bash`, `apply_patch` and `Agent`; Codex's hooks docs describe `updatedInput` rewrites for `Bash` and `apply_patch`, so check `codex --version` against them before relying on a rewrite. Edits arrive as `apply_patch`, so an `Edit|Write` hook does not fire there. New or changed hooks run only after the operator trusts them: Codex stores a per-hook `trusted_hash` and skips untrusted hooks in headless runs. Say in the PR that the operator must approve the hook in Codex once.
+- Codex (WSL): PreToolUse fires for `Bash`, `apply_patch` and `Agent`; Codex's hooks docs describe `updatedInput` rewrites for `Bash` and `apply_patch`, so check `codex --version` against them before relying on a rewrite. Edits arrive as `apply_patch`; Codex docs say its matcher accepts `apply_patch`, `Edit` or `Write`, but the payload is the patch, not a `file_path`, so a Claude `Edit|Write` hook needs adapting to read it. New or changed hooks run only after the operator trusts them: Codex stores a per-hook `trusted_hash` and skips untrusted hooks in headless runs. Say in the PR that the operator must approve the hook in Codex once.
 - Windows targets: no hooks, because the hooks are bash reading WSL paths. The fallback is the rule line, if the behavior matters there.
 - agy: hooks only where `harnesses.json` lists them for agy.
 
