@@ -29,7 +29,7 @@ Start at the top of the table and take every form that covers part of the behavi
 
 | Form | Use when | Lands in |
 |---|---|---|
-| setting | a permission or deny rule expresses it exactly | `dotfiles/settings.fragment.json` (a plugin cannot ship permission rules) |
+| setting | a permission or deny rule covers it, or part of it | `dotfiles/settings.fragment.json` (a plugin cannot ship permission rules) |
 | check | a repo test, lint or CI job can catch it after the fact | an issue in that repo, not here |
 | hook | the trigger is a tool call the harness exposes | `plugins/rig/hooks/<slug>.sh` plus a test |
 | rule | the agent must judge it, or no harness exposes the trigger | one line in `dotfiles/AGENTS.md` or an overlay in `dotfiles/harness/` |
