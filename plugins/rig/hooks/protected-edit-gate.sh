@@ -10,6 +10,8 @@ path=$(jq -r '.tool_input.file_path // .tool_input.notebook_path // ""' <<<"$in"
 [ -n "$path" ] || exit 0
 tool=$(jq -r '.tool_name // ""' <<<"$in" 2>/dev/null) || tool=""
 home="${PROTECTED_EDIT_HOME:-$HOME}"
+# Native Windows Claude Code sends C:\Users\x; Git Bash's $HOME is /c/Users/x.
+if command -v cygpath >/dev/null 2>&1; then path=$(cygpath -u -- "$path"); home=$(cygpath -u -- "$home"); fi
 
 _lib="${CLAUDE_PLUGIN_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}/hooks/lib/report-guard.sh"
 [ -f "$_lib" ] || _lib="$(cd "$(dirname "$0")" && pwd)/lib/report-guard.sh"

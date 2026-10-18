@@ -152,6 +152,11 @@ gh_expand_var() { # <prefix> <word>
 
 gh_resolve_path() { # <cwd> <path>
   local cwd=$1 f=$2
+  # Native Windows Claude Code sends E:\x or E:/x; Git Bash compares /e/x.
+  if command -v cygpath >/dev/null 2>&1; then
+    [ -n "$cwd" ] && cwd=$(cygpath -u -- "$cwd")
+    case "$f" in [A-Za-z]:[\\/]*) f=$(cygpath -u -- "$f") ;; esac
+  fi
   case "$f" in \~/*|\~) f="$HOME${f#\~}" ;; esac
   case "$f" in /*) ;; *) [ -n "$cwd" ] && f="$cwd/$f" ;; esac
   printf '%s' "$f"

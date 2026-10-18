@@ -26,7 +26,8 @@ fi
 
 run_hook() {
   local tool=$1 path=$2 old=${3:-} content=${4:-} new=${5:-}
-  jq -n --arg t "$tool" --arg p "$path" --arg o "$old" --arg c "$content" --arg n "$new" \
+  # Git Bash rewrites POSIX-looking args (/tmp/x, @/x/AGENTS.md) for a native jq.exe; keep them verbatim.
+  MSYS2_ARG_CONV_EXCL='*' jq -n --arg t "$tool" --arg p "$path" --arg o "$old" --arg c "$content" --arg n "$new" \
     '{"tool_name": $t, "tool_input": {"file_path": $p, "old_string": $o, "new_string": $n, "content": $c}}' | "$HOOK"
 }
 
@@ -145,6 +146,17 @@ if [ "$rc" -eq 0 ] && [ -z "$out" ]; then
   echo "PASS: path elsewhere exits 0 with no output"
 else
   echo "FAIL: path elsewhere (rc=$rc, out=$out)"; fails=$((fails + 1))
+fi
+
+# Native Windows Claude Code sends C:\Users\x\.claude\skills\..., which must match a /c/Users/x home.
+if command -v cygpath >/dev/null 2>&1; then
+  err=$(run_hook "Edit" "$(cygpath -w "$PROTECTED_EDIT_HOME/.claude/skills/x/SKILL.md")" "foo" "" 2>&1 >/dev/null)
+  rc=$?
+  if [ "$rc" -eq 2 ] && grep -q 'plugins/rig/skills' <<<"$err"; then
+    echo "PASS: Windows-form path under .claude/skills exits 2"
+  else
+    echo "FAIL: Windows-form path (rc=$rc, err=$err)"; fails=$((fails + 1))
+  fi
 fi
 
 [ "$fails" -eq 0 ] && echo && echo "all protected-edit-gate hook tests passed"

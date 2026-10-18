@@ -12,8 +12,8 @@ week=$(echo "$input" | jq -r '.rate_limits.seven_day.used_percentage // empty')
 five_reset=$(echo "$input" | jq -r '.rate_limits.five_hour.resets_at // empty')
 five_live="$five"  # only log the trace row when this render actually carried live rate_limits
 
-# PS1-based portion: bold green user@host, reset, colon, bold blue cwd, reset
-prompt=$(printf "\033[01;32m%s@%s\033[00m:\033[01;34m%s\033[00m" "$(whoami)" "$(hostname -s)" "$cwd")
+# PS1-based portion: bold green user@host, reset, colon, bold blue cwd, reset; ${HOSTNAME%%.*} is hostname -s, which Windows hostname rejects
+prompt=$(printf "\033[01;32m%s@%s\033[00m:\033[01;34m%s\033[00m" "$(whoami)" "${HOSTNAME%%.*}" "$cwd")
 
 extra=""
 # Model (+effort)

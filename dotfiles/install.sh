@@ -6,6 +6,11 @@
 set -euo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
 . "$HERE/build-lib.sh"
+# Windows jq.exe writes CRLF, and every hook's $(jq -r ...) would keep the \r: README §Native Windows.
+if [ "$(printf '"a"' | jq -r . 2>/dev/null)" = $'a\r' ]; then
+  echo "  ERROR: jq writes CRLF; put an LF jq shim ahead of jq.exe on PATH (README §Native Windows)." >&2
+  exit 1
+fi
 CLAUDE="$HOME/.claude"
 CODEX_DIR="${CODEX_HOME:-$HOME/.codex}"
 DATA_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/rig"
@@ -26,9 +31,11 @@ DOT="$src_root/dotfiles"
 # @-import it, so the body stays under version control with no second copy to drift. Never import a
 # plugin-cache path; those carry a version string that changes on update.
 MARKER="Edit the imported files in the rig repo, not here. Anything below this line is machine-local."
+# Native Windows Claude Code cannot resolve a Git Bash path like /e/sources; cygpath -m gives E:/sources.
+native_path() { if command -v cygpath >/dev/null 2>&1; then cygpath -m "$1"; else echo "$1"; fi; }
 claude_header() {
-  printf '@%s\n' "$DOT/AGENTS.md"
-  printf '@%s\n' "$DOT/$(rig_field claude doctrine.overlay)"
+  printf '@%s\n' "$(native_path "$DOT/AGENTS.md")"
+  printf '@%s\n' "$(native_path "$DOT/$(rig_field claude doctrine.overlay)")"
   printf '\n%s\n' "$MARKER"
 }
 # The operator's lines after the machine-local marker survive every rewrite.
@@ -84,7 +91,7 @@ check() {
 
   rig_check_manifest || flag "harnesses.json fails its own checks"
 
-  echo "claude (WSL Claude Code)"
+  echo "claude (Claude Code)"
   dir=$(jq -r '.plugins["rig@rig"][0].installPath // empty' "$CLAUDE/plugins/installed_plugins.json" 2>/dev/null || true)
   if [ -n "$dir" ] && [ -d "$dir" ]; then
     cc_rev=$(jq -r '.plugins["rig@rig"][0].gitCommitSha // empty' "$CLAUDE/plugins/installed_plugins.json")

@@ -20,7 +20,7 @@ report_guard() {
       --arg tool "$tool" \
       --arg detail "$detail" \
       '{"guard_id": $guard_id, "tool": $tool, "detail": $detail}' 2>/dev/null) || return 0
-  elif command -v python3 >/dev/null 2>&1; then
+  elif python3 -c '' >/dev/null 2>&1; then  # run, not look up: a Windows Store alias stub only exits 49
     payload=$(RIG_GUARD_ID="$guard_id" RIG_TOOL="$tool" RIG_DETAIL="$detail" python3 -c '
 import json, os
 print(json.dumps({
