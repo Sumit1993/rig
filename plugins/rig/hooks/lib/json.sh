@@ -9,7 +9,8 @@
 
 json_runtime() {
   if command -v jq >/dev/null 2>&1; then echo jq
-  elif command -v python3 >/dev/null 2>&1; then echo python3
+  # Run it rather than look it up: on Windows python3 can be the Store alias stub, which only exits 49.
+  elif python3 -c '' >/dev/null 2>&1; then echo python3
   else echo none
   fi
 }

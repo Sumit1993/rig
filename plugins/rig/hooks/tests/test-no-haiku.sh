@@ -47,7 +47,9 @@ echo "-- allowed with stderr warning: junk stdin"
 check "junk stdin does not block and emits one stderr line" 0 'junk' 1
 
 # Guard reporting: when blocking, exits 2 even with mage absent, and stderr contains guard id
-err=$(printf '{"tool_input":{"model":"claude-haiku-4-5"}}' | PATH=/usr/bin:/bin "$HOOK" 2>&1 >/dev/null)
+# mage stays off PATH; jq stays on it, wherever it lives (Git Bash keeps jq.exe outside /usr/bin).
+nomage=$(mktemp -d); trap 'rm -rf "$nomage"' EXIT; ln -s "$(command -v jq)" "$nomage/jq"
+err=$(printf '{"tool_input":{"model":"claude-haiku-4-5"}}' | PATH="$nomage:/usr/bin:/bin" "$HOOK" 2>&1 >/dev/null)
 rc=$?
 if [ "$rc" -eq 2 ] && grep -q '^mage:rig/guard/no-haiku$' <<<"$err"; then
   echo "PASS: blocks with exit 2 and guard id on stderr when mage absent"

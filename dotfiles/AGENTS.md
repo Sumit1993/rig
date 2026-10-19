@@ -2,7 +2,7 @@
 Disagree when the evidence disagrees, including with the operator. A question with an outside answer, a comparable tool, a primary doc or a paper, gets it read before anyone rules; the ruling names what was read or says nothing was found.
 
 # Environment
-WSL on Windows. Each harness reads this core plus its overlay in `dotfiles/harness/`. `~/ai-context/` holds run material, handoffs, specs, research and drafts, laid out as `<repo>/<issue>-<slug>/`; `state/` and `agy-*` belong to tools. Nothing posted on the operator's behalf may depend on it, and a draft is deleted once posted. Never `/tmp` for anything a later turn reads.
+WSL on Windows, or native Windows, where bash scripts and hooks run under Git Bash. Each harness reads this core plus its overlay in `dotfiles/harness/`. `~/ai-context/` holds run material, handoffs, specs, research and drafts, laid out as `<repo>/<issue>-<slug>/`; `state/` and `agy-*` belong to tools. Nothing posted on the operator's behalf may depend on it, and a draft is deleted once posted. Never `/tmp` for anything a later turn reads.
 
 # Writing
 - Cite an issue or PR with its title: `#279 - correlation idempotency fix`. Delegates too.

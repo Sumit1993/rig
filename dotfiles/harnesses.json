@@ -2,7 +2,7 @@
   "$comment": "What each harness gets from plugins/rig. Read by build-lib.sh, the build-*-plugin.sh scripts and install.sh --check. #169 - rig declares and installs every harness's plugins and MCP servers, and reports drift.",
   "targets": {
     "claude": {
-      "$comment": "WSL Claude Code. The plugin loads from the GitHub marketplace as a whole directory, so this target lists everything; nothing is built.",
+      "$comment": "Claude Code, on WSL or native Windows (hooks run under Git Bash there). The plugin loads from the GitHub marketplace as a whole directory, so this target lists everything; nothing is built.",
       "install": "marketplace",
       "skills": ["adversary", "autofix", "autopilot", "claude-review-lane", "codex-desktop", "codex-judge", "coderabbit-lane", "compass", "docs-drift", "farm-out", "lane", "no-comments", "no-doze", "pr-babysit", "triage", "tweet"],
       "hooks": ["agent-prompt-nudge.sh", "budget-nudge.sh", "delegate-check.sh", "draft-posted-nudge.sh", "gh-body-no-scratch.sh", "gh-body-stamp.sh", "gh-write-nudge.sh", "issue-create-nudge.sh", "limit-log.sh", "merge-gate.sh", "no-broad-agy-kill.sh", "no-haiku.sh", "outside-view-nudge.sh", "pr-created.sh", "protected-edit-gate.sh", "reap-watchers.sh", "release-docs-gate.sh", "review-debt.sh", "scoped-cap-gate.sh", "session-budget.sh", "summon-gate.sh"],

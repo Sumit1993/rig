@@ -13,10 +13,12 @@ fail() { echo "FAIL: $1"; fails=$((fails + 1)); }
 
 TMP=$(mktemp -d)
 trap 'rm -rf "$TMP"' EXIT
+# mage stays off PATH; jq stays on it, wherever it lives (Git Bash keeps jq.exe outside /usr/bin).
+mkdir -p "$TMP/nomage"; ln -s "$(command -v jq)" "$TMP/nomage/jq"; NOMAGE_PATH="$TMP/nomage:/usr/bin:/bin"
 
 # 1. report_guard returns 0 when mage is absent from PATH
 rc=0
-out=$(PATH=/usr/bin:/bin report_guard "rig/guard/test-absent" "Agent" "detail" 2>&1) || rc=$?
+out=$(PATH="$NOMAGE_PATH" report_guard "rig/guard/test-absent" "Agent" "detail" 2>&1) || rc=$?
 if [ "$rc" -eq 0 ]; then
   pass "report_guard returns 0 when mage is absent from PATH"
 else
@@ -33,7 +35,7 @@ EOF
 chmod +x "$TMP/bin-failing/mage"
 
 rc=0
-out=$(PATH="$TMP/bin-failing:/usr/bin:/bin" report_guard "rig/guard/test-fail" "Bash" "failing mage" 2>&1) || rc=$?
+out=$(PATH="$TMP/bin-failing:$NOMAGE_PATH" report_guard "rig/guard/test-fail" "Bash" "failing mage" 2>&1) || rc=$?
 if [ "$rc" -eq 0 ]; then
   pass "report_guard returns 0 when mage exists and fails"
 else
@@ -50,7 +52,7 @@ EOF
 chmod +x "$TMP/bin-verbose/mage"
 
 stdout_capture="$TMP/stdout.txt"
-PATH="$TMP/bin-verbose:/usr/bin:/bin" report_guard "rig/guard/test-stdout" "Agent" "check stdout" > "$stdout_capture"
+PATH="$TMP/bin-verbose:$NOMAGE_PATH" report_guard "rig/guard/test-stdout" "Agent" "check stdout" > "$stdout_capture"
 if [ ! -s "$stdout_capture" ]; then
   pass "report_guard writes nothing to stdout"
 else
@@ -69,7 +71,7 @@ EOF
 chmod +x "$TMP/bin-capture/mage"
 
 rm -f "$captured"
-PATH="$TMP/bin-capture:/usr/bin:/bin" report_guard "rig/guard/test-fields" "Write" "valid reason"
+PATH="$TMP/bin-capture:$NOMAGE_PATH" report_guard "rig/guard/test-fields" "Write" "valid reason"
 if [ -f "$captured" ] && jq -e '.guard_id == "rig/guard/test-fields" and .tool == "Write" and .detail == "valid reason"' "$captured" >/dev/null 2>&1; then
   pass "the JSON it sends is valid and carries the three fields"
 else
@@ -79,7 +81,7 @@ fi
 # 5. A detail containing a double quote and a newline still produces valid JSON.
 rm -f "$captured"
 complex_detail=$(printf 'has "quotes" and\nnew lines in it')
-PATH="$TMP/bin-capture:/usr/bin:/bin" report_guard "rig/guard/test-escape" "Edit" "$complex_detail"
+PATH="$TMP/bin-capture:$NOMAGE_PATH" report_guard "rig/guard/test-escape" "Edit" "$complex_detail"
 if [ -f "$captured" ] && jq -e --arg want "$complex_detail" '.guard_id == "rig/guard/test-escape" and .tool == "Edit" and .detail == $want' "$captured" >/dev/null 2>&1; then
   pass "a detail containing a double quote and a newline still produces valid JSON"
 else

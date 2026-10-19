@@ -33,6 +33,7 @@ echo "${FAKE_PR_TITLE:-chore: release 1.0.0}"
 EOF
 chmod +x "$FAKEBIN/gh"
 
+ln -s "$(command -v jq)" "$FAKEBIN/jq"  # the mage-free PATH below keeps jq, wherever it lives
 export CLAUDE_PLUGIN_ROOT="$FAKEROOT" PATH="$FAKEBIN:$PATH" FAKE_REPO=acme/widget
 
 check() { # name want_rc command_str
@@ -77,7 +78,9 @@ check "missing rig-meta.sh passes a non-merge"      0 "git status"
 check "missing rig-meta.sh passes DOCS_GATE=skip"   0 "gh pr merge 42 --squash DOCS_GATE=skip"
 mv "$FAKEROOT/scripts/rig-meta.off" "$FAKEROOT/scripts/rig-meta.sh"
 chmod -x "$FAKEROOT/scripts/rig-meta.sh"
-check "unrunnable rig-meta.sh blocks a merge"       2 "gh pr merge 42 --squash"
+# NTFS keeps a shebang script executable through chmod -x, so Git Bash cannot stage this case.
+if [ -x "$FAKEROOT/scripts/rig-meta.sh" ]; then echo "SKIP: unrunnable rig-meta.sh (chmod -x is a no-op here)"
+else check "unrunnable rig-meta.sh blocks a merge"  2 "gh pr merge 42 --squash"; fi
 chmod +x "$FAKEROOT/scripts/rig-meta.sh"
 mv "$FAKEROOT/data/repo-meta.json" "$FAKEROOT/data/off.json"
 check "missing registry blocks a merge"             2 "gh pr merge 42 --squash"

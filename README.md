@@ -53,7 +53,7 @@ Each harness's global instructions are generated from the same two pieces, the c
 
 Dotfiles, what a plugin cannot carry: `AGENTS.md`, `harness/*.md`, `harnesses.json`, the statusline scripts, `settings.fragment.json` (registers this repo as a marketplace and enables the plugin), `GEMINI.md`, `install.sh`, `install-windows.sh`, the `build-*-plugin.sh` builders and `dedupe.sh`.
 
-One source, several harnesses. `dotfiles/harnesses.json` declares what each target gets: `claude` (WSL Claude Code, the whole plugin from the marketplace), `codex` (WSL CLI), `codex-desktop` (the Windows app), `claude-windows` and `agy` (lane-first). Per target it lists skills, hooks, agents, runtime files and the doctrine overlay. The builders read it, and a build fails on an artifact no target names, on a shipped skill that points at a skill the target lacks, and on a missing runtime file. `install.sh --check` reports drift per target, including Codex hooks still waiting for trust in `/hooks`. `dotfiles/tests/test-builders.sh` covers the builders.
+One source, several harnesses. `dotfiles/harnesses.json` declares what each target gets: `claude` (Claude Code on WSL or native Windows, the whole plugin from the marketplace), `codex` (WSL CLI), `codex-desktop` (the Windows app), `claude-windows` and `agy` (lane-first). Per target it lists skills, hooks, agents, runtime files and the doctrine overlay. The builders read it, and a build fails on an artifact no target names, on a shipped skill that points at a skill the target lacks, and on a missing runtime file. `install.sh --check` reports drift per target, including Codex hooks still waiting for trust in `/hooks`. `dotfiles/tests/test-builders.sh` covers the builders.
 
 ## Guard observation
 
@@ -116,6 +116,15 @@ At the same time, `no-haiku.sh` pipes the following payload to `mage observe` on
 ```bash
 git clone https://github.com/Sumit1993/rig && ./rig/dotfiles/install.sh
 ```
+
+### Native Windows
+
+Run `install.sh` from Git Bash, the shell Claude Code on Windows runs hooks in. The `claude` target then installs whole, hooks included; `install-windows.sh` only matters from WSL. Two Windows binaries need a shim in a PATH directory ahead of them, such as `~/.local/bin`:
+
+- `jq.exe` (`winget install jqlang.jq`) writes CRLF, and `$(jq -r …)` keeps the `\r`. `install.sh` refuses to run until `jq` writes LF. The shim is `~/.local/bin/jq`: `#!/bin/sh` then `exec "<path to jq.exe>" -b "$@"`.
+- python.org's installer ships no `python3.exe`, and the `python3` in `WindowsApps` is a Store alias stub. The shim is `~/.local/bin/python3`, the same two lines with `python.exe`, or turn the alias off under App execution aliases.
+
+`.gitattributes` keeps the checkout LF regardless of `core.autocrlf`; on a clone made before it existed, run `git config core.filemode false` to drop the mode-only diffs NTFS reports.
 
 ## Vendored skills and their updates
 

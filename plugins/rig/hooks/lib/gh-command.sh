@@ -150,8 +150,19 @@ gh_expand_var() { # <prefix> <word>
   if [ -n "$val" ]; then printf '%s' "$val"; else printf '%s' "$word"; fi
 }
 
+gh_posix_path() { # <path>; a Windows drive or UNC path in Git Bash form, anything else unchanged
+  local p=$1 d
+  case "$p" in [A-Za-z]:[\\/]*|\\\\*) ;; *) printf '%s' "$p"; return ;; esac
+  if command -v cygpath >/dev/null 2>&1; then cygpath -u -- "$p"; return; fi
+  p=${p//\\//}
+  case "$p" in [A-Za-z]:/*) d=${p:0:1}; p="/${d,,}${p:2}" ;; esac
+  printf '%s' "$p"
+}
+
 gh_resolve_path() { # <cwd> <path>
   local cwd=$1 f=$2
+  # Native Windows Claude Code sends E:\x, E:/x or \\host\share; Git Bash compares /e/x and //host/share.
+  cwd=$(gh_posix_path "$cwd"); f=$(gh_posix_path "$f")
   case "$f" in \~/*|\~) f="$HOME${f#\~}" ;; esac
   case "$f" in /*) ;; *) [ -n "$cwd" ] && f="$cwd/$f" ;; esac
   printf '%s' "$f"

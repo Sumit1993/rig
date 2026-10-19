@@ -64,8 +64,10 @@ check "mapping a surface is not mechanical" 0 \
   '{"tool_input":{"subagent_type":"general-purpose","description":"Map full UI surface"}}'
 
 # Guard reporting: when blocking, exits 2 even with mage absent, and stderr contains guard id
+# mage stays off PATH; jq stays on it, wherever it lives (Git Bash keeps jq.exe outside /usr/bin).
+nomage=$(mktemp -d); trap 'rm -rf "$nomage"' EXIT; ln -s "$(command -v jq)" "$nomage/jq"
 err=$(printf '{"tool_input":{"subagent_type":"general-purpose","description":"write tests for the parser"}}' \
-  | PATH=/usr/bin:/bin "$HOOK" 2>&1 >/dev/null)
+  | PATH="$nomage:/usr/bin:/bin" "$HOOK" 2>&1 >/dev/null)
 rc=$?
 if [ "$rc" -eq 2 ] && grep -q '^mage:rig/guard/delegate-check$' <<<"$err"; then
   echo "PASS: blocks with exit 2 and guard id on stderr when mage absent"

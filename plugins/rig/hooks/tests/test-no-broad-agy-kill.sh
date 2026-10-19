@@ -56,7 +56,9 @@ check "dash heredoc tab-indented terminator" 0 $'cat <<-\'EOF\' > notes.txt\npki
 check "heredoc then gh pr create body-file" 0 $'cat <<\'EOF\' > body.md\npkill -9 -x agy\nEOF\ngh pr create --body-file body.md'
 
 # Guard reporting: when blocking, exits 2 even with mage absent, and stderr contains guard id
-err=$(jq -n --arg c 'pkill -9 -x agy' '{tool_input:{command:$c}}' | PATH=/usr/bin:/bin "$HOOK" 2>&1 >/dev/null)
+# mage stays off PATH; jq stays on it, wherever it lives (Git Bash keeps jq.exe outside /usr/bin).
+nomage=$(mktemp -d); trap 'rm -rf "$nomage"' EXIT; ln -s "$(command -v jq)" "$nomage/jq"
+err=$(jq -n --arg c 'pkill -9 -x agy' '{tool_input:{command:$c}}' | PATH="$nomage:/usr/bin:/bin" "$HOOK" 2>&1 >/dev/null)
 rc=$?
 if [ "$rc" -eq 2 ] && grep -q '^mage:rig/guard/no-broad-agy-kill$' <<<"$err"; then
   echo "PASS: blocks with exit 2 and guard id on stderr when mage absent"

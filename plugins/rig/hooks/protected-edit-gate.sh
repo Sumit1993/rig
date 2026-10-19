@@ -10,6 +10,17 @@ path=$(jq -r '.tool_input.file_path // .tool_input.notebook_path // ""' <<<"$in"
 [ -n "$path" ] || exit 0
 tool=$(jq -r '.tool_name // ""' <<<"$in" 2>/dev/null) || tool=""
 home="${PROTECTED_EDIT_HOME:-$HOME}"
+# Native Windows Claude Code sends C:\Users\x; Git Bash's $HOME is /c/Users/x. Without cygpath the
+# drive form is rewritten by hand, so a missing tool never turns a block into a pass.
+posix() {
+  local p=$1 d
+  case "$p" in [A-Za-z]:[\\/]*|\\\\*) ;; *) printf '%s' "$p"; return ;; esac
+  if command -v cygpath >/dev/null 2>&1; then cygpath -u -- "$p"; return; fi
+  p=${p//\\//}
+  case "$p" in [A-Za-z]:/*) d=${p:0:1}; p="/${d,,}${p:2}" ;; esac
+  printf '%s' "$p"
+}
+path=$(posix "$path"); home=$(posix "$home")
 
 _lib="${CLAUDE_PLUGIN_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}/hooks/lib/report-guard.sh"
 [ -f "$_lib" ] || _lib="$(cd "$(dirname "$0")" && pwd)/lib/report-guard.sh"

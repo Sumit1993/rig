@@ -10,7 +10,8 @@ DATA="$(cd "$(dirname "$0")/.." && pwd)/data/repo-meta.json"
 STATE_DIR="$HOME/ai-context/state/rig"
 OBSERVED="$STATE_DIR/observed.json"
 
-merged() { jq -s '.[0] * .[1]' <(cat "$OBSERVED" 2>/dev/null || echo '{}') "$DATA"; }
+# A pipe, not <(...): Windows jq.exe cannot open the /dev/fd path a process substitution names.
+merged() { { cat "$OBSERVED" 2>/dev/null || echo '{}'; } | jq -s '.[0] * .[1]' - "$DATA"; }
 
 resolve_repo() {
   local url

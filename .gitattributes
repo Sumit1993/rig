@@ -1,0 +1,3 @@
+# Every script here runs under bash, also from Git Bash on Windows, where core.autocrlf=true
+# would check them out CRLF and break them. Keep the working tree LF everywhere.
+* text=auto eol=lf
