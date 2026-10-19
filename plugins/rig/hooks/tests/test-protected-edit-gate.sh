@@ -159,5 +159,15 @@ if command -v cygpath >/dev/null 2>&1; then
   fi
 fi
 
+# Without cygpath the gate's own converter still maps a Windows-form path onto the Git Bash home.
+# PATH is emptied around the function alone: copied MSYS tools cannot load their DLL elsewhere.
+eval "$(sed -n '/^posix() {/,/^}/p' "$HOOK")"
+got=$(PATH= posix 'C:\Users\x\.claude\skills')
+if [ "$got" = /c/Users/x/.claude/skills ]; then echo "PASS: drive path converts without cygpath"
+else echo "FAIL: drive path without cygpath: got $got"; fails=$((fails + 1)); fi
+got=$(PATH= posix /c/Users/x)
+if [ "$got" = /c/Users/x ]; then echo "PASS: Git Bash home unchanged without cygpath"
+else echo "FAIL: Git Bash home without cygpath: got $got"; fails=$((fails + 1)); fi
+
 [ "$fails" -eq 0 ] && echo && echo "all protected-edit-gate hook tests passed"
 exit "$fails"

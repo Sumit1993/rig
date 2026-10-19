@@ -62,5 +62,24 @@ check "a reassignment after gh does not change the file read" 2 \
   "B=\"$TMPDIR_TEST/dirty-file.txt\"; gh issue comment 5 --body-file \"\$B\"; B=\"$TMPDIR_TEST/clean-file.txt\""
 check "gh issue view passes" 0 'gh issue view 5'
 
+# gh_posix_path, with cygpath (when present) and with PATH emptied so only the bash fallback runs.
+. "$(dirname "$HOOK")/lib/gh-command.sh"
+posix_case() { # name input want
+  local got
+  got=$(PATH= gh_posix_path "$2")
+  if [ "$got" = "$3" ]; then echo "PASS: $1 (no cygpath)"; else echo "FAIL: $1 (no cygpath): got $got"; fails=$((fails + 1)); fi
+  if command -v cygpath >/dev/null 2>&1; then
+    got=$(gh_posix_path "$2")
+    if [ "$got" = "$3" ]; then echo "PASS: $1 (cygpath)"; else echo "FAIL: $1 (cygpath): got $got"; fails=$((fails + 1)); fi
+  fi
+}
+posix_case "drive path with backslashes" 'E:\src\body.md' /e/src/body.md
+posix_case "drive path with slashes" 'C:/Users/x/b.md' /c/Users/x/b.md
+posix_case "UNC path stays absolute" '\\host\share\b.md' //host/share/b.md
+posix_case "POSIX path unchanged" /tmp/b.md /tmp/b.md
+posix_case "relative path unchanged" drafts/b.md drafts/b.md
+got=$(gh_resolve_path /e/repo '\\host\share\b.md')
+if [ "$got" = //host/share/b.md ]; then echo "PASS: a UNC body file is not joined to cwd"; else echo "FAIL: UNC joined to cwd: $got"; fails=$((fails + 1)); fi
+
 [ "$fails" -eq 0 ] && echo && echo "all gh-body-no-scratch hook tests passed"
 exit "$fails"

@@ -32,7 +32,12 @@ DOT="$src_root/dotfiles"
 # plugin-cache path; those carry a version string that changes on update.
 MARKER="Edit the imported files in the rig repo, not here. Anything below this line is machine-local."
 # Native Windows Claude Code cannot resolve a Git Bash path like /e/sources; cygpath -m gives E:/sources.
-native_path() { if command -v cygpath >/dev/null 2>&1; then cygpath -m "$1"; else echo "$1"; fi; }
+case "$(uname -s)" in
+  MINGW*|MSYS*|CYGWIN*) command -v cygpath >/dev/null 2>&1 \
+    || { echo "  ERROR: no cygpath; CLAUDE.md imports would not resolve. Run from Git Bash (README §Native Windows)." >&2; exit 1; }
+    native_path() { cygpath -m "$1"; } ;;
+  *) native_path() { echo "$1"; } ;;
+esac
 claude_header() {
   printf '@%s\n' "$(native_path "$DOT/AGENTS.md")"
   printf '@%s\n' "$(native_path "$DOT/$(rig_field claude doctrine.overlay)")"
