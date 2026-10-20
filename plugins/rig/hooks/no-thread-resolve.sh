@@ -2,7 +2,6 @@
 # mage:rig/guard/no-thread-resolve
 # PreToolUse(Bash) hook: block resolving reviewer review threads (AGENTS.md §Reporting and merging).
 # The session must never resolve a reviewer's review thread; only the reviewer that opened it resolves it.
-# Rung: hook. Skipped: setting (permissions.deny cannot inspect GraphQL mutation bodies), check (API mutations bypass repo CI).
 set -u
 in=$(cat)
 
