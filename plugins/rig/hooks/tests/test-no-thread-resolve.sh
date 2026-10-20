@@ -82,7 +82,8 @@ check_codex "codex payload with read query passes" 0 \
 
 echo "-- guard reporting: exits 2 with guard id when mage absent"
 payload=$(jq -nc --arg c 'gh api graphql -f query="mutation { resolveReviewThread(input:{threadId: x }) { clientMutationId } }"' '{"tool_name":"Bash","tool_input":{"command":$c}}')
-err=$(printf '%s' "$payload" | PATH=/usr/bin:/bin "$HOOK" 2>&1 >/dev/null)
+nomage=$(mktemp -d); trap 'rm -rf "$nomage"' EXIT; ln -s "$(command -v jq)" "$nomage/jq"
+err=$(printf '%s' "$payload" | PATH="$nomage:/usr/bin:/bin" "$HOOK" 2>&1 >/dev/null)
 rc=$?
 if [ "$rc" -eq 2 ] && grep -q '^mage:rig/guard/no-thread-resolve$' <<<"$err"; then
   echo "PASS: blocks with exit 2 and guard id on stderr when mage absent"

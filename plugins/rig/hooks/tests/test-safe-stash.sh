@@ -84,7 +84,8 @@ check "junk stdin does not block" 0 'junk'
 check "empty payload does not block" 0 '{}'
 
 echo "-- guard reporting: exits 2 with guard id when mage absent"
-err=$(printf '{"tool_name":"Bash","tool_input":{"command":"git stash"}}' | PATH=/usr/bin:/bin "$HOOK" 2>&1 >/dev/null)
+nomage=$(mktemp -d); trap 'rm -rf "$nomage"' EXIT; ln -s "$(command -v jq)" "$nomage/jq"
+err=$(printf '{"tool_name":"Bash","tool_input":{"command":"git stash"}}' | PATH="$nomage:/usr/bin:/bin" "$HOOK" 2>&1 >/dev/null)
 rc=$?
 if [ "$rc" -eq 2 ] && grep -q '^mage:rig/guard/safe-stash$' <<<"$err"; then
   echo "PASS: blocks with exit 2 and guard id on stderr when mage absent"

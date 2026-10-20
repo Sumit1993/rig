@@ -4,7 +4,7 @@
     "claude": {
       "$comment": "Claude Code, on WSL or native Windows (hooks run under Git Bash there). The plugin loads from the GitHub marketplace as a whole directory, so this target lists everything; nothing is built.",
       "install": "marketplace",
-      "skills": ["adversary", "autofix", "autopilot", "behavior", "claude-review-lane", "codex-desktop", "codex-judge", "coderabbit-lane", "compass", "docs-drift", "farm-out", "lane", "no-comments", "no-doze", "pr-babysit", "triage", "tweet"],
+      "skills": ["adversary", "autofix", "autopilot", "claude-review-lane", "codex-desktop", "codex-judge", "coderabbit-lane", "compass", "docs-drift", "farm-out", "lane", "no-comments", "no-doze", "pr-babysit", "triage", "tweet"],
       "hooks": ["agent-prompt-nudge.sh", "budget-nudge.sh", "delegate-check.sh", "draft-posted-nudge.sh", "gh-body-no-scratch.sh", "gh-body-stamp.sh", "gh-write-nudge.sh", "issue-create-nudge.sh", "limit-log.sh", "merge-gate.sh", "no-broad-agy-kill.sh", "no-thread-resolve.sh", "no-haiku.sh", "outside-view-nudge.sh", "pr-created.sh", "protected-edit-gate.sh", "reap-watchers.sh", "release-docs-gate.sh", "review-debt.sh", "scoped-cap-gate.sh", "safe-stash.sh", "session-budget.sh", "summon-gate.sh"],
       "agents": ["agy-runner", "codex-runner", "comment-sicko", "fable-planner", "planner"],
       "runtime": ["hooks/lib/gh-command.sh", "hooks/lib/json.sh", "hooks/lib/report-guard.sh", "scripts/ai-context-sweep.sh", "scripts/cr-reply.sh", "scripts/lint-skill-docs.sh", "scripts/rig-meta.sh", "data/repo-meta.json"],
@@ -13,7 +13,7 @@
     "codex": {
       "$comment": "WSL Codex CLI as an organizer. autopilot stays out: its first step arms a scheduled wake-up that Codex has no tool for. no-comments stays out: it spawns a named Claude subagent.",
       "install": "codex-plugin",
-      "skills": ["adversary", "autofix", "behavior", "claude-review-lane", "codex-desktop", "codex-judge", "coderabbit-lane", "compass", "docs-drift", "farm-out", "no-doze", "pr-babysit", "triage", "tweet"],
+      "skills": ["adversary", "autofix", "claude-review-lane", "codex-desktop", "codex-judge", "coderabbit-lane", "compass", "docs-drift", "farm-out", "no-doze", "pr-babysit", "triage", "tweet"],
       "hooks": ["delegate-check.sh", "gh-body-no-scratch.sh", "gh-body-stamp.sh", "issue-create-nudge.sh", "merge-gate.sh", "no-broad-agy-kill.sh", "no-thread-resolve.sh", "outside-view-nudge.sh", "release-docs-gate.sh", "safe-stash.sh", "summon-gate.sh"],
       "hook_events": {"PreToolUse": {"AskUserQuestion|EnterPlanMode|Agent": "Agent"}},
       "agents": [],

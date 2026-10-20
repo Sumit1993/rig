@@ -10,7 +10,6 @@ Plugin `rig`, path-independent via `${CLAUDE_PLUGIN_ROOT}`:
 |---|---|
 | `skills/triage` | Before any issue write: search open and closed, fold or file, Goal / Done when / Pointers, link and close right |
 | `skills/compass` | Where the estate stands and what is next: goals are numbered milestones, `p0` orders inside one, the pick is one command |
-| `skills/behavior` | Turn "always/never do X" into a landed behavior: check existing coverage, pick the strongest forms (setting, check, hook, rule, skill), map every harness target, test, prove it fires, draft PR |
 | `skills/no-doze` | Wait on long work without dozing: sentinel first, evidence-keyed loops, batch scripts over agent-per-step |
 | `skills/autopilot` | Hold a long unattended run: cron wake-up first, session and lanes in their own worktrees, stall rule, green is not evidence, park what needs a human |
 | `skills/pr-babysit` | Watch a PR this session raised: merge contract, seed and arm the reviewer/CI Monitor, route events as pointers, merge or enqueue |

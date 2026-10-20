@@ -2,7 +2,6 @@
 # mage:rig/guard/safe-stash
 # PreToolUse(Bash) hook: block bare `git stash`, unnamed `git stash push`, and `git stash pop`.
 # The stash stack is shared by every worktree; safe forms are `git stash push -u -m <tag>` and `git stash apply <sha>`.
-# Rung: hook. Skipped: setting (no deny rule inspects command arguments or options), check (interactive stash operations do not reach repo CI).
 set -u
 in=$(cat)
 
@@ -24,7 +23,6 @@ _ghlib="${CLAUDE_PLUGIN_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}/hooks/lib/gh-co
 [ -f "$_ghlib" ] && . "$_ghlib"
 type gh_scan >/dev/null 2>&1 || exit 0
 
-# Fast-path check: must contain git and stash
 grep -qE '\bgit\b' <<<"$cmd" || exit 0
 grep -qE '\bstash\b' <<<"$cmd" || exit 0
 
