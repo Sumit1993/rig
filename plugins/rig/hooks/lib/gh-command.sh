@@ -87,10 +87,9 @@ while ($i < $n) {
   $i++;
 }
 # Command position also follows `{`, `!` and the reserved words that open a command list, each itself in command
-# position; `=(` opens an array, not a subshell. `count` reports every call in one pass over the masked text.
+# position; `=(` opens an array, not a subshell. `calls` reports every call in one pass.
 my $lead = qr/(?:^|[;&|`]|(?<!=)\()[ \t]*(?:(?:do|then|else|elif|time|!|\{)[ \t]+)*/m;
 my $asg = qr/(?:[A-Za-z_]\w*=\S*[ \t]+)*/;
-if ($mode eq 'count') { my $c = () = $m =~ /$lead$asg($re)/mg; print $c; exit 0 }
 if ($mode eq 'calls') {
   # One record per call: its own leading assignments, \x1f, then its words separated by \x1d; records end in \x1e.
   while ($m =~ /$lead($asg)($re)/mg) {
@@ -137,7 +136,7 @@ $emit->();
 words_at($off);
 PL
 
-# gh_scan <prefix|tail|words|count|calls> <perl-regex> < cmd. Fails when no gh call matches.
+# gh_scan <prefix|tail|words|calls> <perl-regex> < cmd. Fails when no gh call matches.
 gh_scan() { command -v perl >/dev/null 2>&1 || return 1; LC_ALL=C perl -e "$_GH_SCAN_PL" "$@"; }
 
 # The lines of the first heredoc in text, after its `<<TAG` and before the TAG line.
