@@ -86,16 +86,30 @@ while ($i < $n) {
   if (my $h = heredoc_at($i)) { push @pend, $h->[0]; $i = $h->[1]; next }
   $i++;
 }
-exit 1 unless $m =~ /(?:^|[;&|(`])[ \t]*(?:[A-Za-z_]\w*=\S*[ \t]+)*($re)/m;
+# Command position also follows `{`, `!` and the reserved words that open a command list, each itself in command
+# position; `=(` opens an array, not a subshell. `calls` reports every call in one pass.
+my $lead = qr/(?:^|[;&|`]|(?<!=)\()[ \t]*(?:(?:do|then|else|elif|time|!|\{)[ \t]+)*/m;
+my $asg = qr/(?:[A-Za-z_]\w*=\S*[ \t]+)*/;
+if ($mode eq 'calls') {
+  # One record per call: its own leading assignments, \x1f, then its words separated by \x1d; records end in \x1e.
+  while ($m =~ /$lead($asg)($re)/mg) {
+    my ($a0, $a1, $o) = ($-[1], $+[1], $-[2]); my $keep = pos($m);
+    print substr($s, $a0, $a1 - $a0), "\x1f"; words_at($o, "\x1d"); print "\x1e"; pos($m) = $keep;
+  }
+  exit 0;
+}
+exit 1 unless $m =~ /$lead$asg($re)/m;
 my $off = $-[1];
 
 if ($mode eq 'prefix') { print substr($s, 0, $off); exit 0 }
 if ($mode eq 'tail') { print substr($s, $off); exit 0 }
 exit 0 unless $mode eq 'words';
 
-# The words of the simple command at $off, unquoted, NUL-separated.
-my ($w, $have) = ('', 0); $i = $off;
-my $emit = sub { print $w, "\0" if $have; ($w, $have) = ('', 0) };
+# The words of the simple command at an offset, unquoted, NUL-separated.
+sub words_at {
+my ($w, $have) = ('', 0); my $i = $_[0];
+my $sep = defined $_[1] ? $_[1] : "\0";
+my $emit = sub { print $w, $sep if $have; ($w, $have) = ('', 0) };
 while ($i < $n) {
   my $c = substr($s, $i, 1);
   last if $c =~ /[;&|\n)]/;
@@ -118,9 +132,11 @@ while ($i < $n) {
   $w .= $c; $i++;
 }
 $emit->();
+}
+words_at($off);
 PL
 
-# gh_scan <prefix|tail|words> <perl-regex> < cmd. Fails when no gh call matches.
+# gh_scan <prefix|tail|words|calls> <perl-regex> < cmd. Fails when no gh call matches.
 gh_scan() { command -v perl >/dev/null 2>&1 || return 1; LC_ALL=C perl -e "$_GH_SCAN_PL" "$@"; }
 
 # The lines of the first heredoc in text, after its `<<TAG` and before the TAG line.
