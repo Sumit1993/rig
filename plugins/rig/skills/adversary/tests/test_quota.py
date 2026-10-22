@@ -70,8 +70,11 @@ class CachedQuotaTest(unittest.TestCase):
         for answer in ['5', '{"id":2,"error":"boom"}', '{"id":2,"result":[1]}', '{"id":2,"result":{"rateLimits":"x"}}']:
             with self.subTest(answer=answer):
                 fake = self.home / "codex"
-                fake.write_text("#!/bin/sh\nread a; read b; read c\necho '" + answer + "'\n")
+                fake.write_text("#!/usr/bin/env python3\nimport sys\nfor _ in range(3): sys.stdin.readline()\n"
+                                f"print({answer!r}, flush=True)\n")
                 fake.chmod(0o755)
+                if os.name == "nt":
+                    fake.with_suffix(".cmd").write_text(f'@"{sys.executable}" "%~dp0codex" %*\n')
                 code, line = check({"CODEX_HOME": str(self.home), "RIG_CODEX_BIN": str(fake),
                                     "RIG_CODEX_QUOTA_TIMEOUT": "3"})
                 self.assertEqual(code, 2)
