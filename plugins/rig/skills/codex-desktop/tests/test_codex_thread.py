@@ -10,6 +10,14 @@ spec.loader.exec_module(codex_thread)
 
 
 class CodexThreadTests(unittest.TestCase):
+    def test_default_home_is_native_on_windows_and_mounted_on_wsl(self):
+        with patch.dict(codex_thread.os.environ, {"USER": "u"}, clear=True):
+            with patch.object(codex_thread.sys, "platform", "win32"), patch.object(Path, "home", return_value=Path("C:/Users/u")):
+                self.assertEqual(codex_thread.win_home(), Path("C:/Users/u"))
+            with patch.object(codex_thread.sys, "platform", "linux"):
+                self.assertEqual(codex_thread.win_home(), Path("/mnt/c/Users/u"))
+
+
     def test_new_thread_persists_and_mounts(self):
         captured = {}
 
