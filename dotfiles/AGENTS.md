@@ -32,11 +32,13 @@ The overlay says how to reach each seat. Only the operator changes a seat's effo
 | Model | Afford | Intel | Taste | Effort | Use for |
 | :--- | :-: | :-: | :-: | :-: | :--- |
 | Fable 5.1 | 2 | 9 | 9 | high | Planner seat when allowed: judgement calls, plan-hard problems, taste-critical output |
-| Opus 5.5 (1M) | 4 | 9 | 8 | session | Session, planner seat. `low` for mechanical edits across files, `high` to verify or when medium stalls |
+| Opus 5.5 (1M) | 4 | 9 | 8 | session | Session, planner seat, new lanes at `medium`. `low` for mechanical edits across files, `high` to verify or when medium stalls |
 | Gemini 3.8 Flash | 6 | 8 | 5 | in slug | Side work via agy: tests, checks, triage, evidence |
 | GPT-6.1 Sol | — | — | — | high | Adversary seat. CLI default is `low`; tool output capped at 10k tokens |
-| Sonnet 5.5 | 7 | 7 | 7 | medium | Lookups, reading logs and test output, thin wrappers, well-scoped drafts |
-| Haiku 5.5 | 9 | — | — | medium | Reading, summaries, classification, small checked tasks, thin wrappers; never coordinating, unattended runs or merge-readiness |
+| Sonnet 5.5 | 7 | 7 | 7 | medium | Relating many items: issue and PR queue review, cross-issue mapping, PR comment fixes (`high`). Lookups, logs, well-scoped drafts |
+| Haiku 5.5 | 9 | — | — | medium | Reading one thing at a time: file summaries, search, classification, small checked tasks; never coordinating, unattended runs or merge-readiness |
+
+Pick the tier by the task's shape: Haiku reads one thing, Sonnet relates many, Opus builds or rules. Haiku on a mapping job misses the links; Opus on one is overkill.
 
 Gemini only through agy, where `farm-out` owns model choice. Scores are defaults; override freely. Sub-par output is redone on a smarter model unasked.
 - Every dispatch names its effort. Lower effort before downgrading a model (`#121 - Name an effort level on every dispatch surface, not just one Workflow line`). A coordinator that only routes work runs at `low`.
