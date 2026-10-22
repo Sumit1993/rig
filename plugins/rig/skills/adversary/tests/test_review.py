@@ -6,6 +6,7 @@ import json
 import os
 from pathlib import Path
 import subprocess
+import sys
 import tempfile
 import signal
 import threading
@@ -17,6 +18,22 @@ MODULE = Path(__file__).resolve().parents[1] / "run-review.py"
 spec = importlib.util.spec_from_file_location("judge", MODULE)
 judge = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(judge)
+
+
+def fake_exe(path, source):
+    """A Python stub on PATH: the shebang launches it on POSIX, a .cmd beside it on Windows."""
+    path.write_text(source)
+    path.chmod(0o755)
+    if os.name == "nt":
+        path.with_suffix(".cmd").write_text(f'@"{sys.executable}" "%~dp0{path.name}" %*\n')
+
+
+def alive(pid):
+    if os.name == "nt":
+        rows = subprocess.run(["tasklist", "/FI", f"PID eq {pid}", "/NH"], capture_output=True, text=True).stdout
+        return f" {pid} " in rows
+    stat = Path(f"/proc/{pid}/stat")
+    return stat.exists() and stat.read_text().split()[2] != "Z"
 
 
 def result(verdict="survived", complete=True):
@@ -50,8 +67,7 @@ class ReviewTests(unittest.TestCase):
         self.out = self.history / "round-1"
         self.bin = self.root / "bin"
         self.bin.mkdir()
-        fake = self.bin / "codex"
-        fake.write_text('''#!/usr/bin/env python3
+        fake_exe(self.bin / "codex", '''#!/usr/bin/env python3
 import json, os, pathlib, subprocess, sys, time
 args=sys.argv[1:]
 mode=os.environ.get('REVIEW_MODE','success')
@@ -90,9 +106,7 @@ p=pathlib.Path(args[args.index('-o')+1])
 p.write_text('{broken' if mode=='malformed' else os.environ['REVIEW_RESULT'])
 print(json.dumps({'type':'turn.completed'}))
 ''')
-        fake.chmod(0o755)
-        fake_claude = self.bin / "claude"
-        fake_claude.write_text('''#!/usr/bin/env python3
+        fake_exe(self.bin / "claude", '''#!/usr/bin/env python3
 import json, os, pathlib, sys
 args=sys.argv[1:]
 pathlib.Path(os.environ['CLAUDE_ARGV']).write_text(json.dumps({'argv':args,'cwd':os.getcwd()}))
@@ -107,7 +121,6 @@ out=json.loads(os.environ['REVIEW_RESULT'])
 emit({'type':'assistant','message':{'content':[{'type':'tool_use','id':'t2','name':'StructuredOutput','input':out}]}})
 emit({'type':'result','subtype':'success','is_error':False,'structured_output':out,'modelUsage':{'claude-opus-5-5':{}}})
 ''')
-        fake_claude.chmod(0o755)
         self.claude_argv = self.root / "claude-argv.json"
         self.addCleanup(patch.stopall)
         patch.object(judge, "AI_CONTEXT", self.history).start()
@@ -236,8 +249,7 @@ emit({'type':'result','subtype':'success','is_error':False,'structured_output':o
         self.assertEqual(self.run_review(timeout=1), 1)
         self.assertIn("timed out", self.status()["error"])
         pid = int(pidfile.read_text())
-        stat = Path(f"/proc/{pid}/stat")
-        self.assertTrue(not stat.exists() or stat.read_text().split()[2] == "Z")
+        self.assertFalse(alive(pid))
 
 
     def test_wrong_expected_commit_is_rejected_before_launch(self):
@@ -284,7 +296,7 @@ emit({'type':'result','subtype':'success','is_error':False,'structured_output':o
         def interrupt():
             for _ in range(100):
                 if pidfile.exists():
-                    os.kill(os.getpid(), signal.SIGTERM)
+                    signal.raise_signal(signal.SIGTERM)  # os.kill(own pid) on Windows is TerminateProcess
                     return
                 time.sleep(0.02)
         worker = threading.Thread(target=interrupt)
@@ -295,8 +307,7 @@ emit({'type':'result','subtype':'success','is_error':False,'structured_output':o
             worker.join()
         self.assertIn("cancelled", self.status()["error"])
         pid = int(pidfile.read_text())
-        stat = Path(f"/proc/{pid}/stat")
-        self.assertTrue(not stat.exists() or stat.read_text().split()[2] == "Z")
+        self.assertFalse(alive(pid))
 
     def test_ledger_ids_and_verdict_consistency(self):
         response = result()
@@ -379,7 +390,10 @@ emit({'type':'result','subtype':'success','is_error':False,'structured_output':o
             self.assertEqual(argv[argv.index(flag) + 1], value)
         self.assertIn("--strict-mcp-config", argv)
         schema = json.loads(argv[argv.index("--json-schema") + 1])
-        self.assertEqual(schema, json.loads((judge.HERE / "result.schema.json").read_text()))
+        expected = json.loads((judge.HERE / "result.schema.json").read_text())
+        expected.pop("$schema")
+        self.assertNotIn("$schema", schema)  # Claude Code rejects it (#194)
+        self.assertEqual(schema, expected)
         self.assertEqual(Path(call["cwd"]), self.out / "evidence")
         meta = json.loads((self.out / "metadata.json").read_text())
         self.assertEqual((meta["holder"], meta["model"], meta["effort"]), ("claude", "opus", "high"))

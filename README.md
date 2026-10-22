@@ -119,7 +119,7 @@ git clone https://github.com/Sumit1993/rig && ./rig/dotfiles/install.sh
 
 ### Native Windows
 
-Run `install.sh` from Git Bash, the shell Claude Code on Windows runs hooks in. The `claude` target then installs whole, hooks included; `install-windows.sh` only matters from WSL. Two Windows binaries need a shim in a PATH directory ahead of them, such as `~/.local/bin`:
+Run `install.sh` from Git Bash, the shell Claude Code on Windows runs hooks in. The `claude` target then installs whole, hooks included. `install-windows.sh` installs the `codex-desktop` target into `~/.codex` only when no `codex` CLI shares it, since the app and the CLI read the same home here. Two Windows binaries need a shim in a PATH directory ahead of them, such as `~/.local/bin`:
 
 - `jq.exe` (`winget install jqlang.jq`) writes CRLF, and `$(jq -r …)` keeps the `\r`. `install.sh` refuses to run until `jq` writes LF. The shim is `~/.local/bin/jq`: `#!/bin/sh` then `exec "<path to jq.exe>" -b "$@"`.
 - python.org's installer ships no `python3.exe`, and the `python3` in `WindowsApps` is a Store alias stub. The shim is `~/.local/bin/python3`, the same two lines with `python.exe`, or turn the alias off under App execution aliases.

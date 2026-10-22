@@ -5,11 +5,18 @@ import json
 import os
 from pathlib import Path
 import subprocess
+import sys
 import threading
 
 
+def win_home():
+    if "WIN_HOME" in os.environ:
+        return Path(os.environ["WIN_HOME"])
+    return Path.home() if sys.platform == "win32" else Path(f"/mnt/c/Users/{os.environ['USER']}")
+
+
 def codex_exe():
-    home = Path(os.environ.get("WIN_HOME", f"/mnt/c/Users/{os.environ['USER']}"))
+    home = win_home()
     found = sorted(home.glob("AppData/Local/OpenAI/Codex/bin/*/codex.exe"), key=lambda p: p.stat().st_mtime)
     if not found:
         raise FileNotFoundError("no codex.exe under the Codex desktop install")

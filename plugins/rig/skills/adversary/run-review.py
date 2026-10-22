@@ -6,6 +6,7 @@ import json
 import os
 import re
 from pathlib import Path
+import shutil
 import signal
 import subprocess
 import sys
@@ -41,7 +42,7 @@ def target(worktree):
 
 
 def validate(result, previous=None, ledger=False):
-    schema = json.loads((HERE / "result.schema.json").read_text())
+    schema = json.loads((HERE / "result.schema.json").read_text(encoding="utf-8"))
     Draft202012Validator(schema).validate(result)
     objections = result["objections"]
     ids = [item["id"] for item in objections]
@@ -72,7 +73,20 @@ def validate(result, previous=None, ledger=False):
         raise ValueError("survived verdict names no sources")
 
 
+def exe(name):
+    # Windows subprocess finds neither npm's codex.cmd nor claude.cmd by bare name (#199).
+    return shutil.which(name) or name
+
+
 def terminate(proc):
+    if not hasattr(os, "killpg"):
+        # Windows has no process groups; taskkill /T ends the holder's descendants too (#201).
+        subprocess.run(["taskkill", "/T", "/F", "/PID", str(proc.pid)], capture_output=True)
+        try:
+            proc.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            pass
+        return
     try:
         os.killpg(proc.pid, signal.SIGTERM)
     except ProcessLookupError:
@@ -95,7 +109,7 @@ def terminate(proc):
 def integrations(worktree):
     options = ["-c", "features.plugins=false", "-c", "features.apps=false",
                "-c", "features.enable_mcp_apps=false"]
-    prefix = ["codex", "--no-daemon", "-C", str(worktree)]
+    prefix = [exe("codex"), "--no-daemon", "-C", str(worktree)]
     def servers(overrides):
         output = subprocess.check_output(prefix + overrides + ["mcp", "list", "--json"],
                                          cwd=worktree, text=True, stderr=subprocess.PIPE, timeout=30)
@@ -124,7 +138,7 @@ def codex_quota():
 
 
 def codex_command(worktree, model, effort, candidate, packet_mode):
-    return ["codex", "--no-daemon", "--search", "--ask-for-approval", "never", "exec",
+    return [exe("codex"), "--no-daemon", "--search", "--ask-for-approval", "never", "exec",
             "--ephemeral", "-C", str(worktree),
             *(["--skip-git-repo-check"] if packet_mode else []), "-m", model,
             "-c", f"model_reasoning_effort={effort}", "--sandbox", "read-only",
@@ -135,8 +149,11 @@ def codex_command(worktree, model, effort, candidate, packet_mode):
 def claude_command(effort):
     # stream-json (not json) so tool calls are visible to the zero-tool and sources checks;
     # its final `result` line is the same envelope, with `structured_output`.
-    schema = json.dumps(json.loads((HERE / "result.schema.json").read_text()), separators=(",", ":"))
-    return ["claude", "-p", "--model", CLAUDE_MODEL, "--effort", effort,
+    schema = json.loads((HERE / "result.schema.json").read_text(encoding="utf-8"))
+    # Claude Code cannot resolve a $schema meta-schema URL and rejects the whole schema (#201).
+    schema.pop("$schema", None)
+    schema = json.dumps(schema, separators=(",", ":"))
+    return [exe("claude"), "-p", "--model", CLAUDE_MODEL, "--effort", effort,
             "--tools", CLAUDE_TOOLS, "--allowedTools", CLAUDE_TOOLS, "--strict-mcp-config",
             "--no-session-persistence", "--output-format", "stream-json", "--verbose",
             "--json-schema", schema]
@@ -144,7 +161,7 @@ def claude_command(effort):
 
 def read_events(path):
     events = []
-    for line in path.read_text(errors="replace").splitlines():
+    for line in path.read_text(encoding="utf-8", errors="replace").splitlines():
         try:
             event = json.loads(line)
         except ValueError:
@@ -246,7 +263,7 @@ def run(args):
         if args.base or args.head:
             raise ValueError("base/head require --worktree")
     else:
-        if git(worktree, "rev-parse", "--show-toplevel") != str(worktree):
+        if Path(git(worktree, "rev-parse", "--show-toplevel")).resolve() != worktree:
             raise ValueError("worktree must name the repository root")
         git_dir = Path(git(worktree, "rev-parse", "--absolute-git-dir"))
         common_dir = Path(git(worktree, "rev-parse", "--git-common-dir"))
@@ -261,10 +278,12 @@ def run(args):
             expected[name] = git(worktree, "rev-parse", "--verify", value + "^{commit}")
     previous = None
     if args.previous_result is not None:
-        previous = json.loads(args.previous_result.read_text())
+        previous = json.loads(args.previous_result.read_text(encoding="utf-8"))
         validate(previous, ledger=True)
-    packet_text = packet.read_text()
-    before = target(worktree) if worktree else {"packet_sha256": hashlib.sha256(packet_text.encode()).hexdigest()}
+    # Bytes and UTF-8 throughout: Windows text mode writes CRLF and cp1252, breaking the packet hash (#199).
+    packet_bytes = packet.read_bytes()
+    packet_text = packet_bytes.decode("utf-8")
+    before = target(worktree) if worktree else {"packet_sha256": hashlib.sha256(packet_bytes).hexdigest()}
     if worktree and before["commit"] != expected["head"]:
         raise ValueError("worktree HEAD differs from requested review target")
     if worktree and before["status"]:
@@ -273,17 +292,17 @@ def run(args):
     if not worktree:
         worktree = out / "evidence"
         worktree.mkdir()
-        (worktree / "packet.md").write_text(packet_text)
+        (worktree / "packet.md").write_bytes(packet_bytes)
         expected = {"mode": "packet", **before}
     packet_mode = "packet_sha256" in before
-    prompt = ((HERE / "review-contract.md").read_text() + "\nVerified review identity:\n"
+    prompt = ((HERE / "review-contract.md").read_text(encoding="utf-8") + "\nVerified review identity:\n"
               + json.dumps(expected) + "\n" + packet_text)
     if previous is not None:
         save(out / "previous-result.json", previous)
         prompt += "\nPrevious objection ledger (every ID requires a disposition):\n" + json.dumps(previous)
     prompt_path = out / "prompt.md"
-    prompt_path.write_text(prompt)
-    (out / "packet.md").write_text(packet_text)
+    prompt_path.write_text(prompt, encoding="utf-8")
+    (out / "packet.md").write_bytes(packet_bytes)
     candidate = out / "candidate.json"
     if holder == "codex":
         command = codex_command(worktree, model, args.effort, candidate, packet_mode)
@@ -312,7 +331,7 @@ def run(args):
 
         with (out / "events.jsonl").open("w") as events, (out / "stderr.log").open("w") as errors:
             proc = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=events, cwd=worktree,
-                                    stderr=errors, text=True, start_new_session=True)
+                                    stderr=errors, encoding="utf-8", start_new_session=True)
             try:
                 proc.communicate(prompt, timeout=args.timeout)
             except subprocess.TimeoutExpired:
@@ -338,7 +357,7 @@ def run(args):
             save(candidate, envelope["structured_output"])
         if not tools:
             raise RuntimeError(f"{holder} completed with zero tool calls; judgment incomplete")
-        result = json.loads(candidate.read_text())
+        result = json.loads(candidate.read_text(encoding="utf-8"))
         validate(result, previous)
         candidate.rename(out / "result.json")
         status["verdict"] = result["verdict"]

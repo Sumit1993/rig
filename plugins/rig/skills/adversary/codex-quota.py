@@ -7,6 +7,7 @@ rollout's rate_limits, which is only as fresh as the last Codex turn, so the lin
 import json
 import os
 import queue
+import shutil
 import subprocess
 import sys
 import threading
@@ -15,6 +16,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 CODEX = os.environ.get("RIG_CODEX_BIN", "codex")
+CODEX = shutil.which(CODEX) or CODEX  # npm's codex.cmd on Windows (#199)
 HOME = Path(os.environ.get("CODEX_HOME", Path.home() / ".codex"))
 TIMEOUT = float(os.environ.get("RIG_CODEX_QUOTA_TIMEOUT", "15"))
 NOW = time.time()

@@ -6,13 +6,17 @@ import hashlib
 import json
 import os
 import shlex
-from pathlib import Path
+import shutil
+from pathlib import Path, PureWindowsPath
 import subprocess
+import sys
 from urllib.parse import urlencode
 
 
 MENTIONS = {"computer": ("@Computer", "Computer Use"), "browser": ("@Browser", "Browser"), "task": ("", "")}
 DISPATCHERS = ("claude", "codex", "other")
+# Native Windows: the lane folder is already a Windows path and the dispatcher runs beside the app (#199).
+WINDOWS = sys.platform == "win32"
 
 
 def ask_back(directory, session=None, cwd=None):
@@ -21,6 +25,15 @@ def ask_back(directory, session=None, cwd=None):
     if not session:
         return ""
     # Answer-only: no tools and no MCP servers, so a thread reading untrusted pages can ask but never act.
+    if WINDOWS:
+        # Windows PowerShell 5.1 drops an empty argument ('') and pipes ASCII unless $OutputEncoding says UTF-8.
+        quote = lambda text: "'" + str(text).replace("'", "''") + "'"
+        command = (f"Set-Location -LiteralPath {quote(cwd or os.getcwd())}; "
+                   "$OutputEncoding = [Text.UTF8Encoding]::new($false); "
+                   f"Get-Content -Raw -Encoding UTF8 -LiteralPath {quote(PureWindowsPath(directory, 'question.md'))} | "
+                   f"claude -p --resume {quote(session)} --fork-session --tools= --strict-mcp-config")
+        return (" To ask the Claude session that sent this task a question, write it to question.md in that folder and run "
+                f"`{command}`; its output is the answer.")
     script = (f"cd {shlex.quote(str(cwd or os.getcwd()))} && claude -p --resume {shlex.quote(session)} --fork-session "
               f"--tools '' --strict-mcp-config < {shlex.quote(f'{directory}/question.md')}")
     # Codex runs commands in PowerShell, whose single-quoted strings escape a quote by doubling it.
@@ -41,9 +54,12 @@ def prepare(packet, directory, open_app=False, report="report.md", surface="comp
         raise ValueError(f"dispatcher must be one of {', '.join(DISPATCHERS)}")
     packet_bytes = packet.resolve(strict=True).read_bytes()
     directory = directory.resolve()
-    if not str(directory).startswith("/mnt/"):
+    if directory.as_posix().startswith("/mnt/") and shutil.which("wslpath"):
+        native = subprocess.check_output(["wslpath", "-w", str(directory)], text=True).strip()
+    elif WINDOWS:
+        native = str(PureWindowsPath(directory))
+    else:
         raise ValueError("windows-dir must be on a mounted Windows drive")
-    native = subprocess.check_output(["wslpath", "-w", str(directory)], text=True).strip()
     if not (len(native) > 3 and native[1:3] == ":\\"):
         raise ValueError("windows-dir must resolve to a native drive path")
     directory.mkdir(parents=True, exist_ok=False)

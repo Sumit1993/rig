@@ -24,7 +24,8 @@ Write a self-contained Markdown packet under `~/ai-context/<repo>/<issue>-<slug>
 - Allowed actions and mutations, and the destination of any data sent. `handoff.py` sends the packet inline because "Approve for me" weighs only user messages; a permission that exists only in a file is not one. Default is navigation and observation; never infer permission to submit, delete, purchase or change access.
 - Stop conditions: security, sign-in and permission prompts, and downloads. Name the incidental UI to ignore (banners, promos, notices), or Codex halts on it.
 - Evidence: steps/outcomes, blocked/untried steps and residual uncertainty; app reviews add observed build identity. Screenshots are of named app windows, saved by Codex as files, with an MD5 of each listed in the report; the orchestrator rejects duplicate hashes.
-- Cleanup limited to what the task opened, never the operator's own windows or documents.
+- For Computer Use, every app the thread will drive, by name. The operator grants each one in the app before the run; an ungranted app's prompt times out and ends an unattended turn (§4).
+- Cleanup limited to what the task opened, never the operator's own windows or documents. Record the PID of each process the task starts and kill only those PIDs, never by image name: an image-name kill once took down the operator's unrelated shells (#199).
 
 Pick the surface by need:
 - **Task** (`handoff.py --surface task`) for Windows work with no UI to drive: a Windows build or test run, a file or registry inspection, a Windows-only tool. The thread changes files only inside its task folder and the paths the packet's allowed actions name, so name every path it may write.
@@ -46,6 +47,8 @@ TID=$(python3 "$SKILL_DIR/codex_thread.py" new --name "<packet title>" --workspa
 python3 "$SKILL_DIR/codex_thread.py" send --thread "$TID" --message-file "$TASK/prompt.txt"
 ```
 
+From native Windows (Git Bash) the dispatcher sits beside the app: `WIN_HOME=$HOME`, and `cygpath -w` replaces `wslpath -w`.
+
 `handoff.py` copies and hashes the packet into a new task folder and writes a prompt naming that folder, the title and the report file. Add `--report reply-1.md` for a later step's report, `--surface browser` for the in-app browser, `--surface task` for non-UI work, and `--dispatcher codex|other` when the dispatching session is not Claude Code. `codex_thread.py new` starts a thread through the bundled app-server, persists it and mounts it in the app; `send` queues a message. Later steps go to the same `$TID` with `send`. Each task gets its own thread, so tasks run side by side. Then wait for the report file with a bounded background wait; no file means no result. A zero exit means dispatched, never passed.
 
 ```text
@@ -54,7 +57,7 @@ organizer → verify hashes, provenance, build → adversary seat → objections
 ```
 
 Both directions work mid-task. The organizer reaches a thread with `codex_thread.py send`. How a thread asks back depends on `--dispatcher`:
-- `claude` (the default) from inside a Claude Code session: the prompt names `claude -p --resume <session> --fork-session --tools "" --strict-mcp-config`, run through `wsl.exe` with the question in `question.md`. It answers from that session's context and returns the answer as output. It runs with no tools and no MCP servers ([CLI reference](https://code.claude.com/docs/en/cli-reference): `--tools`, `--strict-mcp-config`), because a thread that reads untrusted pages may ask but never make Claude act; work that needs action comes back in the report.
+- `claude` (the default) from inside a Claude Code session: the prompt names `claude -p --resume <session> --fork-session --tools "" --strict-mcp-config`, run through `wsl.exe` (directly in PowerShell from native Windows) with the question in `question.md`. It answers from that session's context and returns the answer as output. It runs with no tools and no MCP servers ([CLI reference](https://code.claude.com/docs/en/cli-reference): `--tools`, `--strict-mcp-config`), because a thread that reads untrusted pages may ask but never make Claude act; work that needs action comes back in the report.
 - `codex`, `other`, or `claude` outside a session: the thread writes `question-N.md` in its task folder and stops the turn. Check the task folder for a new question file whenever you check for the report, answer it in a file, and send that file with `codex_thread.py send --thread "$TID" --message-file <answer>`; the thread resumes on it. A seat request (planner, adversary) is a question like any other: hold the seat from WSL and send its result back.
 
 `handoff.py --open` still opens the documented `codex://new` composer for a human Send, the fallback when the transport below breaks. Bring deciding evidence into the engineering issue; keep private proposals out of public issues.
