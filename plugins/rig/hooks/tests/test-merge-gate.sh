@@ -148,6 +148,7 @@ fi
 
 # A merge after a shell reserved word or a brace is still in command position.
 for c in 'for p in 5; do gh pr merge $p; done' 'if true; then gh pr merge 5; fi' \
+  'if gh pr merge 5; then :; fi' 'while gh pr merge 5; do :; done' 'until gh pr merge 5; do :; done' \
   'if false; then :; else gh pr merge 5; fi' '{ gh pr merge 5; }' '! gh pr merge 5' \
   'while true; do
   gh pr merge 5
@@ -157,6 +158,14 @@ done'; do
   if [ "$rc" -eq 2 ]; then echo "PASS: blocks after reserved word: ${c%%$'\n'*}"
   else echo "FAIL: missed after reserved word (rc=$rc): $c"; fails=$((fails + 1)); fi
 done
+# Without perl nothing can be parsed, so a merge is blocked rather than waved through.
+noperl=$(mktemp -d); trap 'rm -rf "$noperl"' EXIT
+for b in jq cat dirname grep sed tail; do ln -s "$(command -v "$b")" "$noperl/$b"; done
+# Git Bash copies instead of linking, and a copied binary still needs its msys DLLs beside it.
+for f in /usr/bin/msys-*.dll; do [ -e "$f" ] && ln -s "$f" "$noperl/"; done
+rc=$(jq -n '{"tool_input": {"command": "MERGE_OK=5 gh pr merge 5"}}' | PATH="$noperl" "$BASH" "$HOOK" >/dev/null 2>&1; echo $?)
+if [ "$rc" -eq 2 ]; then echo "PASS: blocks a merge when perl is missing"
+else echo "FAIL: perl missing let a merge through (rc=$rc)"; fails=$((fails + 1)); fi
 for c in 'echo done; gh pr view 5' 'git commit -m "then gh pr merge 5"' 'do_thing gh pr merge 5'; do
   run_hook "$c" >/dev/null 2>&1
   rc=$?

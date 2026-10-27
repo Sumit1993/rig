@@ -88,7 +88,7 @@ while ($i < $n) {
 }
 # Command position also follows `{`, `!` and the reserved words that open a command list, each itself in command
 # position; `=(` opens an array, not a subshell. `calls` reports every call in one pass.
-my $lead = qr/(?:^|[;&|`]|(?<!=)\()[ \t]*(?:(?:do|then|else|elif|time|!|\{)[ \t]+)*/m;
+my $lead = qr/(?:^|[;&|`]|(?<!=)\()[ \t]*(?:(?:if|while|until|do|then|else|elif|time|!|\{)[ \t]+)*/m;
 my $asg = qr/(?:[A-Za-z_]\w*=\S*[ \t]+)*/;
 if ($mode eq 'calls') {
   # One record per call: its own leading assignments, \x1f, then its words separated by \x1d; records end in \x1e.

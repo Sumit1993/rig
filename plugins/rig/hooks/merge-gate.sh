@@ -19,6 +19,13 @@ _report_lib="${CLAUDE_PLUGIN_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}/hooks/lib/
 [ -f "$_report_lib" ] && . "$_report_lib"
 type report_guard >/dev/null 2>&1 || report_guard() { :; }
 
+# gh_scan needs perl; without it no call is found, so fail closed on the merge text the prefilter saw.
+if ! command -v perl >/dev/null 2>&1; then
+  echo "Blocked by rig/guard/merge-gate: perl is missing, so this merge's MERGE_OK token cannot be checked. Install perl." >&2
+  report_guard "rig/guard/merge-gate" "Bash" "no perl"
+  exit 2
+fi
+
 # Every merge's token is an assignment on that same call (`MERGE_OK=<n> gh pr merge <n>`): a token
 # anywhere else in a compound command can belong to another merge or never be set when the merge runs (#196).
 merges=() asgs=()
