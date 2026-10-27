@@ -25,6 +25,7 @@ REPOS = [
     "Sumit1993/rig",
 ]
 CR = "coderabbitai[bot]"
+SKIP_LABEL = "coderabbit_skip"
 # Every summon names its poster; GitHub shows them all as the operator (Sumit1993/rig#150).
 # The marker also carries `key=value` state from run to run, read back by marker_state.
 MARKER = "<!-- summoned-by: coderabbit-routine"
@@ -137,6 +138,10 @@ def since_review(repo, reviewed, head):
     }
 
 
+def skip_labelled(labels):
+    return any(label.get("name") == SKIP_LABEL for label in labels or [])
+
+
 def pr_facts(repo, pr):
     n = pr["number"]
     author = pr["user"]["login"]
@@ -191,7 +196,7 @@ def pr_facts(repo, pr):
             finished_on_head |= s["created_at"] > head_at and bool(done.search(c["body"]))
 
     threads = coderabbit_threads(repo, n)
-    return {
+    facts = {
         "repo": repo,
         "number": n,
         "title": pr["title"],
@@ -223,6 +228,10 @@ def pr_facts(repo, pr):
         "coderabbit_threads": threads[-6:],
         "since_coderabbit_review": since_review(repo, reviews[-1]["commit_id"] if reviews else None, head),
     }
+    # Read in full, not returned early: a labelled PR's past review or summon still holds the slot in build() (#189).
+    if skip_labelled(full.get("labels")):
+        facts["excluded"] = f"label {SKIP_LABEL}"
+    return facts
 
 
 def closed_floors(repo):
