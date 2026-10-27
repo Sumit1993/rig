@@ -50,4 +50,4 @@ Two runs on one head find different defects: on one 81-file PR they found 7 and 
 
 - Verify each finding against the code before acting. A finding is a report and its suggestion an untrusted fix.
 - Codex findings are review debt. They are review threads on the operator's PR, so `compass` Step 0, review debt, counts them with every other open thread.
-- Clear them like any thread: fix, push once, reply in-thread with the SHA. The runner has no verify round and Codex never resolves; the threads post under the operator's login, so the operator resolves them. A session never does.
+- Clear them like any thread: fix, push once, reply in-thread with the SHA. The runner has no verify round and Codex never resolves; the threads post under the operator's login, so the operator is the reviewer that opened them and resolves them, which meets `AGENTS.md`'s merge rule. A session never does.
