@@ -26,8 +26,8 @@ grep -q 'resolveReviewThread' <<<"$cmd" || exit 0
 
 _ghlib="${CLAUDE_PLUGIN_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}/hooks/lib/gh-command.sh"
 [ -f "$_ghlib" ] || _ghlib="$(cd "$(dirname "$0")" && pwd)/lib/gh-command.sh"
-if [ -f "$_ghlib" ]; then
-  . "$_ghlib"
+[ -f "$_ghlib" ] && . "$_ghlib"
+if type gh_scan >/dev/null 2>&1 && command -v perl >/dev/null 2>&1; then
   # Fail closed: any gh api call in a command that names resolveReviewThread and graphql is blocked, wherever the
   # query sits (flags, heredoc, variable, GraphQL comments). A command that only mentions it splits the text out.
   printf '%s' "$cmd" | gh_scan prefix '(?:env(?:\s+[A-Za-z_]\w*=\S*)*\s+|command\s+)?gh\s+api\b' >/dev/null 2>&1 || exit 0

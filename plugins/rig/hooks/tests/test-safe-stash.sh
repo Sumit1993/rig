@@ -5,10 +5,24 @@
 set -u
 HOOK="$(cd "$(dirname "$0")/.." && pwd)/safe-stash.sh"
 fails=0
+test_home=$(mktemp -d); test_bin=$(mktemp -d); noperl_bin=$(mktemp -d)
+trap 'rm -rf "$test_home" "$test_bin" "$noperl_bin"' EXIT
+# Private PATH of every system binary but mage (jq lives outside /usr/bin on Windows); noperl_bin also drops perl.
+for d in /usr/local/bin /usr/bin /bin; do
+  for f in "$d"/*; do
+    n=${f##*/}
+    case $n in mage|mage.*|jq|jq.*) continue ;; esac
+    [ -e "$test_bin/$n" ] || ln -s "$f" "$test_bin/$n" 2>/dev/null
+    case $n in perl|perl.*|perl5*) continue ;; esac
+    [ -e "$noperl_bin/$n" ] || ln -s "$f" "$noperl_bin/$n" 2>/dev/null
+  done
+done
+ln -s "$(command -v jq)" "$test_bin/jq"; ln -s "$(command -v jq)" "$noperl_bin/jq"
+run_hook() { HOME="$test_home" PATH="${HOOK_PATH:-$test_bin}" bash "$HOOK"; }
 
 check() { # name expected_rc json [expected_stderr_lines]
   local name=$1 want=$2 json=$3 got err lines
-  err=$(printf '%s' "$json" | "$HOOK" 2>&1 >/dev/null)
+  err=$(printf '%s' "$json" | run_hook 2>&1 >/dev/null)
   got=$?
   if [ "$got" != "$want" ]; then
     echo "FAIL: $name (want rc=$want, got rc=$got)"; fails=$((fails + 1))
@@ -84,8 +98,7 @@ check "junk stdin does not block" 0 'junk'
 check "empty payload does not block" 0 '{}'
 
 echo "-- guard reporting: exits 2 with guard id when mage absent"
-nomage=$(mktemp -d); trap 'rm -rf "$nomage"' EXIT; ln -s "$(command -v jq)" "$nomage/jq"
-err=$(printf '{"tool_name":"Bash","tool_input":{"command":"git stash"}}' | PATH="$nomage:/usr/bin:/bin" "$HOOK" 2>&1 >/dev/null)
+err=$(printf '{"tool_name":"Bash","tool_input":{"command":"git stash"}}' | run_hook 2>&1 >/dev/null)
 rc=$?
 if [ "$rc" -eq 2 ] && grep -q '^mage:rig/guard/safe-stash$' <<<"$err"; then
   echo "PASS: blocks with exit 2 and guard id on stderr when mage absent"
@@ -93,6 +106,9 @@ else
   echo "FAIL: guard report check failed (rc=$rc, err=$err)"; fails=$((fails + 1))
 fi
 
+echo "-- perl absent: a blocked command still exits 2"
+HOOK_PATH=$noperl_bin check_cmd "git stash pop blocks without perl" 2 "git stash pop"
+HOOK_PATH=$noperl_bin check_cmd "non-stash command passes without perl" 0 "git status"
 echo "-- codex payload shape"
 codex_json=$(jq -n '{session_id:"s",transcript_path:null,cwd:"/tmp",hook_event_name:"PreToolUse",model:"gpt-5-codex",permission_mode:"default",turn_id:"t",tool_name:"Bash",tool_use_id:"c",tool_input:{command:"git stash pop"}}')
 check "codex payload for git stash pop blocks" 2 "$codex_json"

@@ -26,6 +26,16 @@ type gh_scan >/dev/null 2>&1 || exit 0
 grep -qE '\bgit\b' <<<"$cmd" || exit 0
 grep -qE '\bstash\b' <<<"$cmd" || exit 0
 
+if ! command -v perl >/dev/null 2>&1; then
+  cat >&2 <<MSG
+Blocked by rig/guard/safe-stash: perl is required to scan a git stash command, and it is not on PATH. Install perl or run the stash outside this session.
+mage:rig/guard/safe-stash
+MSG
+  tool=$(json_get "$in" "Bash" .tool_name)
+  report_guard "rig/guard/safe-stash" "$tool" "no-perl"
+  exit 2
+fi
+
 cur="$cmd"
 while printf '%s' "$cur" | gh_scan words 'git(?:\s+(?:-[Cc]\s+\S+|--(?:git-dir|work-tree|namespace)\s+\S+|-[A-Za-z]|--[A-Za-z][\w-]*(?:=\S+)?))*\s+stash\b' >/dev/null 2>&1; do
   words=()

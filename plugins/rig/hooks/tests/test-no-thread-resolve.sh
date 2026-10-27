@@ -4,10 +4,24 @@
 set -u
 HOOK="$(cd "$(dirname "$0")/.." && pwd)/no-thread-resolve.sh"
 fails=0
+test_home=$(mktemp -d); test_bin=$(mktemp -d); noperl_bin=$(mktemp -d)
+trap 'rm -rf "$test_home" "$test_bin" "$noperl_bin"' EXIT
+# Private PATH of every system binary but mage (jq lives outside /usr/bin on Windows); noperl_bin also drops perl.
+for d in /usr/local/bin /usr/bin /bin; do
+  for f in "$d"/*; do
+    n=${f##*/}
+    case $n in mage|mage.*|jq|jq.*) continue ;; esac
+    [ -e "$test_bin/$n" ] || ln -s "$f" "$test_bin/$n" 2>/dev/null
+    case $n in perl|perl.*|perl5*) continue ;; esac
+    [ -e "$noperl_bin/$n" ] || ln -s "$f" "$noperl_bin/$n" 2>/dev/null
+  done
+done
+ln -s "$(command -v jq)" "$test_bin/jq"; ln -s "$(command -v jq)" "$noperl_bin/jq"
+run_hook() { HOME="$test_home" PATH="${HOOK_PATH:-$test_bin}" bash "$HOOK"; }
 
 check() { # name expected_rc json [expected_stderr_lines]
   local name=$1 want=$2 json=$3 got err lines
-  err=$(printf '%s' "$json" | "$HOOK" 2>&1 >/dev/null)
+  err=$(printf '%s' "$json" | run_hook 2>&1 >/dev/null)
   got=$?
   if [ "$got" != "$want" ]; then
     echo "FAIL: $name (want rc=$want, got rc=$got)"; fails=$((fails + 1))
@@ -82,8 +96,7 @@ check_codex "codex payload with read query passes" 0 \
 
 echo "-- guard reporting: exits 2 with guard id when mage absent"
 payload=$(jq -nc --arg c 'gh api graphql -f query="mutation { resolveReviewThread(input:{threadId: x }) { clientMutationId } }"' '{"tool_name":"Bash","tool_input":{"command":$c}}')
-nomage=$(mktemp -d); trap 'rm -rf "$nomage"' EXIT; ln -s "$(command -v jq)" "$nomage/jq"
-err=$(printf '%s' "$payload" | PATH="$nomage:/usr/bin:/bin" "$HOOK" 2>&1 >/dev/null)
+err=$(printf '%s' "$payload" | run_hook 2>&1 >/dev/null)
 rc=$?
 if [ "$rc" -eq 2 ] && grep -q '^mage:rig/guard/no-thread-resolve$' <<<"$err"; then
   echo "PASS: blocks with exit 2 and guard id on stderr when mage absent"
@@ -91,24 +104,29 @@ else
   echo "FAIL: guard report check failed (rc=$rc, err=$err)"; fails=$((fails + 1))
 fi
 
+echo "-- perl absent: a blocked command still exits 2"
+HOOK_PATH=$noperl_bin check_cmd "resolveReviewThread via gh api graphql blocks without perl" 2 \
+  'gh api graphql -f query='\''mutation { resolveReviewThread(input: {threadId: "PRRT_1"}) { thread { isResolved } } }'\'''
+HOOK_PATH=$noperl_bin check_cmd "prose mention without gh api passes without perl" 0 'git commit -qam "never resolveReviewThread"'
+
 # The mutation reaches gh through a heredoc, a variable or an env wrapper; a mutation that only quotes the word passes.
 for c in "q='mutation{resolveReviewThread(input:{threadId:\"x\"}){clientMutationId}}'; gh api graphql -f query=\"\$q\"" \
   $'gh api graphql -F query=@- <<EOF\nmutation { resolveReviewThread(input:{threadId:"x"}) { clientMutationId } }\nEOF' \
   "env GH_HOST=x gh api graphql -f query='mutation{resolveReviewThread(input:{threadId:\"x\"}){clientMutationId}}'"; do
-  rc=0; printf '%s' "$(jq -nc --arg c "$c" '{tool_name:"Bash",tool_input:{command:$c}}')" | bash "$HOOK" >/dev/null 2>&1 || rc=$?
+  rc=0; printf '%s' "$(jq -nc --arg c "$c" '{tool_name:"Bash",tool_input:{command:$c}}')" | run_hook >/dev/null 2>&1 || rc=$?
   if [ "$rc" -eq 2 ]; then echo "PASS: indirect mutation blocked: ${c:0:40}"; else echo "FAIL: indirect mutation passed (rc=$rc): $c"; fails=$((fails + 1)); fi
 done
 # Fail closed: a graphql call that only names the mutation is blocked too; other flags and GraphQL comments do not hide it.
 for c in "gh api graphql -f query='mutation{addComment(input:{subjectId:\"x\",body:\"we never resolveReviewThread\"}){clientMutationId}}'" \
   "gh api -X POST graphql -f query='mutation{resolveReviewThread(input:{threadId:\"x\"}){clientMutationId}}'" \
   $'gh api graphql -f query=\'mutation{resolveReviewThread # note\n(input:{threadId:"x"}){clientMutationId}}\''; do
-  rc=0; printf '%s' "$(jq -nc --arg c "$c" '{tool_name:"Bash",tool_input:{command:$c}}')" | bash "$HOOK" >/dev/null 2>&1 || rc=$?
+  rc=0; printf '%s' "$(jq -nc --arg c "$c" '{tool_name:"Bash",tool_input:{command:$c}}')" | run_hook >/dev/null 2>&1 || rc=$?
   if [ "$rc" -eq 2 ]; then echo "PASS: graphql naming the mutation blocked: ${c:0:40}"; else echo "FAIL: graphql naming the mutation passed (rc=$rc): $c"; fails=$((fails + 1)); fi
 done
 # Prose that names the mutation next to an unrelated gh api call must pass.
 for c in 'git commit -qam "the read before resolveReviewThread" && gh api repos/o/r/pulls/1/comments' \
   'gh api repos/o/r/issues/1/comments -f body="we never call resolveReviewThread"'; do
-  rc=0; printf '%s' "$(jq -nc --arg c "$c" '{tool_name:"Bash",tool_input:{command:$c}}')" | bash "$HOOK" >/dev/null 2>&1 || rc=$?
+  rc=0; printf '%s' "$(jq -nc --arg c "$c" '{tool_name:"Bash",tool_input:{command:$c}}')" | run_hook >/dev/null 2>&1 || rc=$?
   if [ "$rc" -eq 0 ]; then echo "PASS: prose mention passes: ${c:0:40}"; else echo "FAIL: prose mention blocked (rc=$rc): $c"; fails=$((fails + 1)); fi
 done
 [ "$fails" -eq 0 ] && echo && echo "all no-thread-resolve hook tests passed"
