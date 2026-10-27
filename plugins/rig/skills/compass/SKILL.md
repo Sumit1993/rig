@@ -17,7 +17,7 @@ Nine labels, the same in every repo, and nothing else:
 | --- | --- | --- |
 | `bug`, `enhancement`, `documentation`, `decision` | `blocked`, `parked`, `needs-operator` | `p0`, `p1` |
 
-Bot labels (`dependencies`, `github_actions`, `javascript`, `autorelease:*`) and the review-lane labels `coderabbit_review`, `claude_review` and `claude_review_skip` are mechanism, not vocabulary. Leave them alone and do not count them as drift.
+Bot labels (`dependencies`, `github_actions`, `javascript`, `autorelease:*`) and the review-lane labels `coderabbit_review`, `coderabbit_skip`, `claude_review` and `claude_review_skip` are mechanism, not vocabulary. Leave them alone and do not count them as drift.
 
 A milestone is titled with the version it ships, `0.5.0`. A repo has at most two open: current and next. Line one of the description is the done-when sentence. There is no number prefix, no due date, and no order across repos.
 
@@ -36,7 +36,7 @@ gh api graphql --paginate -f q="repo:$repo is:pr is:open author:@me -is:draft" \
 
 One agent clears the whole list in one pass, PR by PR on each PR's branch:
 
-- Fix what is right, one push per PR, then reply in each thread (`coderabbit-lane` §5, in-thread replies; `claude-review-lane` for `claude[bot]`). Never resolve a reviewer's thread: `coderabbit-lane` §6, thread resolution; `claude-review-lane` §5, verification rounds.
+- Fix what is right, one push per PR, then reply in each thread (`coderabbit-lane` §5, in-thread replies; `claude-review-lane` for `claude[bot]`; `codex-review-lane` §5, acting on findings, for `assayer-finding` threads). Never resolve a reviewer's thread: `coderabbit-lane` §6, thread resolution; `claude-review-lane` §5, verification rounds.
 - A finding that needs the operator's ruling is collected, not asked one at a time. Ask them all in one question at the end.
 - The routine summons new reviews and never merges.
 - A ready PR whose CodeRabbit review on the current head came back clean, with every thread resolved by the reviewer that opened it and checks green, is listed as ready to merge. Ask the operator once for the whole list and merge each one they grant (`pr-babysit` Phase 3, `MERGE_OK=<pr>`).

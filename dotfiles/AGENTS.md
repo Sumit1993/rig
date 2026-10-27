@@ -34,7 +34,7 @@ The overlay says how to reach each seat. Only the operator changes a seat's effo
 | Fable 5.1 | 2 | 9 | 9 | high | Planner seat when allowed: judgement calls, plan-hard problems, taste-critical output |
 | Opus 5.5 (1M) | 4 | 9 | 8 | session | Session, planner seat. `low` for mechanical edits across files, `high` to verify or when medium stalls |
 | Gemini 3.8 Flash | 6 | 8 | 5 | in slug | Side work via agy: tests, checks, triage, evidence |
-| GPT-6.1 Sol | — | — | — | high | Adversary seat |
+| GPT-6.1 Sol | — | — | — | high | Adversary seat. CLI default is `low`; tool output capped at 10k tokens |
 | Sonnet 5.5 | 7 | 7 | 7 | medium | Lookups, reading logs and test output, thin wrappers, well-scoped drafts |
 | Haiku 5.5 | 9 | — | — | medium | Reading, summaries, classification, small checked tasks, thin wrappers; never coordinating, unattended runs or merge-readiness |
 
@@ -43,7 +43,7 @@ Gemini only through agy, where `farm-out` owns model choice. Scores are defaults
 - Never ask a Claude model to show its reasoning in the reply; it declines as `reasoning_extraction`. Ask for evidence: "mark anything you couldn't confirm, and say where you looked". Sonnet, Haiku (thinking on) and agy-Gemini need explicit verification steps.
 
 # Reviewers
-Reviews run async: the hourly CodeRabbit routine (`scripts/coderabbit-routine/` in Sumit1993/rig) reviews one ready PR per hour across every repo and never merges. A draft is never summoned: open drafts, push freely, mark ready once. Findings wait as review debt for the next session in that repo, cleared before any new pick. Procedure: `compass`, `coderabbit-lane`, `claude-review-lane`, `pr-babysit`.
+Reviews run async: the hourly CodeRabbit routine (`scripts/coderabbit-routine/` in Sumit1993/rig) reviews one ready PR per hour across every repo, skips `coderabbit_skip`, and never merges. Codex reviews only when the operator runs it, on any repo. A draft is never summoned: open drafts, push freely, mark ready once. Findings wait as review debt for the next session in that repo, cleared before any new pick. Procedure: `compass`, `coderabbit-lane`, `claude-review-lane`, `codex-review-lane`, `pr-babysit`.
 
 # Delegation
 agy runs beside the session, never in front of it: tests for code that exists, running suites and returning only the failures, log and CI triage, evidence collection, rebases, bulk reading, per-item repetition. If the session would stop and wait on the answer, it does the work itself or hands reading to the reader seat. Load `farm-out` first. A work order names the files, the command that must pass and what to return. Rulings (security, design surface, product semantics) go to the planner seat, reused inside the prompt-cache hour. Adversarial scrutiny goes to the adversary seat, also when review is the next blocking step; the working agent runs those rounds itself. When Codex cannot hold the adversary seat, another agent holds it through the launcher; never the author's own context. Evidence-backed objections persist through rebuttal, and unresolved material disagreements go to the operator.
