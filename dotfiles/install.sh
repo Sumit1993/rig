@@ -215,7 +215,10 @@ if [ -d "$AGY" ]; then
   echo "→ agy statusline"
   cp "$HERE/agy-statusline-command.sh" "$AGY/statusline.sh"; chmod +x "$AGY/statusline.sh"
   s="$AGY/settings.json"; [ -f "$s" ] || echo '{}' > "$s"
-  jq --arg cmd "$AGY/statusline.sh" '.statusLine = ((.statusLine // {}) + {type: "command", command: $cmd, enabled: true})' "$s" > "$s.tmp" \
+  cmd="$AGY/statusline.sh"
+  # Windows runs a bare .sh path through its file association, opening a Git Bash window per refresh.
+  case "$(uname -s)" in MINGW*|MSYS*|CYGWIN*) cmd="\"$(cygpath -m "$(command -v bash)")\" \"$(cygpath -m "$cmd")\"" ;; esac
+  jq --arg cmd "$cmd" '.statusLine = ((.statusLine // {}) + {type: "command", command: $cmd, enabled: true})' "$s" > "$s.tmp" \
     && jq -e . "$s.tmp" >/dev/null && mv "$s.tmp" "$s"
   echo "→ agy GEMINI.md"
   ln -sfn "$DOT/$(rig_field agy doctrine.file)" "$HOME/.gemini/GEMINI.md"
