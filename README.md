@@ -45,6 +45,8 @@ Plugin `rig`, path-independent via `${CLAUDE_PLUGIN_ROOT}`:
 | `hooks/draft-posted-nudge.sh` | PostToolUse(Bash): a body file posted from ai-context is told to delete the draft, once per file |
 | `hooks/agent-prompt-nudge.sh` | PreToolUse(Agent): a Fable or Opus prompt asking it to show its reasoning, a Sonnet or Haiku prompt with no verify step, a second planner inside the cache hour |
 | `hooks/protected-edit-gate.sh` | PreToolUse(Edit, Write): blocks edits to loose skill copies and to the import line of `~/.claude/CLAUDE.md` |
+| `hooks/safe-stash.sh` | PreToolUse(Bash): blocks bare `git stash`, an unnamed `git stash push` and `git stash pop` (the stash stack is shared by every worktree) |
+| `hooks/no-thread-resolve.sh` | PreToolUse(Bash): blocks a `gh api graphql` call carrying the `resolveReviewThread` mutation; the reviewer resolves its own thread |
 | `hooks/merge-gate.sh` | PreToolUse(Bash): blocks `gh pr merge` and `pulls/N/merge` without `MERGE_OK=<pr>` on the same command |
 
 `dotfiles/AGENTS.md` loads on every turn in every project, so it carries routing and rules only. Procedure lives in a skill that loads on demand. It is harness-neutral: it names seats (organizer, planner, adversary, reader, side lane) and capabilities, and `dotfiles/harness/{claude,codex,codex-desktop,agy}.md` say how each harness reaches them and which gates it enforces.
@@ -69,6 +71,8 @@ Hooks that block or rewrite tool calls report their firing to `mage observe`. Th
 | `plugins/rig/hooks/release-docs-gate.sh` | `rig/guard/release-docs-gate` |
 | `plugins/rig/hooks/protected-edit-gate.sh` | `rig/guard/protected-edit-gate` |
 | `plugins/rig/hooks/merge-gate.sh` | `rig/guard/merge-gate` |
+| `plugins/rig/hooks/safe-stash.sh` | `rig/guard/safe-stash` |
+| `plugins/rig/hooks/no-thread-resolve.sh` | `rig/guard/no-thread-resolve` |
 
 Hooks that neither block nor rewrite (`pr-created.sh` and `reap-watchers.sh`) have no guard identifier.
 
