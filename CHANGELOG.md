@@ -1,5 +1,66 @@
 # Changelog
 
+## [0.18.0](https://github.com/Sumit1993/rig/compare/rig-v0.17.2...rig-v0.18.0) (2026-10-27)
+
+
+### Features
+
+* **farm-out:** lanes set up, stop and tear down cleanly on agy 1.4 and native Windows ([1ce7fe2](https://github.com/Sumit1993/rig/commit/1ce7fe215949b93766cff3f29cb90efa634c058b))
+* **hooks:** add safe-stash PreToolUse hook for git stash commands ([f351ec1](https://github.com/Sumit1993/rig/commit/f351ec176ebdc2c7716944742e1d687b29f976f8))
+* **hooks:** no-thread-resolve, the session never resolves a reviewer's thread ([f2238a4](https://github.com/Sumit1993/rig/commit/f2238a46422f4835c6a6c88c2ca70020651d89f2))
+* **hooks:** safe-stash and no-thread-resolve enforce two doctrine lines ([ffc5e14](https://github.com/Sumit1993/rig/commit/ffc5e14cd5e312da015319e95737fd687900e7e3))
+* **review-lanes:** the routine skips a coderabbit_skip PR, and a bare resolve passes summon-gate ([509ec83](https://github.com/Sumit1993/rig/commit/509ec834463c49f19cacf17763f950087f61a3bd)), closes [#189](https://github.com/Sumit1993/rig/issues/189)
+* **skills:** behavior v0.2, check existing coverage first and layer forms ([a2cca21](https://github.com/Sumit1993/rig/commit/a2cca212fc09947190d69b3dbe7f777b64bac758))
+* **skills:** behavior, from a wish to a landed, tested behavior ([a1860dd](https://github.com/Sumit1993/rig/commit/a1860ddaff6c33452ab86e1a00039e57f9029fea))
+
+
+### Bug Fixes
+
+* **hooks:** gh_scan sees a gh call after do, then, else, elif, ! and a brace ([64f87b1](https://github.com/Sumit1993/rig/commit/64f87b1ab0b737ef50ee236aa10bfe66572411b7))
+* **hooks:** merge-gate checks every merge in a command; a brace counts only as a brace group ([47c7549](https://github.com/Sumit1993/rig/commit/47c75499e6285813583575e21b115292fc48f064))
+* **hooks:** merge-gate checks every merge, including one after do, then, else, ! or a brace ([9acae6c](https://github.com/Sumit1993/rig/commit/9acae6c26c955c5fc90f5115cdb0e02f40374431))
+* **hooks:** merge-gate reads every merge call in one pass and takes each token from its own call ([a4c271c](https://github.com/Sumit1993/rig/commit/a4c271c069d883afcd55ca54cbda26c6a5169e7b))
+* **hooks:** merge-gate sees a merge after if, while or until, and blocks when perl is missing ([824a7cc](https://github.com/Sumit1993/rig/commit/824a7cca5b0bedc6eb0107cc5ae05ed3f7faedd6))
+* **hooks:** no-thread-resolve and safe-stash fail closed without perl; tests isolate PATH and HOME ([ddc6940](https://github.com/Sumit1993/rig/commit/ddc6940a8f26f376adf50da7a5972436b933718e))
+* **hooks:** no-thread-resolve fails closed on any gh api graphql call naming the mutation; skill corrects the Codex apply_patch matcher ([57027cb](https://github.com/Sumit1993/rig/commit/57027cb65df988d49ba7a4790e2638b25bd1f1eb))
+* **hooks:** no-thread-resolve reads the gh api graphql call, not prose that names it ([e21e0a3](https://github.com/Sumit1993/rig/commit/e21e0a3ab73fb82e101e36ecc5f52364ab344e80))
+* **hooks:** safe-stash catches git -C &lt;path&gt; stash and git -c k=v stash ([4217c21](https://github.com/Sumit1993/rig/commit/4217c21ee0e55cfbc62add4ca8b1a940797a9977))
+* **hooks:** safe-stash reads git global options; no-thread-resolve catches heredoc, variable and env-wrapped mutations ([7550ad8](https://github.com/Sumit1993/rig/commit/7550ad83ba5a115bfe4061228173274793b3562e))
+* **install:** quote agy's statusline script path on Windows ([7ed0e4d](https://github.com/Sumit1993/rig/commit/7ed0e4d6d3bd0b6682f4e250cfa8fe0e444785b6))
+* **install:** run agy's statusline through bash on Windows ([2742160](https://github.com/Sumit1993/rig/commit/2742160b15301cc9bdae4ce6c1082c28367a893b))
+* **install:** run agy's statusline through bash on Windows ([e5f0545](https://github.com/Sumit1993/rig/commit/e5f05456ef76a831d4c9f1437078812737192114))
+* **skills:** behavior, a setting that covers part of a behavior still lands ([bf8d051](https://github.com/Sumit1993/rig/commit/bf8d051b6edbb7ef1d3444fbd6e83cfdc338dad5))
+* **windows:** adversary and codex-desktop skills run on native Windows ([5ae3b86](https://github.com/Sumit1993/rig/commit/5ae3b861e25daa2c9cfe0f0f9149d83606837fdf))
+* **windows:** adversary and codex-desktop skills run on native Windows ([acf04ec](https://github.com/Sumit1993/rig/commit/acf04ec4cb4bbb83f9c86767ee998ad91a808be0))
+
+
+### Documentation
+
+* **agents:** pick the model tier by the task's shape ([17f7736](https://github.com/Sumit1993/rig/commit/17f7736d0a39055914393bf1e1d0f8a8cb520c01))
+* **agents:** pick the model tier by the task's shape ([2a05e53](https://github.com/Sumit1993/rig/commit/2a05e53a0a966c79ffe22ed7b3112c9181353c08))
+* **codex-desktop:** the keep-it-in-WSL rule applies to WSL machines only ([23ebd2d](https://github.com/Sumit1993/rig/commit/23ebd2d7f5d722054167b68d4431dac759953395))
+* **farm-out:** monitor and text-return lines are for Claude subagents; agy adds worktrees with git; autopilot points at farm-out ([dc5088c](https://github.com/Sumit1993/rig/commit/dc5088ca63cbd7c75b7bf224aeba05e45b3fba46))
+* name the new blocking hooks in the gates list; thread resolves go through the UI ([5351210](https://github.com/Sumit1993/rig/commit/5351210a44194efce3c504e5776a54ceb31495b0))
+* **readme:** behavior skill, safe-stash and no-thread-resolve; list the skill for Claude and Codex ([30b11dd](https://github.com/Sumit1993/rig/commit/30b11dd0fd7dd8d08c5146c98afb51f8d25940f3))
+* **review-lanes:** Codex has a lane skill, and the skip label and verified-but-open resolve are written down ([3a3350c](https://github.com/Sumit1993/rig/commit/3a3350c14bf488ffac5b689c7e6aaaee324430a9)), closes [#189](https://github.com/Sumit1993/rig/issues/189)
+* **review-lanes:** Codex threads are the operator's to resolve under the merge rule; compass cites claude-review-lane §6 ([42bfb46](https://github.com/Sumit1993/rig/commit/42bfb46c869d87e5f7099cdef5e66255777b976d))
+
+
+### Code Refactoring
+
+* drop the behavior skill; safe-stash and no-thread-resolve stand alone ([014c2d5](https://github.com/Sumit1993/rig/commit/014c2d57938aa1ba647d42af1e53c36b3530c7fa))
+
+
+### Tests
+
+* **adversary:** compare cwd paths resolved, so 8.3 short names match ([bfdce08](https://github.com/Sumit1993/rig/commit/bfdce08dd083bb2f4ee214f10aff30decfdf1357))
+* **hooks:** merge-gate drops the contrived bypass cases; gh_scan drops unused count mode ([21644ae](https://github.com/Sumit1993/rig/commit/21644ae7eece5e4b7767401df06e509ed83409ac))
+
+
+### Continuous Integration
+
+* hooks and skill-script tests run on windows-latest; builder test reads agy's new validate output ([903b8a7](https://github.com/Sumit1993/rig/commit/903b8a7b48b749f2812fec702a265ad972fb5e66))
+
 ## [0.17.2](https://github.com/Sumit1993/rig/compare/rig-v0.17.1...rig-v0.17.2) (2026-10-19)
 
 
