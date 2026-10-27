@@ -4,7 +4,9 @@
 # On resume or fork, the resume-cost fields Claude Code sends (v2.1.251+) become one more sentence.
 # Rung: hook. Skipped: impossible (the harness banner does not show external quota), check (the session starts dynamically).
 set -u
-in=$(cat)
+# --print: the same line as plain text, on demand rather than only at session start (#177).
+print=""; [ "${1:-}" = "--print" ] && print=1
+if [ -n "$print" ]; then in='{}'; else in=$(cat); fi
 log="${BUDGET_USAGE_LOG:-$HOME/.claude/metrics/usage.jsonl}"
 quota="${BUDGET_QUOTA_SH:-$(cd "$(dirname "$0")/.." && pwd)/skills/farm-out/agy-quota.sh}"
 codex_quota="${BUDGET_CODEX_QUOTA:-$(cd "$(dirname "$0")/.." && pwd)/skills/adversary/codex-quota.py}"
@@ -53,5 +55,6 @@ if [ -n "$gap" ] && { [ "$src" = "resume" ] || [ "$src" = "fork" ]; }; then
   resume=" Resumed after $((gap / 60))m: ${ctx_tok} context tokens re-sent, ${cache}."
 fi
 msg="Budget: ${acct}. agy gemini: ${g}. agy claude-gpt: ${c}. codex: ${x}.${resume} ${policy}"
+[ -n "$print" ] && { printf '%s\n' "$msg"; exit 0; }
 jq -n --arg ctx "$msg" '{"hookSpecificOutput":{"hookEventName":"SessionStart","additionalContext":$ctx}}'
 exit 0

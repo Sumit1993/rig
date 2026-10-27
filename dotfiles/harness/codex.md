@@ -4,7 +4,7 @@ How Codex does what `AGENTS.md` names.
 - Spawn a subagent: ask for one in plain words ("spawn an agent to…"), or define one in `~/.codex/agents/<name>.toml` with `model` and `model_reasoning_effort`.
 - Ask the operator: end the turn with the question. In `codex exec` nobody answers; write the question into the report and stop.
 - Wait in the background: start the job detached with its output to a file and a sentinel on exit, then check the sentinel (`no-doze`). `codex queue --thread <id> --message …` hands a running session a follow-up.
-- Worktrees: `git worktree add .claude/worktrees/<task> -b <branch> origin/<default>`, where Claude Code keeps them too. Work in them by absolute path.
+- Worktrees: farm-out's `lane-worktree.sh add <repo> .claude/worktrees/<task> <branch> origin/<default>`, which copies the `.worktreeinclude` files, where Claude Code keeps them too. Work in them by absolute path.
 - Planner seat: `claude -p --agent rig:planner --output-format json "<decision, constraints, options>"`. `rig:fable-planner` only when the operator allows Fable.
 - Adversary seat: the launcher in the `adversary` skill, run with the shell. A Codex organizer that authored the work still sends it to a fresh run through the launcher, never its own context.
 - Reader seat: `claude -p --model haiku --output-format json`.

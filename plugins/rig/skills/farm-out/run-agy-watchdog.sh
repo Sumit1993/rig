@@ -72,6 +72,10 @@ if command -v jq >/dev/null 2>&1; then
     }' > "$OUT.meta.json.tmp" 2>/dev/null && mv -f "$OUT.meta.json.tmp" "$OUT.meta.json" 2>/dev/null || rm -f "$OUT.meta.json.tmp" 2>/dev/null
 fi
 
+# A spec saved inside the worktree is the lane's input, not uncommitted work (#177).
+SPEC_REL=""; case "$PROMPT" in "$WT"/*) SPEC_REL="${PROMPT#"$WT"/}" ;; esac
+dirty_lines() { git -C "$WT" status --porcelain --untracked-files=all 2>/dev/null | grep -vxF "?? ${SPEC_REL:-/}"; }
+
 BASE=$(git -C "$WT" rev-parse HEAD 2>/dev/null)
 [ -n "$BASE" ] || echo "WATCHDOG: cannot resolve HEAD in $WT; completion unknown, so no early kill" >&2
 agy --model "$MODEL" --log-file "$ACTIVITY" --output-format json \
@@ -79,6 +83,11 @@ agy --model "$MODEL" --log-file "$ACTIVITY" --output-format json \
   --dangerously-skip-permissions --print-timeout "$TMOUT" > "$OUT" 2> "$OUT.err" &
 PID=$!
 echo "WATCHDOG: agy pid $PID slug $SLUG activity $ACTIVITY" >&2
+# kill-agy.sh reads the pid here, so a stop never picks between agy processes (#205).
+if command -v jq >/dev/null 2>&1 && [ -f "$OUT.meta.json" ]; then
+  jq --argjson pid "$PID" '. + {agy_pid: $pid}' "$OUT.meta.json" > "$OUT.meta.json.tmp" 2>/dev/null \
+    && mv -f "$OUT.meta.json.tmp" "$OUT.meta.json" 2>/dev/null || rm -f "$OUT.meta.json.tmp" 2>/dev/null
+fi
 
 # Formats a staleness duration in seconds as "MmSs" (e.g. 192 -> "3m12s"). The watchdog
 # already computes this to decide the kill; printing it removes a recompute-from-mtime
@@ -94,7 +103,7 @@ while kill -0 "$PID" 2>/dev/null; do
   stale=$((now - mt))
   if [ "$stale" -gt 180 ]; then
     ahead=$(git -C "$WT" rev-list --count "$BASE"..HEAD 2>/dev/null || echo 0)
-    dirty=$(git -C "$WT" status --porcelain 2>/dev/null | head -1)
+    dirty=$(dirty_lines | head -1)
     # A live child is a command still running (agy >=1.2.9 waits quietly on background work, #167).
     # pgrep exits 1 on no match; anything higher (or missing) is "could not determine", so no kill.
     busy=$(pgrep -P "$PID" 2>/dev/null) || [ $? -eq 1 ] || busy=unknown
@@ -109,6 +118,8 @@ while kill -0 "$PID" 2>/dev/null; do
 done
 wait "$PID" 2>/dev/null
 RC=$?
+# agy logs a glog error line (E<MMDD>) for every temp file its watcher skips (#177).
+sed -i -E '/E[0-9]{4} .*file_watcher\.go:[0-9]+\] skipping empty or temp file/d' "$ACTIVITY" 2>/dev/null
 
 # The sentinel goes to the activity log, never to $OUT: appending to $OUT would make the
 # JSON envelope unparseable, and an unparseable envelope is how truncation is detected.
@@ -153,6 +164,7 @@ if command -v jq >/dev/null 2>&1; then
     --arg expected_commits "$EXPECT" \
     --arg print_timeout "$TMOUT" \
     --arg rc "$RC" \
+    --argjson agy_pid "$PID" \
     --arg status "${STATUS:-UNPARSEABLE}" \
     --arg conversation_id "${CID:-}" \
     --arg ended_at "$ENDED_AT" \
@@ -172,6 +184,7 @@ if command -v jq >/dev/null 2>&1; then
       expected_commits: ($expected_commits | tonumber? // $expected_commits),
       print_timeout: $print_timeout,
       rc: ($rc | tonumber? // $rc),
+      agy_pid: $agy_pid,
       status: $status,
       conversation_id: $conversation_id,
       ended_at: $ended_at,
@@ -193,5 +206,5 @@ if [ -n "$VERIFY" ]; then
   VRC=$?
 fi
 COMMITS=$(git -C "$WT" rev-list --count "$BASE"..HEAD 2>/dev/null || echo 0)
-DIRTY=$(git -C "$WT" status --porcelain 2>/dev/null | wc -l)
+DIRTY=$(dirty_lines | wc -l)
 echo "AGY_EXITED rc=$RC model=$MODEL status=$SENTINEL_STATUS cid=${CID:-none} out=$OUT bytes=$(stat -c %s "$OUT" 2>/dev/null || echo 0) commits=$COMMITS dirty=$DIRTY verify_rc=$VRC" >> "$ACTIVITY"

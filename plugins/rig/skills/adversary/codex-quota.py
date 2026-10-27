@@ -24,7 +24,7 @@ NOW = time.time()
 
 def live():
     proc = subprocess.Popen([CODEX, "app-server"], stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                            stderr=subprocess.DEVNULL, text=True, start_new_session=True)
+                            stderr=subprocess.DEVNULL, encoding="utf-8", start_new_session=True)
     lines = queue.Queue()
     threading.Thread(target=lambda: [lines.put(line) for line in proc.stdout], daemon=True).start()
     try:

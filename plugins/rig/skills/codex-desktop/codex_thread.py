@@ -26,7 +26,7 @@ def codex_exe():
 def rpc(calls, exe=None, deadline=60):
     """Run JSON-RPC calls against a private stdio app-server; a call's params may be a function of earlier results."""
     proc = subprocess.Popen([exe or codex_exe(), "app-server", "--stdio"], stdin=subprocess.PIPE,
-                            stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True)
+                            stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, encoding="utf-8")
     # Killing the server ends the stdout read, so a silent app-server cannot hang `new`.
     timer = threading.Timer(deadline, proc.kill)
     timer.start()

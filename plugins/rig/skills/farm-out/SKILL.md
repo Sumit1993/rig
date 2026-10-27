@@ -9,7 +9,7 @@ metadata:
 
 Which model gets which task is `AGENTS.md`. Model choice inside an agy run is this skill's. How to wait on a run is `no-doze`. What the runner does once a run is live (failure table, resume, kill, the babysit loop, terminal reports) is `references/handler.md`.
 
-Verified against agy 1.2.16. Check `agy --version` before trusting a flag; `agy changelog` records what moved.
+Verified against agy 1.4.7 (`agy --version`). `agy changelog` records what moved but can stop short of the installed version (1.4.3 there); a flag it does not cover is checked in `agy --help`.
 
 ## Gotchas
 
@@ -18,7 +18,7 @@ Verified against agy 1.2.16. Check `agy --version` before trusting a flag; `agy 
 - agy meters two quota groups, not one lane per model: Gemini Flash and Pro share one, Claude Opus, Claude Sonnet and GPT-OSS share the other. `agy` with no arguments prints both. Probe with `agy-quota.sh check <model>` before fanning out.
 - Gemini dry moves the lane to agy's other group: relaunch the same spec on `claude-sonnet-4-6` if `agy-quota.sh check claude-sonnet-4-6` reads usable (operator ruling on #167, superseding claude-kit#118). Both groups dry ends the dispatch; the work goes to a Claude subagent on `model: sonnet` holding the same prompt file, and a run you launched yourself with no wrapper goes the same way. Never a reset timer.
 - Lane count is derived from the scarce resource and its scope (a review counter, a merge invariant, a weekly pool). A limit assumed per-repo can be org-wide or per-developer.
-- Reference content from another repo is fetched from live refs (`gh api repos/<r>/contents/<path>`, or `git show origin/main:<path>`), never a working tree.
+- Reference content from another repo is fetched from live refs (`gh api repos/<r>/contents/<path>`, or `git show origin/main:<path>`), never a working tree. Under Git Bash a `<rev>:<path>` argument needs `MSYS_NO_PATHCONV=1`, or it arrives as `origin\main;...`.
 - `~/.gemini/GEMINI.md` (a link to `dotfiles/GEMINI.md`) carries how agy works a lane: `view_file` for reads, `lane/scripts/run.sh` for suites, no polling, no wandering. agy loads it in `-p` runs (canary test, #167). Work orders stay lean on those; you still verify agy's claims.
 
 ## Launch
@@ -58,14 +58,15 @@ AGY_PID=$!            # agy itself, no subshell in between
 - Stdout holds one object written at the end, so a healthy run looks frozen. Watch `$ACTIVITY`.
 - `--model` takes a slug from `agy models`. No `--effort` with an effort-suffixed slug. `--print-timeout` is a Go duration (`40m`); bare `2400` exits 2.
 - The sidecar `$OUT.meta.json` exists because agy's envelope omits the model.
-- `run-agy-watchdog.sh` in this directory wraps the launch (positional arguments, `references/handler.md` step 1), reaps hangs and records quota walls through `agy-quota.sh record-from-envelope`. `agy-quota.sh live` reads both groups' quota at zero tokens (#133 - Every seat sees its quotas).
+- `run-agy-watchdog.sh` in this directory wraps the launch (positional arguments, `references/handler.md` step 1), reaps hangs, records quota walls through `agy-quota.sh record-from-envelope`, and keeps agy's pid in the sidecar as `agy_pid`. `agy-quota.sh check` reads only that cached record and says so; `agy-quota.sh live` probes both groups at zero tokens (#133 - Every seat sees its quotas).
+- Stop a run with `kill-agy.sh <slug>`, never by name or by a pid picked from `tasklist` (`references/handler.md`, Kill).
 
 ## Models inside agy
 
-- `gemini-3.8-flash-low` is the default for a work order that names its files, its change and a `Verify:` line: the same order took 7 turns in 27 s on low against 11 turns in 2.9 min on high, both correct (#167). `gemini-3.8-flash-high` when the lane must work out what to change. Neither for open-ended unsupervised coding. `gemini-3.7-flash-high` if 3.8 misbehaves.
-- `gemini-3.1-pro-high` is untested here and draws on Flash's pool: a quality choice, never a quota escape.
-- `claude-sonnet-4-6` and `claude-opus-4-6-thinking` (agy 1.3.3 `agy models`; the 5.5 slugs of 1.2.16 are gone) sit in the other quota group with `gpt-oss-120b-medium`. `claude-sonnet-4-6` is the Gemini fallback. Its predecessor `claude-sonnet-5-5-low` did the #167 work order in 5 turns and 24 s; 4.6 is untested here. Opus there is untested and draws on the same pool.
-- `gemini-3.8-flash-medium`, `gemini-3.6-flash-*` and `gemini-3.1-pro-low` are listed and untested here. Avoid `gpt-oss-120b-medium`.
+agy 1.4.7 `agy models` prints six slugs: `gemini-3.8-flash-{low,medium,high}`, `claude-sonnet-4-6`, `claude-opus-4-6-thinking` and `gpt-oss-120b-medium`. Re-run it before naming any other.
+
+- `gemini-3.8-flash-low` is the default for a work order that names its files, its change and a `Verify:` line: the same order took 7 turns in 27 s on low against 11 turns in 2.9 min on high, both correct (#167). `gemini-3.8-flash-high` when the lane must work out what to change. Neither for open-ended unsupervised coding. `gemini-3.8-flash-medium` is untested here.
+- `claude-sonnet-4-6` and `claude-opus-4-6-thinking` sit in the other quota group with `gpt-oss-120b-medium`. `claude-sonnet-4-6` is the Gemini fallback. Its predecessor `claude-sonnet-5-5-low` did the #167 work order in 5 turns and 24 s; 4.6 is untested here. Opus there is untested and draws on the same pool. Avoid `gpt-oss-120b-medium`.
 - agy has its own skills: Matt Pocock's set is at `~/ai-context/vendor/mattpocock-skills` for agy-side planning and review.
 
 ## Dispatch
@@ -74,10 +75,14 @@ A lane takes side work while the session keeps coding (`AGENTS.md` §Delegation)
 
 Bulk reading the organizer would otherwise wait on (logs, test output, a dozen files to summarize, a classification pass) goes to a Haiku subagent (`model: haiku`, Haiku 5.5) rather than into the organizer's context. Its prompt names what to read, what to return and how each claim is checked, as for Sonnet. Haiku never coordinates, never runs unattended and never calls a PR merge-ready.
 
-Write the spec to `~/ai-context/<repo>/<issue>-<slug>/spec-<lane>.md` or into the repo, never `/tmp`. Its last lines are one `` Verify: `<command>` `` line and what to return. agy runs only the suites that line names, so for an end-to-end change it names every suite the change touches, Playwright specs and BDD `.feature` files alike.
+Write the spec to `~/ai-context/<repo>/<issue>-<slug>/spec-<lane>.md` or into the repo, never `/tmp`. Its last lines are one `` Verify: `<command>` `` line and what to return. agy runs only the suites that line names, so for an end-to-end change it names every suite the change touches, Playwright specs and BDD `.feature` files alike. A TypeScript lane's line runs the tests and `tsc --noEmit` both; tests alone passed lanes that did not type-check.
 
-Launch it yourself with Bash `run_in_background: true`: `run-agy-watchdog.sh <worktree> <spec> ~/ai-context/agy-logs/<slug>.json <expected_commits> <timeout>`. The session spends nothing while agy works; the completion notice lands when it exits. The watchdog runs the spec's `Verify:` command itself and appends one line to `<slug>.activity.log`: `AGY_EXITED rc= status= commits= dirty= verify_rc=`.
-- `status=SUCCESS`, `commits` at least the expected count, `dirty=0` and `verify_rc=0`: read the diff against the spec and the tail of `<slug>.json.verify.log`. That is the whole review.
+Every work order and every subagent prompt also says: every git write is `git -C <absolute worktree path>` (the Bash cwd carries over between calls, so a bare `git rebase` lands in whichever worktree the last `cd` left). A Claude subagent's prompt also says: stop any monitor or watch you armed before you report, and return a document as text for the organizer to save (the harness refuses a subagent's report file). An agy lane arms no monitor and may save evidence files.
+
+The organizer sets the lane's worktree up before launch. `lane-worktree.sh add <repo> <path> <branch> origin/<default>` in this directory adds it and copies the gitignored files the repo's `.worktreeinclude` names (`.env` and the like). Then run the install and build the `Verify:` line needs in it: `pnpm install --frozen-lockfile`, and in a monorepo the workspace packages the lane imports (`turbo build --filter=<pkg>...`), or vitest and `tsc` cannot resolve them. Once the work lands, `lane-worktree.sh remove <path>`, never `git worktree remove` (fails on long `node_modules` paths on Windows) or `robocopy /MIR` (follows pnpm links into other trees).
+
+Launch it yourself, one Bash `run_in_background: true` call per lane: `run-agy-watchdog.sh <worktree> <spec> ~/ai-context/agy-logs/<slug>.json <expected_commits> <timeout>`. A `nohup … &` loop over several lanes sends no completion notices. The session spends nothing while agy works; the completion notice lands when it exits. The watchdog runs the spec's `Verify:` command itself and appends one line to `<slug>.activity.log`: `AGY_EXITED rc= status= commits= dirty= verify_rc=`.
+- `status=SUCCESS`, `commits` at least the expected count, `dirty=0` and `verify_rc=0`: read the diff against the spec and the tail of `<slug>.json.verify.log`. That is the whole review. An evidence-only lane passes `expected_commits` 0 and is clean at `commits=0`; its spec saved inside the worktree is not counted in `dirty`.
 - Anything else: spawn `subagent_type: "agy-runner"` with the spec path and the envelope path to salvage, resume or finish it (`references/handler.md`). A Sonnet runner that waits on a healthy run cost a median 2.4M cache-read tokens per lane across 83 lanes (#167); spend that only on a run that needs it.
 
 - One lane per item, run in parallel, each with its own branch and its own narrow test command. A run costs about 5 s per step, one step at a time, and every step resends the whole context. A ten-item lane took 400 steps and 40 minutes, then hit its timeout; ten one-item lanes each take a few minutes (run data in #164 - Friction from a long unattended prismalens run). Past ~140k tokens agy compacts and re-reads files (google-antigravity/antigravity-cli#878). Verification still runs once at the umbrella, after the item branches are merged into it.

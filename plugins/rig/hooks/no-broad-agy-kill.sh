@@ -66,8 +66,8 @@ Other sessions' runs die as rc=137 with empty output, which reads as silent quot
 costs them their retry budget chasing a cause that was you. This repo's own test suite did
 exactly that today.
 
-Kill by PID instead (\`kill -9 "\$AGY_PID"\`, captured as \$! at launch, or the pid
-run-agy-watchdog.sh prints). If the PID is lost, match this run's --log-file slug:
+Kill by PID instead: farm-out's \`kill-agy.sh <slug>\` reads the pid run-agy-watchdog.sh
+recorded, or \`kill -9 "\$AGY_PID"\` captured as \$! at launch. If the PID is lost, match this run's --log-file slug:
 \`kill -9 \$(pgrep -f "\$SLUG")\`. See farm-out references/handler.md, "Kill".
 
 To see what you would have hit: \`pgrep -a agy\`, then \`readlink /proc/<pid>/cwd\` to tell

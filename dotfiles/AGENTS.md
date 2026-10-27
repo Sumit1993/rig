@@ -49,7 +49,7 @@ Reviews run async: the hourly CodeRabbit routine (`scripts/coderabbit-routine/` 
 agy runs beside the session, never in front of it: tests for code that exists, running suites and returning only the failures, log and CI triage, evidence collection, rebases, bulk reading, per-item repetition. If the session would stop and wait on the answer, it does the work itself or hands reading to the reader seat. Load `farm-out` first. A work order names the files, the command that must pass and what to return. Rulings (security, design surface, product semantics) go to the planner seat, reused inside the prompt-cache hour. Adversarial scrutiny goes to the adversary seat, also when review is the next blocking step; the working agent runs those rounds itself. When Codex cannot hold the adversary seat, another agent holds it through the launcher; never the author's own context. Evidence-backed objections persist through rebuttal, and unresolved material disagreements go to the operator.
 
 # Worktrees
-Delegated and unattended work runs in its own worktree, never the main checkout; an agy lane gets the path named absolutely in its prompt. A lane that wants a clean base branches from `origin/<default>` itself. Whoever made a worktree removes it and its branch once the work lands.
+Delegated and unattended work runs in its own worktree, never the main checkout; an agy lane gets the path named absolutely in its prompt. A lane that wants a clean base branches from `origin/<default>` itself. `farm-out`'s `lane-worktree.sh` adds one with its `.worktreeinclude` files and removes one. Whoever made a worktree removes it and its branch once the work lands.
 
 # Reporting and merging
 - Check every delegated claim against evidence before relying on it.

@@ -43,6 +43,20 @@ class CodexThreadTests(unittest.TestCase):
         argv = run.call_args.args[0]
         self.assertEqual(argv, ["codex.exe", "queue", "--thread", "t-1", "--approve-for-me", "--message", "do 'it'; rm -rf /"])
 
+    def test_rpc_reads_utf8_whatever_the_locale(self):
+        # cp1252 on Windows misreads a UTF-8 reply unless the pipe says utf-8 (#164).
+        server = ("import json,sys\n"
+                  "for line in sys.stdin:\n"
+                  "    m = json.loads(line)\n"
+                  "    if 'id' in m:\n"
+                  "        sys.stdout.buffer.write((json.dumps({'id': m['id'], 'result': {'name': 'QA \u2192 done'}}, ensure_ascii=False) + '\\n').encode('utf-8'))\n"
+                  "        sys.stdout.flush()\n")
+        real_popen = codex_thread.subprocess.Popen
+        fake = lambda argv, **kw: real_popen([sys.executable, "-c", server], **kw)
+        with patch.object(codex_thread.subprocess, "Popen", fake):
+            results = codex_thread.rpc([("thread/name/set", {})], exe="codex.exe", deadline=10)
+        self.assertEqual(results[1]["name"], "QA \u2192 done")
+
     def test_rpc_kills_a_silent_server(self):
         real_popen = codex_thread.subprocess.Popen
         silent = lambda argv, **kw: real_popen([sys.executable, "-c", "import time; time.sleep(30)"], **kw)
