@@ -83,6 +83,13 @@ cmd_record() {
   fi
 }
 
+# check reads only the cached record; `live` is the probe. Issue #177.
+CACHED="cached, not a live probe (agy-quota.sh live)"
+ago() { # seconds -> 3d, 5h or 12m
+  local s=$1
+  if [ "$s" -ge 86400 ]; then echo "$((s / 86400))d"; elif [ "$s" -ge 3600 ]; then echo "$((s / 3600))h"; else echo "$((s / 60))m"; fi
+}
+
 cmd_check() {
   local model
   model=$(group_for "$1")
@@ -95,7 +102,7 @@ cmd_check() {
   local entry
   entry=$(printf '%s' "$current" | jq -c --arg m "$model" '.[$m] // empty' 2>/dev/null)
   if [ -z "$entry" ] || [ "$entry" = "null" ]; then
-    echo "usable: $model has no quota record"
+    echo "usable: $model has no quota record; $CACHED"
     return 0
   fi
   local reset_at
@@ -110,10 +117,10 @@ cmd_check() {
     reset_epoch=$(date -u -d "$reset_at" +%s 2>/dev/null || echo 0)
     if [ "$reset_epoch" -gt "$now_epoch" ]; then
       local rem=$((reset_epoch - now_epoch))
-      echo "exhausted: $model quota reset at $reset_at (${rem}s remaining)"
+      echo "exhausted: $model quota reset at $reset_at (${rem}s remaining); $CACHED"
       return 1
     else
-      echo "usable: $model quota reset at $reset_at has passed"
+      echo "usable: $model quota reset at $reset_at passed $(ago $((now_epoch - reset_epoch))) ago; $CACHED"
       return 0
     fi
   else
@@ -126,10 +133,10 @@ cmd_check() {
     local expiry_epoch=$((exhausted_epoch + window))
     if [ "$now_epoch" -lt "$expiry_epoch" ]; then
       local rem=$((expiry_epoch - now_epoch))
-      echo "exhausted: $model quota exhausted at $exhausted_at (fallback window ${window}s, ${rem}s remaining)"
+      echo "exhausted: $model quota exhausted at $exhausted_at (fallback window ${window}s, ${rem}s remaining); $CACHED"
       return 1
     else
-      echo "usable: $model fallback window of ${window}s from $exhausted_at has passed"
+      echo "usable: $model fallback window of ${window}s from $exhausted_at passed $(ago $((now_epoch - expiry_epoch))) ago; $CACHED"
       return 0
     fi
   fi

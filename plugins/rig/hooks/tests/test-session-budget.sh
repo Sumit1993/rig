@@ -51,6 +51,9 @@ grep -q "Resumed after 90m: 91000 context tokens re-sent, prompt cache likely ex
 out=$(echo '{"source":"startup"}' | BUDGET_USAGE_LOG="$T/usage.jsonl" BUDGET_QUOTA_SH="$T/quota.sh" "$HOOK" | ctx)
 grep -q "Resumed" <<<"$out" && { echo "FAIL: startup claims a resume"; fails=$((fails+1)); } || echo "PASS: a fresh start says nothing about resuming"
 
+out=$(BUDGET_USAGE_LOG="$T/usage.jsonl" BUDGET_QUOTA_SH="$T/quota.sh" "$HOOK" --print </dev/null)
+[[ "$out" == "Budget: 5h window 63%, 7d 36%"* ]] && echo "PASS: --print gives the line as plain text" || { echo "FAIL: --print ($out)"; fails=$((fails+1)); }
+
 rc=$(printf 'junk' | BUDGET_USAGE_LOG="$T/none.jsonl" BUDGET_QUOTA_SH="$T/quota.sh" "$HOOK" >/dev/null 2>&1; echo $?)
 [ "$rc" -eq 0 ] && echo "PASS: junk stdin exits 0" || { echo "FAIL: junk rc=$rc"; fails=$((fails+1)); }
 

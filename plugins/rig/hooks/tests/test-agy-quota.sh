@@ -279,5 +279,12 @@ case "$c16_out" in
 esac
 check "a group with one bucket missing reports unavailable, never 0%" '[ "$c16_rc" -eq 0 ] && [ "$c16_match" -eq 1 ] && [ "$c16_no_zero" -eq 1 ]'
 
+echo "-- 17. check names its source and the age of a passed reset (#177)"
+bash "$AGY_QUOTA" record gemini-3.8-flash-low "$(date -u -d '-3 days' +%Y-%m-%dT%H:%M:%SZ)"
+c17_out=$(bash "$AGY_QUOTA" check gemini-3.8-flash-low 2>&1); c17_rc=$?
+c17_none=$(bash "$AGY_QUOTA" check claude-sonnet-4-6 2>&1)
+check "a reset 3 days old reads as cached with its age" '[ "$c17_rc" -eq 0 ] && [[ "$c17_out" == usable:*"passed 3d ago"*"not a live probe"* ]]'
+check "no record also says it is not a live probe" '[[ "$c17_none" == usable:*"no quota record"*"not a live probe"* ]]'
+
 [ "$fails" -eq 0 ] && echo && echo "all test-agy-quota tests passed"
 exit "$fails"

@@ -21,6 +21,8 @@ Nothing is dispatched until both exist. With no scheduled wake-up the run is one
 4. `CronList` after, to confirm. A cron that failed to arm looks like a quiet run.
 5. Record the job ID in the plan file beside the condition that ends it (§3, the stall rule).
 
+The one exception to that ceiling: while every lane is parked or budget-held until a known time hours off, idle ticks buy only cache warmth. Replace the cron with one pinned to that minute and hour, and re-arm the 30-minute cron when it fires.
+
 Jobs live in this session's memory only, fire only while the REPL is idle (so a foreground wait stays shorter than one interval), and expire after 7 days. `ScheduleWakeup` paces `/loop` and is not this.
 
 ### Write the plan file
@@ -33,7 +35,9 @@ Respect the window. Never start a lane that cannot finish and be verified in the
 
 `AGENTS.md` §Worktrees is the rule. The main checkout and its stack belong to the session; a lane that "restores" its branch takes the run down. A lane gets an absolute worktree path and stops and reports if it is missing. The stash stack is shared by every worktree, so never a bare `git stash`: set work aside with a WIP commit.
 
-Every dispatch prompt names the absolute worktree path, the exact verify commands the lane runs itself, the report format (findings, evidence, SHAs, blockers, no prose), the stop conditions ("abort and report rather than improvise" on any conflict, frozen path, or gate still red after N minutes), what the lane may not do (merge, close, bypass, edit a frozen path), the stall rule (§3), and the early-stop rule: status notes go in the same message as the next tool call, and it stops only when nothing can move without the operator.
+Every git write names its worktree: `git -C <absolute path>`, from the session and in every dispatch prompt. The Bash cwd carries over between calls, so a bare `git rebase` runs in whichever worktree the last `cd` left.
+
+Every dispatch prompt names the absolute worktree path, the exact verify commands the lane runs itself, the report format (findings, evidence, SHAs, blockers, no prose), the stop conditions ("abort and report rather than improvise" on any conflict, frozen path, or gate still red after N minutes), what the lane may not do (merge, close, bypass, edit a frozen path), the stall rule (§3), the teardown rule (stop any monitor it armed before it reports), that a document comes back as text for the organizer to save (the harness refuses a subagent's report file), and the early-stop rule: status notes go in the same message as the next tool call, and it stops only when nothing can move without the operator.
 
 Never override a lane's brief with reasoning invented on the spot; cite what supersedes it. With no source the brief wins, and a lane that refuses an unsourced order is correct.
 
