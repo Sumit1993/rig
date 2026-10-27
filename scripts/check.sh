@@ -35,8 +35,8 @@ else
 fi
 echo
 
-echo "=== 2.3 skill script tests (adversary, codex-desktop)"
-for suite in plugins/rig/skills/adversary/tests plugins/rig/skills/codex-desktop/tests; do
+echo "=== 2.3 script tests (adversary, codex-desktop, coderabbit-routine)"
+for suite in plugins/rig/skills/adversary/tests plugins/rig/skills/codex-desktop/tests scripts/coderabbit-routine/tests; do
   if python3 -m unittest discover -s "$suite" 2>&1 | tail -3; [ "${PIPESTATUS[0]}" -eq 0 ]; then
     echo "PASS: $suite"
   else

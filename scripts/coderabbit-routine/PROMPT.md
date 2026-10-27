@@ -17,7 +17,7 @@ The scripts are fixed in a local session, never in this run.
 
 ## 1. Read the digest
 
-Run `python3 digest.py > /tmp/digest.json` from this directory, with the Bash timeout set to 600000: when the slot opens within 8 minutes, the digest sleeps until it does and then reads everything again (`waited_s` says how long). It lists every open pull request in the six repos. Pull requests marked `excluded` (Dependabot, release-please, other authors, drafts) are never summoned.
+Run `python3 digest.py > /tmp/digest.json` from this directory, with the Bash timeout set to 600000: when the slot opens within 8 minutes, the digest sleeps until it does and then reads everything again (`waited_s` says how long). It lists every open pull request in the six repos. Pull requests marked `excluded` (Dependabot, release-please, other authors, drafts, the `coderabbit_skip` label) are never summoned. `act.py` also refuses a PR that gained the label after the digest ran; it posts nothing, so summon the next candidate instead and name the refused one in the report.
 
 ## 2. Budget
 

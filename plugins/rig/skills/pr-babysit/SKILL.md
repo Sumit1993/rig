@@ -36,7 +36,8 @@ Push freely; nothing runs pre-push. Escalate by risk, and never pay model tokens
 | Tier | When | What |
 |---|---|---|
 | Claude review (`claude[bot]`) | Where `rig-meta.sh get <repo> claude_lane` says the lane runs: every same-repo PR, automatic, but not every round and not every author | The default. Inline findings. Advisory, but every thread it opens blocks. See `claude-review-lane` |
-| CodeRabbit (`coderabbitai[bot]`) | Every ready PR, summoned by the hourly CodeRabbit routine; `auto_review` is off everywhere | The independent lane, drawing a scarce per-developer counter. See `coderabbit-lane` |
+| CodeRabbit (`coderabbitai[bot]`) | Every ready PR not labelled `coderabbit_skip`, summoned by the hourly CodeRabbit routine; `auto_review` is off everywhere | The independent lane, drawing a scarce per-developer counter. See `coderabbit-lane` |
+| Codex (`assayer review`) | Only when the operator runs it, any repo | Findings post as the operator, each ending in `assayer-finding`. See `codex-review-lane` |
 | One Opus 5 pass | Non-trivial PRs | Spec and ADR conformance, which the bots cannot see |
 | `/code-review ultra` | Rare | Engine core, security boundary, contract or schema changes |
 

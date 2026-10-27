@@ -9,11 +9,15 @@ cmd=$(jq -r '.tool_input.command // ""' <<<"$in" 2>/dev/null) || exit 0
 [ -n "$cmd" ] || exit 0
 # Any post naming coderabbit and review needs the token: shell escapes ($'\040', \x40) defeat an exact phrase match.
 # Keyed on the handle, not the product name, so prose about CodeRabbit in a heredoc passes (#160).
-grep -qiE '(@|\\x40|\\100|\\u0040)coderabbit|coderabbitai' <<<"$cmd" && grep -qi 'review' <<<"$cmd" || exit 0
+handle='(@|\\x40|\\100|\\u0040)coderabbit(ai)?|coderabbitai'
+grep -qiE "$handle" <<<"$cmd" && grep -qi 'review' <<<"$cmd" || exit 0
 # A post, not a read: gh pr/issue comment, or gh api .../comments carrying a body field.
 grep -qE 'gh[[:space:]]+(pr|issue)[[:space:]]+comment\b' <<<"$cmd" \
   || { grep -qE 'issues/[0-9]+/comments' <<<"$cmd" && grep -qE '(-f|-F|--field|--raw-field)[[:space:]]+body=|--input\b' <<<"$cmd"; } \
   || exit 0
+# A resolve is no summon, but passes only when every handle in the command opens one: a review request
+# riding in the same command still needs the token (#189).
+[ "$(grep -oiE "($handle)[[:space:]]+resolve\b" <<<"$cmd" | wc -l)" -eq "$(grep -oiE "$handle" <<<"$cmd" | wc -l)" ] && exit 0
 
 # Every post in a compound command must name the token's PR; a post with no readable target fails.
 posts=$(grep -oE 'gh[[:space:]]+(pr|issue)[[:space:]]+comment\b|issues/[0-9]+/comments' <<<"$cmd" | wc -l)

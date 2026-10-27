@@ -55,7 +55,7 @@ Last rewritten 2026-08-30, after gh-workflows#53 (per-repo config, org defaults,
 gh-workflows enforces no ruleset, and on that repo the push is the CodeRabbit request.</p>
 
 <h2><span class="n">1</span>The cast</h2>
-<p>Ten parties touch a PR. The thing worth holding in your head is which of them has a model inside it,
+<p>Eleven parties touch a PR. The thing worth holding in your head is which of them has a model inside it,
 because that is the line the whole permission design is drawn along.</p>
 
 <div class="legend">
@@ -110,6 +110,12 @@ because that is the line the whole permission design is drawn along.</p>
     <h4>CodeRabbit <span class="kind k-third">third party</span></h4>
     <span class="id">coderabbitai[bot]</span>
     <p>The escalation reviewer. One counter per developer, shared across every repo you touch. Automatic on <code>gh-workflows</code>, admitted by the <code>coderabbit_review</code> label everywhere else.</p>
+  </div>
+  <div class="card agent">
+    <h4>Codex <span class="kind k-agent">agent</span></h4>
+    <span class="id">posts under the operator's credential</span>
+    <p>GPT-6.1 Sol through the assayer runner (<code>assayer review owner/repo#N --post</code>, prismalens/gh-workflows#243). No repo admits it automatically: it runs only when the operator runs it, on any repo. Inline findings end in <code>assayer-finding</code>; the <code>## Code review</code> summary counts the reviewable files examined.</p>
+    <p><span class="no">Never</span> resolves a thread or verifies a fix. Its threads are review debt like any other, and the operator resolves them. Procedure: <code>codex-review-lane</code>.</p>
   </div>
   <div class="card human">
     <h4>Fork contributor <span class="kind k-human">human</span></h4>
@@ -954,7 +960,8 @@ every hour. It only summons; it never merges. <code>auto_review</code> is off in
 opening a PR or marking it ready spends nothing by itself.</p>
 <p>Each run makes <strong>one summon</strong>. First a re-review: a PR whose head moved past its last review and whose CodeRabbit threads
   all carry a reply. Then new PRs, oldest first. The head commit must be 20 minutes old, drafts are never summoned, and a
-  rate-limit notice's stated wait is obeyed.</p>
+  rate-limit notice's stated wait is obeyed. A PR labelled <code>coderabbit_skip</code> is never summoned, and the routine re-reads
+  labels just before it posts. The label stops admission only: it resolves no thread and lifts no merge requirement.</p>
 <p>Findings are not fixed by the routine. They wait on the PR as review debt, printed at the next session start in that repo
 and cleared by that session before any new pick (<code>compass</code> Step 0): one push per PR, a reply in every thread,
 rulings collected into one question. The routine then re-reviews, CodeRabbit resolves what it accepts, and the operator
@@ -1106,7 +1113,7 @@ gh-workflows#12 (roadmap index and standing invariants), gh-workflows#20 (resolu
 verify becomes its own hardened job), gh-workflows#33/#34/#54 (per-repo config, model escalation, org defaults),
 gh-workflows#37 (dropped the dead GitHub App path from the docs), gh-workflows#39 (vendored prompt drift check),
 canary runs on <code>prismalens/sreforge#157</code> and run <code>33200877365</code> on <code>prismalens/prismalens</code>.
-Sumit1993/rig#150 (the hourly CodeRabbit routine and review debt). Skills that carry the procedures: <code>claude-review-lane</code>, <code>coderabbit-lane</code>, <code>pr-babysit</code>, <code>compass</code>.</p>
+Sumit1993/rig#150 (the hourly CodeRabbit routine and review debt). Skills that carry the procedures: <code>claude-review-lane</code>, <code>coderabbit-lane</code>, <code>codex-review-lane</code>, <code>pr-babysit</code>, <code>compass</code>.</p>
 
 </main>
 </body>

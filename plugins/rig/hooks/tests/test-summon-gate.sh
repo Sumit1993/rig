@@ -29,6 +29,12 @@ check "compound second target blocked" 2 "CR_SUMMON_OK=213 gh pr comment 213 --b
 check "compound targetless post blocked" 2 "CR_SUMMON_OK=213 gh pr comment 213 --body '@coderabbitai review'; gh pr comment --body '@coderabbitai review'"
 check "prose naming CodeRabbit then a comment allowed" 0 "$(printf 'cat > d.md <<EOF\nthe hourly CodeRabbit review queue\nEOF\ngh issue comment 160 --body-file d.md')"
 check "@coderabbit handle still blocked" 2 "gh pr comment 213 --body '@coderabbit review'"
+check "bare resolve allowed" 0 "gh pr comment 213 --body '@coderabbitai resolve'"
+check "resolve with text naming review allowed" 0 "gh pr comment 213 --body '@coderabbitai resolve: every review finding is verified fixed in abc123'"
+check "api resolve allowed" 0 "gh api repos/o/r/issues/213/comments -f body='@coderabbitai resolve after review'"
+check "resolve then review in one body blocked" 2 "gh pr comment 213 --body \$'@coderabbitai resolve\n@coderabbitai review'"
+check "resolve and review posts in one command blocked" 2 "gh pr comment 213 --body '@coderabbitai resolve'; gh pr comment 214 --body '@coderabbitai review'"
+check "escaped resolve does not exempt a review" 2 "gh pr comment 213 --body \$'@coderabbitai\\040resolve review'"
 check "junk input exits 0" 0 ""
 printf 'not json' | "$HOOK" >/dev/null 2>&1 && pass "non-JSON stdin exits 0" || fail "non-JSON stdin"
 

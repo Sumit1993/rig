@@ -13,6 +13,8 @@ metadata:
 
 The hourly CodeRabbit routine (`scripts/coderabbit-routine/` in Sumit1993/rig, `Sumit1993/rig#150`) is the admission mechanism, in every repo. `auto_review` is off everywhere, so opening a PR or marking it ready spends nothing by itself. Each hour the routine summons CodeRabbit on at most one PR: first a re-review, a PR whose head moved past its last review and whose CodeRabbit threads all carry a reply, then new PRs oldest first. A re-review is skipped when the model judges the new commits to be only fixes that CodeRabbit already confirmed in-thread, since reviewing a fix only finds a smaller nit in it. A draft is never summoned, so a PR stays a draft while commits are still coming.
 
+A PR labelled `coderabbit_skip` is never summoned, new or re-review: the digest marks it `excluded` with the reason, and `act.py` re-reads labels before posting, so a label added mid-run still holds. The label only stops admission. It resolves no thread and lifts no merge requirement, and the PR's past review still counts against the hourly slot. The operator creates the label.
+
 The routine never merges. Merging is a local session's job when the operator asks for it (`compass` Step 0, `pr-babysit` Phase 3). The routine is a Claude Code routine; each run's report, in its run history at claude.ai/code/routines, lists what was summoned and what waits. Its summons carry a hidden `<!-- summoned-by: coderabbit-routine -->` line, so a summon without it came from a session or by hand. Its off switch is pausing the routine.
 
 ## 2. When to summon by hand
@@ -70,7 +72,8 @@ Replies go in-thread, to satisfy `required_review_thread_resolution`. `cr-reply.
 ## 6. Thread resolution
 
 - A fixed thread needs no re-review. CodeRabbit reads the in-thread "Fixed in <sha>" reply, checks the fix and resolves the thread itself (prismalens PR #160). So push the fixes, reply in every thread, and a few minutes later re-read `isResolved`: act on whatever is still open (CodeRabbit's follow-up in that thread says why). Never summon a review to get threads resolved.
-- Bare top-level `@coderabbitai resolve` blanket-resolves every thread with zero validation. The operator's call only, for rounds made entirely of declined or deferred findings whose dispositions are already recorded.
-- A PR merges only with every review thread resolved by the reviewer that opened it. The session never resolves a CodeRabbit thread to clear a merge.
+- Verified but open: CodeRabbit sometimes confirms a fix in-thread and leaves the thread open. Before escalating, re-read every unresolved thread and its latest CodeRabbit reply on the current head. Hand the operator the threads whose latest reply confirms the fix, quoting it, apart from the ones still disputed or unanswered.
+- Bare top-level `@coderabbitai resolve` blanket-resolves every thread with zero validation. The operator's call only, for rounds where every thread it would close is confirmed fixed in-thread or carries a recorded decline or deferral; one confirmed fix never justifies closing the rest. It is a command, not a review request: post it alone, `gh pr comment <pr> --body '@coderabbitai resolve'`, which `summon-gate.sh` passes without `CR_SUMMON_OK`. A review request in the same command is still gated.
+- A PR merges only with every review thread resolved by the reviewer that opened it. The session never resolves a CodeRabbit thread, through GraphQL `resolveReviewThread` or otherwise.
 - Declining or deferring: CodeRabbit self-resolves only when code changed, so a declined or deferred finding goes to the operator, who resolves it under three rules. State the disposition (accepted-and-deferred with landing target, or rejected with reasons; "noted" is not a disposition). Wait about 60 seconds for the counter-reply so follow-up issue offers are not dropped. Reference tracking issues by number.
 - Never reply and resolve in one step.

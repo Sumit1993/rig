@@ -52,6 +52,8 @@ Check Codex's usage before planning around a judgment: `codex-quota.py check` pr
 
 The Codex holder runs fresh, read-only, with saved CLI authentication and native web search. Plugins and apps are off; every configured MCP server is discovered and disabled, and a second inventory must show all of them disabled, or the launch is refused. The Claude holder gets only Read, Grep, Glob, WebSearch and WebFetch, with `--strict-mcp-config`. Filesystem sandboxing is not an external-service boundary: write-capable integrations stay out of this seat. Builds that need writes are separate verification work, or are reported unverified.
 
+Rig's generated `~/.codex/AGENTS.md` reaches every Codex run, this seat's included: neither `--ignore-user-config` nor `-c project_doc_max_bytes=0` keeps it out. That is known behaviour, not a defect the launcher fixes.
+
 The launcher enforces its deadline and kills only its own process group; SIGINT or SIGTERM cleans up the group and records failure. It never retries, switches model or holder on its own, or writes a judgment itself. These outcomes are failures, never a clean verdict:
 
 - the frozen target or packet changed during the run;
