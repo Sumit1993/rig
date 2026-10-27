@@ -97,7 +97,7 @@ How to read a verify round:
 
 The reviewer resolves what it verifies as fixed. A human rules on anything disputed, declined or deferred.
 
-A `fixed` verdict resolves the thread citing the commit. Anything disputed, declined or deferred is resolved by a human, via GraphQL `resolveReviewThread` or the UI, after the disposition is posted in-thread.
+A `fixed` verdict resolves the thread citing the commit. Anything disputed, declined or deferred is resolved by a human in the UI (`no-thread-resolve` blocks the GraphQL mutation), after the disposition is posted in-thread.
 
 ## 7. Before a merge
 
