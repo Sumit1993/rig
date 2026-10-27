@@ -11,16 +11,33 @@ jobs:
       - run: bash plugins/rig/scripts/lint-skill-docs.sh
 
   hooks:
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
     steps:
       - uses: actions/checkout@v7
+      # Native Windows runs every hook under Git Bash, where jq.exe writes CRLF (#199).
+      - if: runner.os == 'Windows'
+        run: |
+          mkdir -p "$HOME/bin"
+          printf '#!/bin/sh\nexec "%s" -b "$@"\n' "$(command -v jq)" > "$HOME/bin/jq"
+          echo "$(cygpath -w "$HOME/bin")" >> "$GITHUB_PATH"
       # The hook suites gate code Claude Code runs on every tool call, so a break here
       # is a break in every session. replay-transcripts.sh finds no transcripts on a
       # runner and exits clean; it is the local pass that has real payloads to replay.
       - run: bash plugins/rig/hooks/tests/run-all.sh
 
   skill-scripts:
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v7

@@ -79,7 +79,7 @@ check "built merge-gate passes MERGE_OK naming the PR" '[ "$(run_built merge-gat
 
 if command -v agy >/dev/null 2>&1; then
   out=$(HOME="$T/home" timeout 30 agy plugin validate "$T/agy" 2>&1)
-  check "agy plugin validate passes" 'grep -q "\[ok\]" <<<"$out" && ! grep -qi "error" <<<"$out"'
+  check "agy plugin validate passes" 'grep -qE "\[ok\]|Validation passed" <<<"$out" && ! grep -qi "error" <<<"$out"'
 else
   echo "SKIP: agy not installed, plugin validate not run"
 fi

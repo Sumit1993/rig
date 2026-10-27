@@ -19,16 +19,36 @@ class HandoffTests(unittest.TestCase):
         self.packet = self.root / "proposal.md"
         self.packet.write_text("Observe only; do not submit.\n")
         self.directory = self.root / "request"
+        # Every test but the native ones runs as WSL, whatever OS hosts the suite.
+        self.addCleanup(patch.stopall)
+        patch.object(handoff, "WINDOWS", False).start()
+        patch.object(handoff.shutil, "which", return_value="/usr/bin/wslpath").start()
 
     def test_native_workspace_required(self):
         with self.assertRaisesRegex(ValueError, "mounted Windows"):
             handoff.prepare(self.packet, self.directory)
 
+    def test_native_windows_takes_the_folder_as_is(self):
+        with patch.object(handoff, "WINDOWS", True), patch.object(handoff.shutil, "which", return_value=None), \
+             patch.object(Path, "resolve", lambda p, **kw: p), \
+             patch.object(handoff.subprocess, "check_output") as wslpath, \
+             patch.object(Path, "mkdir"), patch.object(Path, "write_bytes"), patch.object(Path, "write_text"):
+            status = handoff.prepare(self.packet, Path("C:/lane/tasks/x"))
+        wslpath.assert_not_called()
+        self.assertEqual(status["windows_workspace"], "C:\\lane\\tasks\\x")
+
+    def test_native_ask_back_runs_locally_in_powershell(self):
+        with patch.object(handoff, "WINDOWS", True):
+            cmd = handoff.ask_back(Path("C:/my lane/x"), session="sid-1", cwd="E:\\it's repo")
+        self.assertNotIn("wsl.exe", cmd)
+        self.assertIn("Set-Location -LiteralPath 'E:\\it''s repo';", cmd)
+        self.assertIn("-LiteralPath 'C:\\my lane\\x\\question.md' | ", cmd)
+        self.assertIn("claude -p --resume 'sid-1' --fork-session --tools= --strict-mcp-config", cmd)
+
     def test_prepares_only_and_never_overwrites(self):
         with patch.object(handoff.subprocess, "check_output", return_value="C:\\Tests\\request\n"):
             with patch.object(Path, "resolve", lambda p, **kw: p):
-                original = self.directory
-                self.directory = Path("/mnt") / original.relative_to("/")
+                self.directory = Path("/mnt/c/Tests/request")
                 packet = b"# Settings dialog review\r\nObserve only; do not submit.\r\n"
                 self.packet.write_bytes(packet)
                 with patch.object(Path, "mkdir"), patch.object(Path, "write_bytes") as copy, \
