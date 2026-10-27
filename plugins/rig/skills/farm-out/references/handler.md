@@ -39,7 +39,7 @@ A background Claude subagent's `output_file` can be 0 bytes while it ran fine. I
 - Every live run: `pgrep -x agy`, then `readlink /proc/<pid>/cwd` for its worktree. On native Windows, Git Bash's `ps` lists agy under its msys PID, and `/proc/<pid>/cwd` and `/proc/<pid>/cmdline` read for it. Never `taskkill` a pid from `tasklist` or Task Manager: two lanes are two identical `agy.exe` rows, and the WINPID tells you nothing about which worktree.
 - Never derive the pattern from the prompt-file name. The launch expands `$(cat <file>)`, so agy's argv holds the prompt text. The file name matches only the wrappers, and killing on it leaves agy running.
 - agy processes are machine-global. `pkill -x agy`, `pkill -f agy`, `killall agy` and `pgrep -f "agy [-]-model"` are never acceptable, not even when every live run is yours. The `pre:bash:no-broad-agy-kill` hook blocks them; if it fires, you wanted a PID.
-- Prove a PID is yours or kill nothing. Yours means `readlink /proc/<pid>/cwd` matches your worktree, or a `$!` you captured. "Cannot identify my run, not killing" is a correct outcome: a hung run of yours costs a timeout, the wrong kill costs someone else's unattended work.
+- Prove a PID is yours or kill nothing. Yours means `readlink /proc/<pid>/cwd` matches your worktree, a `$!` you captured, or the sidecar's `agy_pid` that `kill-agy.sh` checks against the run's activity log. "Cannot identify my run, not killing" is a correct outcome: a hung run of yours costs a timeout, the wrong kill costs someone else's unattended work.
 - A runtime slug also prevents the exit-144 self-kill: it did not exist when your ancestor shells started, so it cannot match their command lines. Bracketing helps but is not sufficient; see `no-doze`.
 
 ## Handler babysit loop
