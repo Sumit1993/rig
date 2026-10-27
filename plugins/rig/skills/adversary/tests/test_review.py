@@ -394,7 +394,7 @@ emit({'type':'result','subtype':'success','is_error':False,'structured_output':o
         expected.pop("$schema")
         self.assertNotIn("$schema", schema)  # Claude Code rejects it (#194)
         self.assertEqual(schema, expected)
-        self.assertEqual(Path(call["cwd"]), self.out / "evidence")
+        self.assertEqual(Path(call["cwd"]).resolve(), (self.out / "evidence").resolve())
         meta = json.loads((self.out / "metadata.json").read_text())
         self.assertEqual((meta["holder"], meta["model"], meta["effort"]), ("claude", "opus", "high"))
         self.assertEqual(meta["resolved_model"], ["claude-opus-5-5"])
@@ -405,7 +405,7 @@ emit({'type':'result','subtype':'success','is_error':False,'structured_output':o
 
     def test_claude_holder_repo_mode_runs_in_worktree(self):
         self.assertEqual(self.run_holder("claude", worktree=self.worktree), 0)
-        self.assertEqual(Path(json.loads(self.claude_argv.read_text())["cwd"]), self.worktree)
+        self.assertEqual(Path(json.loads(self.claude_argv.read_text())["cwd"]).resolve(), self.worktree.resolve())
 
     def test_claude_holder_zero_tools_and_bad_envelope_fail(self):
         os.environ["REVIEW_MODE"] = "no_tools"
