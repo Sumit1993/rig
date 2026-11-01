@@ -5,6 +5,7 @@ How Claude Code does what `AGENTS.md` names.
 - Effort: on Opus 5.5, Sonnet 5.5 and Fable 5.1, `/effort` keeps the prompt cache. Raise it for one hard step and lower it after.
 - Ask the operator: AskUserQuestion.
 - Wait in the background: Bash `run_in_background`, Monitor; `no-doze` holds the rules.
+- Wake-up: `wake.sh arm <name> <min> <plan> --session <id>` (rig `scripts/`) for a run that must outlive the session or a standby (`autopilot` §0); `CronCreate` only for ticks while this session stays open.
 - Worktrees live under `.claude/worktrees/`: `EnterWorktree` for this session, `isolation: "worktree"` for a subagent, `lane-worktree.sh add <repo> .claude/worktrees/agy-<task> <branch>` (farm-out) for an agy lane, which copies the `.worktreeinclude` files. A repo whose lanes build needs one.
 - Planner seat: Agent `planner` (Opus 5.5, `high`); `fable-planner` only when the operator allows Fable. Reuse it with SendMessage inside the prompt-cache hour.
 - Adversary seat: the launcher in the `adversary` skill, run with Bash.

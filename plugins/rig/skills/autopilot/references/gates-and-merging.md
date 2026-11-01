@@ -40,3 +40,9 @@ The PR that repairs a gate is the worst candidate in the repo for skipping revie
 - An honest gap beats an invented claim. Say where the evidence for a parked item is incomplete.
 - Every parked item goes in the plan file's decision list as a specific question with options, never "needs review".
 
+## 4. A green job proves nothing. Only a posted artifact does
+
+A workflow can report `success` having posted nothing, and does.
+
+- Read the job that produces the artifact, not the wrapper check. A green review step means the lane ran; only the thing it was supposed to post counts.
+- A green gate whose description names a retired producer is a leftover, not a pass. It flips red the moment anything re-evaluates it, and a status-only read cannot see that coming.

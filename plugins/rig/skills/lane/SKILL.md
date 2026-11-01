@@ -1,6 +1,6 @@
 ---
 name: lane
-description: "Scripts that fold several agy tool calls into one: run a check to completion with a short result, commit with SHA and stat. Load when working a delegated work order headless (agy -p)."
+description: "Load when working a delegated work order headless as an agy lane (agy -p)."
 metadata:
   version: "0.1.0"
 ---

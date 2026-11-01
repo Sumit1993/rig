@@ -28,5 +28,32 @@ check "under a minute" 45 "0m45s"
 check "zero" 0 "0m0s"
 check "over an hour still m/s (watchdog kills well under an hour)" 3661 "61m1s"
 
+# Live runs against a fake agy: a run hung after its work is reaped before its timeout, and one
+# with a live child is left alone. Uses pgrep, or the Windows PID on Git Bash (#208).
+L=$(mktemp -d); trap 'rm -f "$fn"; rm -rf "$L"' EXIT
+mkdir -p "$L/bin" "$L/wt"
+cat > "$L/bin/agy" <<'FAKE'
+#!/bin/bash
+[ "${1:-}" = --version ] && { echo "agy fake"; exit 0; }
+while [ $# -gt 0 ]; do [ "$1" = --log-file ] && log=$2; shift; done
+echo started >> "$log"
+# The child refreshes the log as it exits, so the run is never stale with no child.
+if [ "$FAKE_MODE" = child ]; then (sleep 8; echo done >> "$log") & wait; else exec sleep 60; fi
+FAKE
+chmod +x "$L/bin/agy"
+git -C "$L/wt" init -q && git -C "$L/wt" -c user.email=t@t -c user.name=t commit -q --allow-empty -m base
+echo "work order" > "$L/spec.md"
+live() { # mode
+  local start; start=$(date +%s)
+  FAKE_MODE=$1 PATH="$L/bin:$PATH" RIG_WATCHDOG_POLL=1 RIG_WATCHDOG_STALE=2 bash "$SRC" "$L/wt" "$L/spec.md" "$L/$1.json" 0 600 2>/dev/null
+  echo $(( $(date +%s) - start ))
+}
+secs=$(live quiet)
+if grep -q "killed hung agy" "$L/quiet.activity.log" && [ "$secs" -lt 30 ]; then echo "PASS: a hung run with no child is reaped before its timeout (${secs}s)"
+else echo "FAIL: hung run not reaped (${secs}s): $(tail -2 "$L/quiet.activity.log")"; fails=$((fails + 1)); fi
+live child >/dev/null
+if ! grep -q "killed hung agy" "$L/child.activity.log" && grep -q "AGY_EXITED rc=0" "$L/child.activity.log"; then echo "PASS: a run with a live child is not reaped"
+else echo "FAIL: a run with a live child was reaped: $(tail -2 "$L/child.activity.log")"; fails=$((fails + 1)); fi
+
 [ "$fails" -eq 0 ] && { echo; echo "all agy-watchdog staleness tests passed"; exit 0; }
 echo "$fails failure(s)"; exit 1

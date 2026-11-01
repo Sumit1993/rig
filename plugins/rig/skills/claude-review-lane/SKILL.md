@@ -1,6 +1,6 @@
 ---
 name: claude-review-lane
-description: "How the claude[bot] review lane behaves on any PR. Load when a claude[bot] thread, a claude-review-liveness comment, an @claude review summon, a verify round, or a PR that got no Claude review is in front of you; also before merging a PR the lane reviewed."
+description: "Load when a claude[bot] thread, a claude-review-liveness comment, an @claude review summon, a verify round, or a PR that got no Claude review is in front of you, and before merging a PR that lane reviewed."
 metadata:
   version: "4.0.0"
 ---

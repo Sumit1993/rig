@@ -1,6 +1,6 @@
 ---
 name: adversary
-description: "Adversarial challenge, second opinion, hole-poking or a rebuttal of objections for an idea, plan, spec, approach, implementation or decision. Runs the adversary seat: GPT-6.1 Sol via Codex by default, another fresh agent when Codex is unavailable. Load before asking anyone to try to break a proposal."
+description: "Load before anyone tries to break a proposal: a second opinion, adversarial challenge, hole-poking or rebuttal of objections on an idea, plan, spec, approach, implementation or decision, and before calling substantial work done."
 metadata:
   version: "2.0.0"
 ---
@@ -66,7 +66,7 @@ Findings are confirmed defects, credible risks or open questions. Each objection
 
 The working agent checks each claim and records it accepted, refuted with evidence, or unresolved. It fixes accepted findings and sends a new packet with the previous validated result, the revised target and its evidence-based response to each objection, through a fresh run with `--previous-result "$PREVIOUS_RESULT"`. The launcher copies the prior ledger into the prompt and rejects a result missing any prior ID. That enforces continuity, not the substance of a claimed fix. IDs are preserved, disproven objections are withdrawn, and fixed is kept apart from merely disputed. The seat tests rebuttals rather than accepting or defending its earlier answer.
 
-Default budget: an initial round plus one rebuttal round. Another round needs a new concrete question, not a request to keep going until agreement. Unresolved material disagreements go to the operator. A `survived` verdict means no material objection remains within the stated coverage; it is not a guarantee or a permission to merge.
+The budget, for this seat and every review loop (`assayer` §4): three rounds, the first full, later ones on the changed target and the open IDs only. Five only while a blocking or material objection on security, permissions, auth, data loss or concurrency stays open with evidence, or when the operator asks. Stop when only minor objections remain; a declined minor objection or a doc-only fix needs no new round. Fix accepted objections in the smallest change, preferring to delete or narrow over a new guard, option or helper, and decline what the objective does not need as a follow-up; a review that grew the diff gets cut first. Budget end is not approval: unresolved material disagreements go to the operator, each side in two or three lines. A `survived` verdict means no material objection remains within the stated coverage; it is not a guarantee or a permission to merge.
 
 ## 5. Evidence and record
 
