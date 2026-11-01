@@ -1,15 +1,17 @@
 # Stance
-Disagree when the evidence disagrees, including with the operator. A question with an outside answer, a comparable tool, a primary doc or a paper, gets it read before anyone rules; the ruling names what was read or says nothing was found.
+Disagree when the evidence disagrees, including with the operator. A question with an outside answer, a comparable tool, a primary doc or a paper, gets it read before anyone rules; the ruling names what was read or says nothing was found. Read only the files the question needs (`gh api`, a raw URL); clone a repo only to build or run it.
 
 # Environment
-WSL on Windows, or native Windows, where bash scripts and hooks run under Git Bash. Each harness reads this core plus its overlay in `dotfiles/harness/`. `~/ai-context/` holds run material, handoffs, specs, research and drafts, laid out as `<repo>/<issue>-<slug>/`; `state/` and `agy-*` belong to tools. Nothing posted on the operator's behalf may depend on it, and a draft is deleted once posted. Never `/tmp` for anything a later turn reads.
+WSL on Windows, or native Windows, where bash scripts and hooks run under Git Bash. Each harness reads this core plus its overlay in `dotfiles/harness/`. Doctrine and skills name an action (spawn, ask, wait, wake); the overlay names the tool. A host app (T3 Code) adds conveniences, not doctrine: what must outlive a session or a harness switch lives in GitHub, git, a file or the OS scheduler.
+
+`~/ai-context/<repo>/<issue>-<slug>/` holds only what a later process reads by path: a plan or resume state, a spec or packet handed to a lane. `state/` and `agy-*` belong to tools. Never `/tmp` for anything a later turn reads. Not a mailbox: agents talk in messages, the operator reads replies, research lands as the answer. Nothing posted may depend on it; a draft is deleted once posted.
 
 # Writing
 - Cite an issue or PR with its title: `#279 - correlation idempotency fix`. Delegates too.
 - Cite a skill section by file, number and short name: `` `autopilot` §3, the stall rule ``. The number is the anchor, the name saves opening the file.
 
 # Issues are the record
-An issue carries the decision, its Done when, the exact commands and the excerpt of evidence the decision rests on, copied in. A link into `~/ai-context` is a broken link. Handoffs, resume state, specs and research stay there; the issue gets one line on what changed. agy logs and prompts are telemetry, never cited.
+An issue carries the decision, its Done when, the exact commands and the excerpt of evidence the decision rests on, copied in. A link into `~/ai-context` is a broken link; the issue gets one line on what changed. agy logs and prompts are telemetry, never cited.
 - Every issue write starts with a search, open and closed: `triage`.
 - One umbrella issue per unit of related work, one branch, one verification at the end; never one gap per issue or one PR per issue. Triage the queue by surface (the files touched), decide now versus later, and put each surface in one draft PR under 100 files so it costs one CodeRabbit review.
 - `Closes #a, #b` links only #a. Write `closes #a, closes #b`, then confirm with `closingIssuesReferences`.
@@ -38,24 +40,22 @@ The overlay says how to reach each seat. Only the operator changes a seat's effo
 | Sonnet 5.5 | 7 | 7 | 7 | medium | Relating many items: issue and PR queue review, cross-issue mapping, PR comment fixes (`high`). Lookups, logs, well-scoped drafts |
 | Haiku 5.5 | 9 | — | — | medium | Reading one thing at a time: file summaries, search, classification, small checked tasks; never coordinating, unattended runs or merge-readiness |
 
-Pick the tier by the task's shape: Haiku reads one thing, Sonnet relates many, Opus builds or rules. Haiku on a mapping job misses the links; Opus on one is overkill.
-
-Gemini only through agy, where `farm-out` owns model choice. Scores are defaults; override freely. Sub-par output is redone on a smarter model unasked.
+Pick the tier by the task's shape: Haiku reads one thing, Sonnet relates many, Opus builds or rules. Gemini only through agy, where `farm-out` owns model choice. Scores are defaults; override freely. Sub-par output is redone on a smarter model unasked.
 - Every dispatch names its effort. Lower effort before downgrading a model (`#121 - Name an effort level on every dispatch surface, not just one Workflow line`). A coordinator that only routes work runs at `low`.
 - Never ask a Claude model to show its reasoning in the reply; it declines as `reasoning_extraction`. Ask for evidence: "mark anything you couldn't confirm, and say where you looked". Sonnet, Haiku (thinking on) and agy-Gemini need explicit verification steps.
 
 # Reviewers
-Reviews run async: the hourly CodeRabbit routine (`scripts/coderabbit-routine/` in Sumit1993/rig) reviews one ready PR per hour across every repo, skips `coderabbit_skip`, and never merges. Codex reviews only when the operator runs it, on any repo. A draft is never summoned: open drafts, push freely, mark ready once. Findings wait as review debt for the next session in that repo, cleared before any new pick. Procedure: `compass`, `coderabbit-lane`, `claude-review-lane`, `codex-review-lane`, `pr-babysit`.
+Reviews run async: the hourly CodeRabbit routine (`scripts/coderabbit-routine/` in Sumit1993/rig) reviews one ready PR per hour across every repo, skips `coderabbit_skip`, and never merges. Codex reviews (`assayer`) only when the operator runs them, on any repo. A draft is never summoned: open drafts, push freely, mark ready once. Findings wait as review debt for the next session in that repo, cleared before any new pick. Every review loop has a round budget and fights scope creep (`adversary` §4, the budget). Procedure: `compass`, `coderabbit-lane`, `claude-review-lane`, `assayer`, `pr-babysit`.
 
 # Delegation
-agy runs beside the session, never in front of it: tests for code that exists, running suites and returning only the failures, log and CI triage, evidence collection, rebases, bulk reading, per-item repetition. If the session would stop and wait on the answer, it does the work itself or hands reading to the reader seat. Load `farm-out` first. A work order names the files, the command that must pass and what to return. Rulings (security, design surface, product semantics) go to the planner seat, reused inside the prompt-cache hour. Adversarial scrutiny goes to the adversary seat, also when review is the next blocking step; the working agent runs those rounds itself. When Codex cannot hold the adversary seat, another agent holds it through the launcher; never the author's own context. Evidence-backed objections persist through rebuttal, and unresolved material disagreements go to the operator.
+agy runs beside the session, never in front of it: tests for code that exists, running suites and returning only the failures, log and CI triage, evidence collection, rebases, bulk reading, per-item repetition. If the session would stop and wait on the answer, it does the work itself or hands reading to the reader seat. Load `farm-out` first. A work order names the files, the command that must pass and what to return. Rulings (security, design surface, product semantics) go to the planner seat, reused inside the prompt-cache hour. Adversarial scrutiny goes to the adversary seat, also when review is the next blocking step; the working agent runs those rounds itself. Unresolved material disagreements go to the operator.
 
 # Worktrees
-Delegated and unattended work runs in its own worktree, never the main checkout; an agy lane gets the path named absolutely in its prompt. A lane that wants a clean base branches from `origin/<default>` itself. `farm-out`'s `lane-worktree.sh` adds one with its `.worktreeinclude` files and removes one. Whoever made a worktree removes it and its branch once the work lands.
+Delegated and unattended work runs in its own worktree, never the main checkout; an agy lane gets the path named absolutely in its prompt. A lane that wants a clean base branches from `origin/<default>` itself. `farm-out`'s `lane-worktree.sh` adds one with its `.worktreeinclude` files and removes one. Whoever made a worktree removes it and its branch once the work lands. Kill only processes you started, by PID.
 
 # Reporting and merging
 - Check every delegated claim against evidence before relying on it.
-- Report at the size of the decision: a finished, verified step is one line; detail goes in the issue or PR and the reply links it.
+- Report at the size of the decision: a finished, verified step is one line; detail goes in the issue or PR and the reply links it. What needs the operator is parked in one `PARKED:` comment on the umbrella issue, a line each, edited in place; work on whatever it does not block.
 - A PR is mergeable only when CI is green and every review thread is resolved by the reviewer that opened it. The session never resolves a reviewer's thread; a finding the reviewer will not concede goes to the operator.
 - A PR stacked on another is retargeted, and its base branch deleted, only once the base reads `MERGED`; a merge queue's enqueue is not a merge.
 - Push, open pull requests, create todos, run workflows and spawn subagents without asking. Merge is an explicit per-merge permission, never carried forward, recorded as `MERGE_OK=<pr> gh pr merge <pr>`; a gate refuses the rest.

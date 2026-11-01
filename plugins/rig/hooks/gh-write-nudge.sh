@@ -1,6 +1,6 @@
 #!/bin/bash
 # PreToolUse(Bash) hook: nudges at the moment of a gh write, once per session per kind.
-# handoff: a body shaped like a handoff, or over 40 lines, belongs in ~/ai-context and the
+# handoff: a body shaped like a handoff, or over 40 lines, is not the record; the
 # issue gets the delta. cite: a bare #N with no title. nondraft: gh pr create without --draft.
 # Refs #123. Rung: hook. Skipped: check (the body exists only at call time), rule (in AGENTS.md, ignored).
 set -u
@@ -49,7 +49,7 @@ msgs=()
 lines=$(printf '%s' "$body_text" | grep -c '' || true)
 if grep -qiE '^#+ *(handoff|resume|handback|state at|lane table|work queue)|decisions? owed|resume handoff|lane (spec|table)' <<<"$body_text" \
    || [ "$lines" -gt 40 ]; then
-  once handoff && msgs+=("This body reads as a handoff, or runs $lines lines. AGENTS.md §Issues are the record: the issue gets the decision, its Done when and one line on what changed; handoffs, state tables and lane specs go to ~/ai-context/<repo>/<issue>-<slug>/handoff.md. Post if this is the decision.")
+  once handoff && msgs+=("This body reads as a handoff, or runs $lines lines. AGENTS.md §Issues are the record: the issue gets the decision, its Done when and one line on what changed; a handoff, state table or lane spec belongs in the reply, or in ~/ai-context only when a later process reads it by path. Post if this is the decision.")
 fi
 if [ -n "$body_text" ] && printf '%s' "$body_text" | grep -qP '(?<![&\w])#\d+\b(?! - )'; then
   once cite && msgs+=("A bare #N in this body. AGENTS.md §Writing: cite an issue or PR with its title, \`#N - title\`, so the reader does not have to open it.")

@@ -11,14 +11,13 @@ Plugin `rig`, path-independent via `${CLAUDE_PLUGIN_ROOT}`:
 | `skills/triage` | Before any issue write: search open and closed, fold or file, Goal / Done when / Pointers, link and close right |
 | `skills/compass` | Where the estate stands and what is next: goals are numbered milestones, `p0` orders inside one, the pick is one command |
 | `skills/no-doze` | Wait on long work without dozing: sentinel first, evidence-keyed loops, batch scripts over agent-per-step |
-| `skills/autopilot` | Hold a long unattended run: cron wake-up first, session and lanes in their own worktrees, stall rule, green is not evidence, park what needs a human |
+| `skills/autopilot` | Hold a long unattended run: OS wake-up first (`scripts/wake.sh`, any harness), session and lanes in their own worktrees, stall rule, green is not evidence, park what needs a human |
 | `skills/pr-babysit` | Watch a PR this session raised: merge contract, seed and arm the reviewer/CI Monitor, route events as pointers, merge or enqueue |
 | `skills/claude-review-lane` | How `claude[bot]` behaves: liveness verdicts, the ways it stays quiet, summon grammar, verify rounds, who resolves a thread |
 | `skills/coderabbit-lane` | How `coderabbitai[bot]` behaves: per-developer counter, hand admission by label, bare triggers, in-thread replies |
-| `skills/codex-review-lane` | How a Codex round through the assayer runner behaves: template contract, coverage count, runner limits, variance, findings as review debt |
+| `skills/assayer` | Review rounds through the assayer runner (Codex by default, OpenCode free): admission, template contract, coverage count, runner limits, round budget, findings as review debt |
 | `skills/farm-out` | Antigravity CLI delegation: preflight probe, launch line, model choice, failure table, kill by PID (`kill-agy.sh`), lane worktrees (`lane-worktree.sh`), the runner's babysit loop |
 | `skills/adversary` | The adversary seat challenges ideas, plans, specs, approaches, implementations and decisions; Sol via Codex by default, a fresh Opus when Codex is unavailable; evidence-backed objections survive rebuttal rounds |
-| `skills/codex-judge` | Alias for one release: points to `adversary` |
 | `skills/codex-desktop` | WSL hands scoped desktop work to the Windows Codex app in threads it starts with no click; Computer Use evidence returns to the judge |
 | `agents/codex-runner` | Optional Haiku handler that runs one adversary-seat judgment so an organizer keeps the wait off its own context |
 | `skills/docs-drift` | Four-phase docs-drift playbook plus the illustration standard |
@@ -187,7 +186,7 @@ python3 "$SKILL_DIR/run-review.py" --packet "$PACKET" --run-dir "$RUN_DIR" \
 
 `status.json` reports completed, incomplete or failed. Only schema-valid, internally consistent responses for an unchanged target become `result.json`. A run with zero tool calls, a Codex error event such as a refusal, a quota error, a timeout, malformed output, a material coverage gap or a `survived` verdict without sources never counts as clean. Every `sources` entry naming a path or URL is matched against the run's tool calls; unmatched entries are listed, and they downgrade a `survived` verdict to `incomplete`. The launcher kills only its own process group on timeout or cancellation.
 
-Keep stable objection IDs and pass the prior result with `--previous-result "$PREVIOUS_RESULT"` on a fresh rebuttal run. Missing prior IDs fail validation; the working agent still verifies the substance of fixed/withdrawn claims. The default budget is an initial round and one rebuttal; a further round needs a new concrete question. Copy deciding evidence into the issue/PR or private planning record, never cite telemetry paths.
+Keep stable objection IDs and pass the prior result with `--previous-result "$PREVIOUS_RESULT"` on a fresh rebuttal run. Missing prior IDs fail validation; the working agent still verifies the substance of fixed/withdrawn claims. The budget is three rounds, five only while a security, auth, data-loss or concurrency objection stays open (`adversary` §4). Copy deciding evidence into the issue/PR or private planning record, never cite telemetry paths.
 
 Verify the launcher without model usage:
 

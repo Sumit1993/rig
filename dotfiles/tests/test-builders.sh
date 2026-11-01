@@ -56,8 +56,8 @@ check "codex without cr-reply.sh fails closure" 'grep -q "uses scripts/cr-reply.
 variant '.targets.codex.runtime -= ["hooks/lib/json.sh"]'
 out=$(RIG_MANIFEST="$T/m.json" bash "$D/build-codex-plugin.sh" "$T/y" codex 2>&1 >/dev/null)
 check "codex without json.sh fails closure" 'grep -q "uses hooks/lib/json.sh" <<<"$out"'
-variant '.targets.codex.allow_refs = {}'
-out=$(RIG_MANIFEST="$T/m.json" bash "$D/build-codex-plugin.sh" "$T/y" codex 2>&1 >/dev/null)
+variant '.targets["claude-windows"].allow_refs = {}'
+out=$(RIG_MANIFEST="$T/m.json" bash "$D/build-claude-plugin.sh" "$T/y" claude-windows 2>&1 >/dev/null)
 check "an allow_refs entry is what lets no-doze point at autopilot" 'grep -q "no-doze.*names skill autopilot" <<<"$out"'
 
 # --- shipped hooks run from the built Codex plugin, Codex payload shape
