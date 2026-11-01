@@ -37,7 +37,8 @@ cat > "$L/bin/agy" <<'FAKE'
 [ "${1:-}" = --version ] && { echo "agy fake"; exit 0; }
 while [ $# -gt 0 ]; do [ "$1" = --log-file ] && log=$2; shift; done
 echo started >> "$log"
-if [ "$FAKE_MODE" = child ]; then sleep 12 & wait; else exec sleep 60; fi
+# The child refreshes the log as it exits, so the run is never stale with no child.
+if [ "$FAKE_MODE" = child ]; then (sleep 8; echo done >> "$log") & wait; else exec sleep 60; fi
 FAKE
 chmod +x "$L/bin/agy"
 git -C "$L/wt" init -q && git -C "$L/wt" -c user.email=t@t -c user.name=t commit -q --allow-empty -m base

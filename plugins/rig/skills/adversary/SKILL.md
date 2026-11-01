@@ -1,6 +1,6 @@
 ---
 name: adversary
-description: "Adversarial challenge, second opinion, hole-poking or a rebuttal of objections for an idea, plan, spec, approach, implementation or decision. Runs the adversary seat: GPT-6.1 Sol via Codex by default, another fresh agent when Codex is unavailable. Load before asking anyone to try to break a proposal."
+description: "Load before anyone tries to break a proposal: a second opinion, adversarial challenge, hole-poking or rebuttal of objections on an idea, plan, spec, approach, implementation or decision, and before calling substantial work done."
 metadata:
   version: "2.0.0"
 ---

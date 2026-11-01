@@ -1,6 +1,6 @@
 ---
 name: tweet
-description: Draft a tweet for @Desolatte about something cool from the current work session. Use when the user says "/tweet", "tweet this", "this is tweetable", or asks to share a finding/idea on X/Twitter.
+description: "Load when the user says \"/tweet\", \"tweet this\", \"this is tweetable\", or asks to share a finding or idea from the session on X/Twitter."
 metadata:
   version: "1.0.0"
 ---

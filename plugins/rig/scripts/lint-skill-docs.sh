@@ -15,8 +15,25 @@ for f in "$root"/plugins/*/skills/*/SKILL.md "$root"/dotfiles/AGENTS.md; do
   [ -n "$found" ] && hits="${hits}${found}"$'\n'
 done
 
+# Shape: the always-loaded description says when to load, the body stays small and detail
+# nests in references/ (#157 - rig loads less and says it once). Vendored skills keep upstream's body.
+for f in "$root"/plugins/*/skills/*/SKILL.md; do
+  d=$(sed -n 's/^description: *"\{0,1\}//p' "$f" | head -1)
+  case "$d" in Load*|Use*) ;; *) hits="${hits}$f: description must open with when to load it (Load when/before, Use when)"$'\n' ;; esac
+  [ "${#d}" -le 250 ] || hits="${hits}$f: description is ${#d} chars; 250 at most"$'\n'
+  if ! grep -q '^  upstream:' "$f"; then
+    w=$(awk 'n>=2 {print} /^---$/ {n++}' "$f" | wc -w)
+    [ "$w" -le 1500 ] || hits="${hits}$f: body is $w words; move a sub-case to references/ (1500 at most)"$'\n'
+  fi
+  for r in "$(dirname "$f")"/references/*.md; do
+    [ -f "$r" ] || continue
+    grep -rqF "$(basename "$r")" "$(dirname "$f")" --include=*.md --exclude="$(basename "$r")" \
+      || hits="${hits}$r: no SKILL.md or reference points to it"$'\n'
+  done
+done
+
 if [ -n "${hits// /}" ] && [ "$hits" != $'\n' ]; then
-  echo "doc lint: narrative/date markers found — state the constraint, leave provenance to git history:"
+  echo "doc lint: state the constraint and leave provenance to git history; keep each skill small and its description a trigger:"
   printf '%s' "$hits"
   exit 1
 fi

@@ -1,6 +1,6 @@
 ---
 name: autopilot
-description: "Load before any run that outlasts the operator's attention: unattended, overnight, autonomous, \"keep going while I'm away\", a cron-driven loop, or several lanes at once. Arm the wake-up first, keep lanes in worktrees, catch stalls, verify every delegate claim, park what needs a human."
+description: "Load before any run that outlasts the operator's attention: unattended, overnight, autonomous, \"keep going while I'm away\", a scheduled or cron-driven loop, or several lanes at once."
 metadata:
   version: "5.0.0"
 ---
@@ -40,7 +40,7 @@ Respect the window. Never start a lane that cannot finish and be verified in the
 
 Every git write names its worktree with `git -C <absolute path>`, from the session too (`farm-out` §Dispatch).
 
-Every dispatch prompt names the absolute worktree path, the exact verify commands the lane runs itself, the report format (findings, evidence, SHAs, blockers, no prose), the stop conditions ("abort and report rather than improvise" on any conflict, frozen path, or gate still red after N minutes), what the lane may not do (merge, close, bypass, edit a frozen path), the stall rule (§3), the `farm-out` §Dispatch lines (`git -C`, teardown, a document returned as text), and the early-stop rule: status notes go in the same message as the next tool call, and it stops only when nothing can move without the operator.
+Every dispatch prompt carries the `farm-out` §Dispatch lines plus: the verify commands the lane runs itself, a report of findings, evidence, SHAs and blockers with no prose, "abort and report rather than improvise" on any conflict, frozen path or gate still red after N minutes, what it may not do (merge, close, bypass, edit a frozen path), and the stall rule (§3). Status notes go in the same message as the next tool call; it stops only when nothing can move without the operator.
 
 Never override a lane's brief with reasoning invented on the spot; cite what supersedes it. With no source the brief wins, and a lane that refuses an unsourced order is correct.
 
@@ -52,9 +52,9 @@ Verification runs once per umbrella against the build, not once per unit (§5, c
 
 A lane that returns saying "standing by", "waiting for" or "will be notified" has stalled. It is not waiting.
 
-A completion notification fires only when an agent has no live background children, so a background launch followed by handing control back can never be woken. A wait is real only inside the agent's own turn: a foreground `until` loop keyed on durable evidence, loop length as the deadline (`no-doze` §2, wait on evidence).
+A background launch followed by handing control back can never be woken; a wait is real only inside the agent's own turn, keyed on durable evidence with a deadline (`no-doze` §2, wait on evidence).
 
-Fix it at once and skip the acknowledgement. `SendMessage` the lane: "go read <the concrete artifact: log path, PR check, SHA> now. Then wait in the foreground with a deadline. Do not return until the evidence resolves or the deadline expires." Never accept two "waiting" reports in a row; read the artifact yourself. Put this rule in every dispatch prompt.
+Fix it at once, without acknowledgement. Message the lane: "go read <the concrete artifact: log path, PR check, SHA> now. Then wait in the foreground with a deadline. Do not return until the evidence resolves or the deadline expires." Never accept two "waiting" reports in a row; read the artifact yourself.
 
 Evidence readable only through an MCP call is watched by the wake-up tick, never a monitor (`no-doze` §2, wait on evidence).
 
@@ -62,10 +62,7 @@ The reverse failure is a watch that outlives its job. Anything armed to watch on
 
 ## 4. A green job proves nothing. Only a posted artifact does
 
-A workflow can report `success` having posted nothing, and does.
-
-- Read the job that produces the artifact, not the wrapper check. A green review step means the lane ran; only the thing it was supposed to post counts.
-- A green gate whose description names a retired producer is a leftover, not a pass. It flips red the moment anything re-evaluates it, and a status-only read cannot see that coming.
+A green check means a job ran, not that it posted its artifact; read `references/gates-and-merging.md` §4 before calling a gate passed.
 
 ## 5. Check every delegate claim against live state
 
@@ -79,12 +76,7 @@ Check a PR body's claims against its file list; a body that contradicts its diff
 
 ## 6. Ask the planner seat when the call is a judgement
 
-Architecture, security and crypto, product semantics, and any dilemma where two rules point opposite ways go to the planner seat with the decision, the constraints and the options, not the whole run. The seat is the `planner` agent, Opus 5.5 at effort high; `fable-planner` holds it only when the operator has allowed Fable. An organizer outside Claude Code reaches it with `claude -p --agent rig:planner --output-format json`.
-
-- Frame the consult around the subsystem, not the hole in front of you (§7, flip the setting).
-- Reuse the same planner inside the prompt-cache hour; past it, start a new one.
-- Its ruling binds that decision, and what it explicitly deferred stays deferred.
-- A ruling you disagree with is still the ruling. Record the disagreement in the plan file and park it (§10, park for sign-off).
+Architecture, security, product semantics and any dilemma where two rules point opposite ways go to the planner seat (`AGENTS.md` §Seats) with the decision, the constraints and the options, framed around the subsystem, not the hole in front of you (§7, flip the setting). Its ruling binds that decision and what it deferred stays deferred. A ruling you disagree with is still the ruling: record the disagreement in the plan file and park it (§10, park for sign-off).
 
 ## 7 to 10. Gates, merges, bypasses, sign-off
 
@@ -106,6 +98,6 @@ While the operator is away the plan file is the record; a tick reports one line 
 3. Confirm every lane is alive by listing agents; a lane saying "standing by" gets the §3 fix first.
 4. Check real state, not reports: default branch SHA, each PR's head SHA, each gate's description string.
 5. Dispatch only work whose prerequisites are final.
-6. Append findings and decisions to the plan file. One or two lines to the terminal.
+6. Append findings and decisions to the plan file; one line to the terminal.
 
 Hand back on a hard blocker or when the work is done, not on a timer. Disarm the wake-up and every other watch (§3, the stall rule), and leave the plan file's decision list first: each entry a question, its options, and what it blocks.

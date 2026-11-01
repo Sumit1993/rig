@@ -1,6 +1,6 @@
 ---
 name: no-doze
-description: "How to wait on long-running work without dozing: sentinel-first launches, evidence-keyed foreground waits, batch scripts over agent-per-step, killing a run safely. Load before launching anything that outlives one turn."
+description: "Load before launching anything that outlives one turn, when a wait, watcher or handler has gone quiet, or when a background run must be killed."
 metadata:
   version: "2.0.0"
 ---

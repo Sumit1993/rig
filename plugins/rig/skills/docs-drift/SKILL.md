@@ -1,6 +1,6 @@
 ---
 name: docs-drift
-description: "Audit and fix docs drift, then install prevention nets. Load before merging a release PR on a repo whose registry entry has a docs block, or when docs drift is suspected."
+description: "Load before merging a release PR on a repo whose registry entry has a docs block, when the release-docs gate blocks a merge, or when docs drift is suspected."
 metadata:
   version: "2.0.0"
 ---

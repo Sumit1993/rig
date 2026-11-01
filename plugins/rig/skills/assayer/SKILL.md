@@ -1,6 +1,6 @@
 ---
 name: assayer
-description: "Review rounds through the assayer runner: `assayer review`, Codex as the default engine and OpenCode's free models as the cheap one, its coverage-count summary, runner limits, the round budget, run-to-run variance, and how its findings count as review debt. Load when an assayer-finding thread, an assayer or Codex review round, a round that stopped early, or a choice of whether to run another round is in front of you."
+description: "Load when an assayer-finding thread, an `assayer review` or Codex review round, a round that stopped early, or the choice to run another review round is in front of you."
 metadata:
   version: "2.0.0"
 ---
