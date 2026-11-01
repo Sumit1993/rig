@@ -97,16 +97,28 @@ fmt_stale() {
   printf '%dm%ds' "$((s / 60))" "$((s % 60))"
 }
 
+# A live child is a command still running (agy >=1.2.9 waits quietly on background work, #167).
+# Prints the child PIDs; exit 2 is "could not determine", so no kill. Git Bash has no pgrep: its
+# own children show in ps, agy.exe's native ones only by its Windows PID (#208).
+live_children() {
+  if command -v pgrep >/dev/null 2>&1; then pgrep -P "$1"; [ $? -le 1 ] || return 2; return 0; fi
+  local winpid msys native
+  msys=$(ps | awk -v p="$1" 'NR > 1 && $2 == p { print $1 }') || return 2
+  winpid=$(cat "/proc/$1/winpid" 2>/dev/null) && [ -n "$winpid" ] || return 2
+  native=$(powershell.exe -NoProfile -Command "(Get-CimInstance Win32_Process -Filter 'ParentProcessId=$winpid').ProcessId" 2>/dev/null) || return 2
+  printf '%s\n%s\n' "$msys" "$native" | tr -d '\r' | grep .
+  return 0
+}
+
+POLL="${RIG_WATCHDOG_POLL:-60}"; STALE="${RIG_WATCHDOG_STALE:-180}"
 while kill -0 "$PID" 2>/dev/null; do
-  sleep 60
+  sleep "$POLL"
   now=$(date +%s); mt=$(stat -c %Y "$ACTIVITY" 2>/dev/null || echo "$now")
   stale=$((now - mt))
-  if [ "$stale" -gt 180 ]; then
+  if [ "$stale" -gt "$STALE" ]; then
     ahead=$(git -C "$WT" rev-list --count "$BASE"..HEAD 2>/dev/null || echo 0)
     dirty=$(dirty_lines | head -1)
-    # A live child is a command still running (agy >=1.2.9 waits quietly on background work, #167).
-    # pgrep exits 1 on no match; anything higher (or missing) is "could not determine", so no kill.
-    busy=$(pgrep -P "$PID" 2>/dev/null) || [ $? -eq 1 ] || busy=unknown
+    busy=$(live_children "$PID" 2>/dev/null) || busy=unknown
     if [ "$ahead" -ge "$EXPECT" ] && [ -z "$dirty" ] && [ -z "$busy" ]; then
       stale_fmt=$(fmt_stale "$stale")
       echo "WATCHDOG: log stale $stale_fmt, killing agy (work complete: $ahead commits, clean tree)" >&2
