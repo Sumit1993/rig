@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.19.0](https://github.com/Sumit1993/rig/compare/rig-v0.18.0...rig-v0.19.0) (2026-11-01)
+
+
+### Features
+
+* harness-neutral doctrine, OS wake-up in autopilot, review round budget, assayer skill ([5748bcd](https://github.com/Sumit1993/rig/commit/5748bcd6da378e4d1d23985854204a7c07be01fd))
+* overnight runs wake from the OS for any harness, and rig says less about harnesses ([bfdaafd](https://github.com/Sumit1993/rig/commit/bfdaafd172246d39606e6a600f691f034fe6bcda))
+* skill descriptions say when to load, long skills nest a sub-case in references/ ([9ebf0f9](https://github.com/Sumit1993/rig/commit/9ebf0f95f71c95430f865856dbba2be349f6b60c))
+* wake.sh arms an OS wake-up any harness can resume; agy watchdog reaps on native Windows ([02b1cb0](https://github.com/Sumit1993/rig/commit/02b1cb0a4c0aafbeea4fb368797e75657315a310))
+
 ## [0.18.0](https://github.com/Sumit1993/rig/compare/rig-v0.17.2...rig-v0.18.0) (2026-10-27)
 
 
