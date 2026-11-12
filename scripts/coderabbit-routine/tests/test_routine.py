@@ -17,13 +17,13 @@ def iso(minutes_ago):
     return (datetime.now(timezone.utc) - timedelta(minutes=minutes_ago)).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
-def fake_gh(labels, reviewed_at=None):
+def fake_gh(labels, reviewed_at=None, base="main"):
     """A PR at HEAD; with reviewed_at, CodeRabbit reviewed OLD then, so it is a re-review candidate."""
     reviews = [{"user": {"login": digest.CR}, "body": "Actionable comments posted: 1", "commit_id": OLD, "submitted_at": reviewed_at}] if reviewed_at else []
     routes = {
         f"repos/{REPO}/pulls?state=open&per_page=100": [listed(labels)],
         f"repos/{REPO}/pulls?state=closed&sort=updated&direction=desc&per_page=50&page=1": [],
-        f"repos/{REPO}/pulls/7": {"head": {"sha": HEAD}, "changed_files": 1, "labels": [{"name": n} for n in labels]},
+        f"repos/{REPO}/pulls/7": {"head": {"sha": HEAD}, "base": {"ref": base, "repo": {"default_branch": "main"}}, "changed_files": 1, "labels": [{"name": n} for n in labels]},
         f"repos/{REPO}/commits/{HEAD}": {"commit": {"committer": {"date": iso(30)}}},
         f"repos/{REPO}/pulls/7/files?per_page=100": [{"filename": "src/x.py"}],
         f"repos/{REPO}/pulls/7/reviews?per_page=100": reviews,
@@ -41,8 +41,8 @@ def listed(labels):
     }
 
 
-def facts(labels, reviewed_at=None):
-    with mock.patch.object(digest, "gh", fake_gh(labels, reviewed_at)):
+def facts(labels, reviewed_at=None, base="main"):
+    with mock.patch.object(digest, "gh", fake_gh(labels, reviewed_at, base)):
         return digest.pr_facts(REPO, listed(labels))
 
 
@@ -64,6 +64,16 @@ class DigestSkipLabel(unittest.TestCase):
         with mock.patch.object(digest, "REPOS", [REPO]), mock.patch.object(digest, "gh", fake_gh([digest.SKIP_LABEL], iso(10))):
             _, d = digest.build()
         self.assertFalse(d["slot_open"])
+
+
+class DigestStack(unittest.TestCase):
+    """A PR stacked on another branch waits for its base to merge (#212)."""
+
+    def test_pr_on_the_default_branch_is_not_stacked(self):
+        self.assertIsNone(facts([])["stacked_on"])
+
+    def test_pr_on_another_branch_names_its_base(self):
+        self.assertEqual(facts([], base="feat/base")["stacked_on"], "feat/base")
 
 
 class ActRereadsLabels(unittest.TestCase):

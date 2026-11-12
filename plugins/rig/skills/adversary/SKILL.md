@@ -9,13 +9,13 @@ metadata:
 
 ## 1. The seat
 
-The adversary tries to break a proposal before anyone acts on it. It is not the implementer, the planner or a merge authority. Invoke it to attack an idea's value or feasibility, a spec's assumptions, competing approaches, a substantial plan before implementation, an implementation before it is called done, or a disputed product or architecture decision. Mechanical edits do not need it.
+The adversary tries to break a proposal before anyone acts on it. It is not the implementer, the planner or a merge authority. Invoke it to attack an idea's value or feasibility, a spec's assumptions, competing approaches, a substantial plan before implementation, an implementation before it is called done, or a disputed product or architecture decision.
 
-The default holder is GPT-6.1 Sol through `codex exec`, at effort `high`. The effort is fixed: an agent does not choose it. The operator alone overrides it, through `RIG_ADVERSARY_EFFORT` (`xhigh` or `max`). Codex may use its own subagents for reading; it owns and verifies every objection they feed it.
+The default holder is GPT-6.1 Sol through `codex exec`, at effort `high`. The operator overrides the effort through `RIG_ADVERSARY_EFFORT` (`xhigh` or `max`). Codex may use its own subagents for reading; it owns and verifies every objection they feed it.
 
 When Codex is unavailable (its quota is exhausted or unknown, or the run failed), another agent holds the seat: `--holder claude` runs Opus 5.5 at the same effort, under the same contract, packet, result schema and validator, in a fresh process. The seat never passes to the author's own context; a self-review is not a substitute. `metadata.json` and `status.json` record the holder, so the ledger shows who judged.
 
-The agent doing the work runs its own adversary rounds: it calls the launcher with its shell and reads the result. `codex-runner` is optional, for an organizer that wants the wait off its own context.
+The agent doing the work runs its own adversary rounds: it calls the launcher with its shell and reads the result.
 
 ## 2. Frozen packet
 
@@ -29,7 +29,7 @@ The packet lives under `~/ai-context/<repo>/<issue>-<slug>/`. It carries:
 
 A proposal without a repository is self-contained: the proposal itself, its assumptions, intended users, alternatives, constraints and success and failure criteria, with source excerpts and exact URLs copied in. A linked mutable document is not frozen evidence.
 
-The launcher prepends `review-contract.md`, requires full `--base` and `--head` SHAs with `--worktree`, rejects a mismatched HEAD or a dirty tree, copies the packet, and records hashes, arguments, holder and runtime status in a new run directory under `~/ai-context`. It needs Python 3.10+ with `jsonschema` (`python3 -m pip install -r requirements.txt` from this skill's directory), an authenticated `codex` (or `claude` for the fallback holder), and Git only for repository evidence. A missing dependency is a failed dispatch, not a reason to buy access.
+The launcher prepends `review-contract.md`, requires full `--base` and `--head` SHAs with `--worktree`, rejects a mismatched HEAD or a dirty tree, copies the packet, and records hashes, arguments, holder and runtime status in a new run directory under `~/ai-context`. It needs Python 3.10+ with `jsonschema` (`python3 -m pip install -r requirements.txt` from this skill's directory), an authenticated `codex` (or `claude` for the fallback holder), and Git only for repository evidence.
 
 ## 3. Running a round
 
@@ -50,11 +50,9 @@ When Codex is unavailable, the same command with `--holder claude` gives the sea
 
 Check Codex's usage before planning around a judgment: `codex-quota.py check` prints one line (`usable: 5h 40%, weekly 67%` or `exhausted until <time>: …`) and exits 0 usable, 1 exhausted, 2 unknown. It asks the Codex app server's `account/rateLimits/read` method ([protocol](https://github.com/openai/codex/blob/main/codex-rs/app-server-protocol/src/protocol/common.rs)), with no model turn, and falls back to the newest Codex rollout log, labeled with its age. The launcher runs the same check: an exhausted quota fails the run before launch, and a failed run records the quota so a usage limit is not read as a generic error. Session start prints it in the budget line. An exhausted or unknown quota passes the seat to `--holder claude`, or the judgment waits for the reset when the operator prefers Codex.
 
-The Codex holder runs fresh, read-only, with saved CLI authentication and native web search. Plugins and apps are off; every configured MCP server is discovered and disabled, and a second inventory must show all of them disabled, or the launch is refused. The Claude holder gets only Read, Grep, Glob, WebSearch and WebFetch, with `--strict-mcp-config`. Filesystem sandboxing is not an external-service boundary: write-capable integrations stay out of this seat. Builds that need writes are separate verification work, or are reported unverified.
+The Codex holder runs fresh, read-only, with saved CLI authentication and native web search. Plugins and apps are off; every configured MCP server is discovered and disabled, and a second inventory must show all of them disabled, or the launch is refused. The Claude holder gets only Read, Grep, Glob, WebSearch and WebFetch, with `--strict-mcp-config`. Filesystem sandboxing is not an external-service boundary: write-capable integrations stay out of this seat.
 
-Rig's generated `~/.codex/AGENTS.md` reaches every Codex run, this seat's included: neither `--ignore-user-config` nor `-c project_doc_max_bytes=0` keeps it out. That is known behaviour, not a defect the launcher fixes.
-
-The launcher enforces its deadline and kills only its own process group; SIGINT or SIGTERM cleans up the group and records failure. It never retries, switches model or holder on its own, or writes a judgment itself. These outcomes are failures, never a clean verdict:
+The launcher enforces its deadline and kills only its own process group; SIGINT or SIGTERM cleans up the group and records failure. These outcomes are failures, never a clean verdict:
 
 - the frozen target or packet changed during the run;
 - the holder finished with zero tool calls, or Codex reported an error such as a refusal (`codex_error_info`);
@@ -62,18 +60,18 @@ The launcher enforces its deadline and kills only its own process group; SIGINT 
 
 ## 4. Objections and rebuttals
 
-Findings are confirmed defects, credible risks or open questions. Each objection carries a stable ID, a failure scenario, the violated constraint, evidence, impact and a falsification check. There is no finding count, no speculative certainty and no style-only objection. The seat challenges the premise, design, scope, verification and claimed benefit, and looks for simpler alternatives and attacks the author did not anticipate.
+Findings are confirmed defects, credible risks or open questions. Each objection carries a stable ID, a failure scenario, the violated constraint, evidence, impact and a falsification check. There is no finding count, no speculative certainty and no style-only objection.
 
 The working agent checks each claim and records it accepted, refuted with evidence, or unresolved. It fixes accepted findings and sends a new packet with the previous validated result, the revised target and its evidence-based response to each objection, through a fresh run with `--previous-result "$PREVIOUS_RESULT"`. The launcher copies the prior ledger into the prompt and rejects a result missing any prior ID. That enforces continuity, not the substance of a claimed fix. IDs are preserved, disproven objections are withdrawn, and fixed is kept apart from merely disputed. The seat tests rebuttals rather than accepting or defending its earlier answer.
 
-The budget, for this seat and every review loop (`assayer` §4): three rounds, the first full, later ones on the changed target and the open IDs only. Five only while a blocking or material objection on security, permissions, auth, data loss or concurrency stays open with evidence, or when the operator asks. Stop when only minor objections remain; a declined minor objection or a doc-only fix needs no new round. Fix accepted objections in the smallest change, preferring to delete or narrow over a new guard, option or helper, and decline what the objective does not need as a follow-up; a review that grew the diff gets cut first. Budget end is not approval: unresolved material disagreements go to the operator, each side in two or three lines. A `survived` verdict means no material objection remains within the stated coverage; it is not a guarantee or a permission to merge.
+The budget: one round plus a rebuttal on the changed target. Stop when no material objection is open; one still open after the rebuttal goes to the operator.
 
 ## 5. Evidence and record
 
 `result.json` is the validated judgment. `status.json` is the authority on its standing: `completed`, `incomplete` or `failed`, the holder, and `unmatched_sources`, every `sources` entry naming a path or URL that no tool call in the run touched. A `survived` verdict with any unmatched source is downgraded to `incomplete` in `status.json`, with the reason. `events.jsonl`, stderr and metadata are telemetry. Check the exit status, target identity and validation before relying on a finding. Copy the decision, commands and deciding evidence into the issue, PR or private record; a log or prompt path is never cited as durable evidence.
 
-The seat reads outside primary sources and the surrounding records before ruling, names its sources and limits, and gives the strongest objection to its own recommendation. It reports what survived as well as what failed. Unreachable sources are a stated coverage gap, never an invented citation.
+Unreachable sources are a stated coverage gap, never an invented citation.
 
 ## 6. Live evidence
 
-Use `codex-desktop` to run a scoped Windows task or experiment. Its observations are separate evidence, not permission for the read-only seat to change apps. Feed the test report, screenshots, build identity and missing coverage into a new packet. A prepared or opened request is not a performed test.
+Use `codex-desktop` to run a scoped Windows task or experiment. Feed its test report, screenshots, build identity and missing coverage into a new packet.

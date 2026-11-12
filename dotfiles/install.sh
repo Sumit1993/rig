@@ -150,7 +150,7 @@ check() {
     else
       flag "no rig plugin at $dir"
     fi
-    [ "$(readlink "$HOME/.gemini/GEMINI.md" 2>/dev/null)" = "$DOT/GEMINI.md" ] && echo "  doctrine: GEMINI.md linked" || flag "$HOME/.gemini/GEMINI.md does not link to $DOT/GEMINI.md"
+    cmp -s "$HOME/.gemini/GEMINI.md" "$DOT/GEMINI.md" && echo "  doctrine: GEMINI.md current" || flag "$HOME/.gemini/GEMINI.md differs from $DOT/GEMINI.md; re-run install.sh"
     doctrine_check agy "$HOME/.gemini/AGENTS.md"
   else
     echo "agy: not installed, skipped"
@@ -174,6 +174,18 @@ codex_trust() { # <installed-dir>
   done < <(jq -r '.hooks | to_entries[] | .key as $e | .value | to_entries[] | .key as $g | .value.hooks | to_entries[]
                   | "\($e | gsub("(?<a>[a-z])(?<b>[A-Z])"; "\(.a)_\(.b)") | ascii_downcase):\($g):\(.key)\t\(.value.command | capture("hooks/(?<s>[^\"/ ]+)").s)"' "$f")
   [ "$pending" -eq 0 ] || drift=1
+}
+
+# json_edit <file> [jq args...] <filter>: rewrite a settings file in place, with a backup. A file jq cannot
+# parse (comments, trailing commas) is left alone with a warning rather than aborting the install.
+json_edit() {
+  local f=$1; shift
+  if ! jq -e . "$f" >/dev/null 2>&1; then
+    echo "  WARN: $f is not plain JSON (comments?); left unchanged. Remove the comments and re-run, or edit it by hand." >&2
+    return 1
+  fi
+  cp "$f" "$f.bak-$(date +%s)"
+  jq "$@" "$f" > "$f.tmp" && jq -e . "$f.tmp" >/dev/null && mv "$f.tmp" "$f"
 }
 
 if [ "${1:-}" = "--check" ]; then
@@ -207,21 +219,13 @@ else
   wanted=$(claude_md_wanted); printf '%s\n' "$wanted" > "$CLAUDE/CLAUDE.md"
 fi
 
-echo "→ statusline"
-cp "$HERE/statusline-command.sh" "$CLAUDE/statusline-command.sh"
-
 AGY="$HOME/.gemini/antigravity-cli"
 if [ -d "$AGY" ]; then
-  echo "→ agy statusline"
-  cp "$HERE/agy-statusline-command.sh" "$AGY/statusline.sh"; chmod +x "$AGY/statusline.sh"
-  s="$AGY/settings.json"; [ -f "$s" ] || echo '{}' > "$s"
-  cmd="$AGY/statusline.sh"
-  # Windows runs a bare .sh path through its file association, opening a Git Bash window per refresh.
-  case "$(uname -s)" in MINGW*|MSYS*|CYGWIN*) cmd="\"$(cygpath -m "$(command -v bash)")\" \"$(cygpath -m "$cmd")\"" ;; esac
-  jq --arg cmd "$cmd" '.statusLine = ((.statusLine // {}) + {type: "command", command: $cmd, enabled: true})' "$s" > "$s.tmp" \
-    && jq -e . "$s.tmp" >/dev/null && mv "$s.tmp" "$s"
+  # rig ships no status line; a script goes only once its settings entry is gone.
+  { [ ! -f "$AGY/settings.json" ] || json_edit "$AGY/settings.json" 'if (.statusLine.command // "") | test("statusline[.]sh") then del(.statusLine) else . end'; } && rm -f "$AGY/statusline.sh"
+  # A copy, not a symlink: Git Bash's ln copies on Windows, and --check compares contents either way.
   echo "→ agy GEMINI.md"
-  ln -sfn "$DOT/$(rig_field agy doctrine.file)" "$HOME/.gemini/GEMINI.md"
+  rm -f "$HOME/.gemini/GEMINI.md"; cp "$DOT/$(rig_field agy doctrine.file)" "$HOME/.gemini/GEMINI.md"
   echo "→ agy AGENTS.md (AGENTS.md + $(rig_field agy doctrine.overlay))"
   rig_write_doctrine "$HOME/.gemini/AGENTS.md" agy "$DOT"
   if command -v agy >/dev/null 2>&1; then
@@ -245,14 +249,12 @@ fi
 
 bash "$HERE/install-windows.sh"
 
-echo "→ settings.json (deep-merge: fragment overlays existing; permissions.allow unions)"
+echo "→ settings.json (deep-merge: fragment overlays existing; permissions.allow unions; old rig status line dropped)"
 if [ -f "$CLAUDE/settings.json" ]; then
-  cp "$CLAUDE/settings.json" "$CLAUDE/settings.json.bak-$(date +%s)"
-  jq -s '.[0] as $cur | .[1] as $frag | ($cur * $frag)
-         | .permissions.allow = (($cur.permissions.allow // []) + ($frag.permissions.allow // []) | unique)' \
-    "$CLAUDE/settings.json" "$HERE/settings.fragment.json" > "$CLAUDE/settings.json.tmp"
-  jq -e . "$CLAUDE/settings.json.tmp" >/dev/null
-  mv "$CLAUDE/settings.json.tmp" "$CLAUDE/settings.json"
+  json_edit "$CLAUDE/settings.json" --slurpfile frag "$HERE/settings.fragment.json" '. as $cur | $frag[0] as $f | ($cur * $f)
+    | .permissions.allow = (($cur.permissions.allow // []) + ($f.permissions.allow // []) | unique)
+    | if (.statusLine.command // "") | test("statusline-command[.]sh") then del(.statusLine) else . end' \
+    && rm -f "$CLAUDE/statusline-command.sh"
 else
   cp "$HERE/settings.fragment.json" "$CLAUDE/settings.json"
 fi

@@ -11,4 +11,4 @@ How Codex does what `AGENTS.md` names.
 - Reader seat: `claude -p --model haiku --output-format json`.
 - Side lane: `agy -p`, per `farm-out`.
 - Gates: the rig hooks the Codex build ships (`dotfiles/harnesses.json`), and only once trusted in `/hooks`; every rebuild needs the trust again. A rule whose hook is not shipped here is self-enforced.
-- Quota: `codex-quota.py check` in the `adversary` skill (app-server `account/rateLimits/read`), or `/status` in the TUI. Claude's limits: the last row of `~/.claude/metrics/usage.jsonl`. agy's: `agy-quota.sh check <model>`.
+- Quota: `codex-quota.py check` in the `adversary` skill (app-server `account/rateLimits/read`), or `/status` in the TUI. agy's: `agy-quota.sh check <model>`.

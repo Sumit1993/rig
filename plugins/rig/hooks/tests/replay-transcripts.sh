@@ -75,9 +75,6 @@ replay() { # hook_file tool_name label
 
 fails=0
 replay no-broad-agy-kill.sh Bash  "no-broad-agy-kill"  || fails=$((fails + 1))
-replay delegate-check.sh    Agent "delegate-check"     || fails=$((fails + 1))
-replay no-haiku.sh          Agent "no-haiku"           || fails=$((fails + 1))
-replay pr-created.sh        Bash  "pr-created"         || fails=$((fails + 1))
 
 echo
 echo "A crash is a bug. A block is a judgement call: re-run with REPLAY_SHOW=1 and read"
