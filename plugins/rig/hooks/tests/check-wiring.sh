@@ -36,14 +36,6 @@ while IFS=$'\t' read -r event id matcher cmd; do
     done < <(tr '|' '\n' <<<"$matcher")
   fi
 
-  # Some hooks act on the machine when run: reap-watchers kills watcher processes by
-  # pattern, and executing it here killed this suite's own shell (exit 144) twice. Wiring
-  # is checked for those; behaviour is left to their own tests.
-  case "$(basename "$path")" in
-    reap-watchers.sh|release-docs-gate.sh)
-      echo "PASS: $id wired ($(basename "$path")), execution probe skipped (side effects)"
-      continue ;;
-  esac
 
   # A hook must survive junk on stdin without crashing; anything but 0/2 is a bug.
   printf 'not json' | timeout 10 "$path" >/dev/null 2>&1

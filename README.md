@@ -27,26 +27,7 @@ Plugin `rig`, path-independent via `${CLAUDE_PLUGIN_ROOT}`:
 | `agents/comment-sicko` | The subagent `no-comments` spawns. Deletes comments, never code |
 | `agents/planner` | The planner seat: specs and rulings on Opus 5.5 at effort high |
 | `agents/fable-planner` | The planner seat on Fable 5.1, used only when the operator allows Fable |
-| `hooks/pr-created.sh` | PostToolUse(Bash, Agent): a real PR URL injects "pick its watcher now": `/autofix-pr` by default, the pr-babysit Monitor for a held round |
-| `hooks/delegate-check.sh` | PreToolUse(Agent): blocks a Claude subagent on delegable work. Escape: name agy in the prompt |
-| `hooks/no-haiku.sh` | PreToolUse(Agent): blocks Haiku 4.x ids; bare `haiku` (Haiku 5.5) passes |
-| `hooks/no-broad-agy-kill.sh` | PreToolUse(Bash): blocks a kill that targets agy by name; kill by PID or slug |
-| `hooks/release-docs-gate.sh` | PreToolUse(Bash): blocks merging a release PR without a docs audit in 14 days. Escape: `DOCS_GATE=skip` |
-| `hooks/reap-watchers.sh` | SessionEnd kills watchers, SessionStart reaps orphans. Seen-state is durable so this is free |
-| `hooks/gh-body-no-scratch.sh` | PreToolUse(Bash): blocks gh issue/pr citing ai-context or /tmp. Escape: `SCRATCH_GATE=skip` |
-| `hooks/gh-body-stamp.sh` | PreToolUse(Bash): blocks gh issue/pr posts whose body carries no operator-stamp marker. Escape: `STAMP_GATE=skip` |
-| `hooks/issue-create-nudge.sh` | PreToolUse(Bash): nudges on third gh issue create this session to fold into an umbrella |
-| `hooks/session-budget.sh` | SessionStart: one line with agy quota per group, Codex's usage limits and the resume cost on `--resume`. The probes run in parallel, each cut at 6 s |
-| `hooks/review-debt.sh` | SessionStart: unresolved review threads on author's non-draft PRs; clear review debt before any new pick |
-| `hooks/limit-log.sh` | StopFailure(rate_limit, overloaded) and Notification(quota_auto_resume_*): one JSON line each in `~/.claude/metrics/limits.jsonl` |
-| `hooks/outside-view-nudge.sh` | PreToolUse(AskUserQuestion, EnterPlanMode, planner or fable-planner spawn): get an outside view first. 1st time, then every 3rd per session |
-| `hooks/gh-write-nudge.sh` | PreToolUse(Bash): nudges once per session on a handoff-shaped or 40-plus-line gh body, a bare `#N`, and a non-draft `gh pr create` |
-| `hooks/draft-posted-nudge.sh` | PostToolUse(Bash): a body file posted from ai-context is told to delete the draft, once per file |
-| `hooks/agent-prompt-nudge.sh` | PreToolUse(Agent): a Fable or Opus prompt asking it to show its reasoning, a Sonnet or Haiku prompt with no verify step, a second planner inside the cache hour |
-| `hooks/protected-edit-gate.sh` | PreToolUse(Edit, Write): blocks edits to loose skill copies and to the import line of `~/.claude/CLAUDE.md` |
-| `hooks/safe-stash.sh` | PreToolUse(Bash): blocks bare `git stash`, an unnamed `git stash push` and `git stash pop` (the stash stack is shared by every worktree) |
-| `hooks/no-thread-resolve.sh` | PreToolUse(Bash): blocks a `gh api graphql` call carrying the `resolveReviewThread` mutation; the reviewer resolves its own thread |
-| `hooks/merge-gate.sh` | PreToolUse(Bash): blocks `gh pr merge` and `pulls/N/merge` without `MERGE_OK=<pr>` on the same command |
+The rig plugin ships only the gates that stop real harm: `merge-gate` (no merge without `MERGE_OK`), `summon-gate` (no CodeRabbit summon without `CR_SUMMON_OK`), `no-thread-resolve`, `safe-stash` and `no-broad-agy-kill`.
 
 `dotfiles/AGENTS.md` loads on every turn in every project, so it carries routing and rules only. Procedure lives in a skill that loads on demand. It is harness-neutral: it names seats (organizer, planner, adversary, reader, side lane) and capabilities, and `dotfiles/harness/{claude,codex,codex-desktop,agy}.md` say how each harness reaches them and which gates it enforces.
 
@@ -64,16 +45,10 @@ Hooks that block or rewrite tool calls report their firing to `mage observe`. Th
 
 | Hook file | Guard id |
 |---|---|
-| `plugins/rig/hooks/delegate-check.sh` | `rig/guard/delegate-check` |
-| `plugins/rig/hooks/no-haiku.sh` | `rig/guard/no-haiku` |
 | `plugins/rig/hooks/no-broad-agy-kill.sh` | `rig/guard/no-broad-agy-kill` |
-| `plugins/rig/hooks/release-docs-gate.sh` | `rig/guard/release-docs-gate` |
-| `plugins/rig/hooks/protected-edit-gate.sh` | `rig/guard/protected-edit-gate` |
 | `plugins/rig/hooks/merge-gate.sh` | `rig/guard/merge-gate` |
 | `plugins/rig/hooks/safe-stash.sh` | `rig/guard/safe-stash` |
 | `plugins/rig/hooks/no-thread-resolve.sh` | `rig/guard/no-thread-resolve` |
-
-Hooks that neither block nor rewrite (`pr-created.sh` and `reap-watchers.sh`) have no guard identifier.
 
 ### Header convention and reporting
 
@@ -94,25 +69,6 @@ The reporter library is at `plugins/rig/hooks/lib/report-guard.sh`.
 ### Fail-open contract
 
 The reporter is fire-and-forget and always fails open. If `mage` or `jq` is absent from PATH, the function returns 0. Calls to `mage observe` run with a 5 second timeout. Any error, non-zero exit, or timeout is ignored so the hook still exits with its block code. The reporter writes nothing to stdout because hook stdout is a protocol channel.
-
-### Worked example
-
-When an agent invokes `Agent` with `claude-haiku-4-5-20251001`, `plugins/rig/hooks/no-haiku.sh` blocks. The agent receives this message on stderr:
-
-```
-Blocked by routing doctrine (dotfiles/AGENTS.md §Models): Haiku 4.x is not used. Pick haiku (Haiku 5.5) or above.
-mage:rig/guard/no-haiku
-```
-
-At the same time, `no-haiku.sh` pipes the following payload to `mage observe` on stdin:
-
-```json
-{
-  "guard_id": "rig/guard/no-haiku",
-  "tool": "Agent",
-  "detail": "claude-haiku-4-5-20251001"
-}
-```
 
 ## New machine
 
