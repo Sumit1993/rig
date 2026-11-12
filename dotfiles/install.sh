@@ -106,8 +106,6 @@ check() {
   else
     flag "rig@rig is not in $CLAUDE/plugins/installed_plugins.json"
   fi
-  [ -e "$CLAUDE/statusline-command.sh" ] && flag "$CLAUDE/statusline-command.sh is left from an old install; re-run install.sh"
-  [ "$(jq -r '.statusLine.command // ""' "$CLAUDE/settings.json" 2>/dev/null)" = "bash ~/.claude/statusline-command.sh" ] && flag "settings.json still runs the old rig status line"
   if [ -f "$CLAUDE/CLAUDE.md" ] && cmp -s <(claude_md_wanted) "$CLAUDE/CLAUDE.md"; then echo "  doctrine: CLAUDE.md imports current"
   else flag "$CLAUDE/CLAUDE.md does not import AGENTS.md and $(rig_field claude doctrine.overlay) from $DOT"; fi
 
