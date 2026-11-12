@@ -6,97 +6,9 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/release-docs-gate.sh\"",
-            "timeout": 20,
-            "statusMessage": "release-docs-gate"
-          }
-        ]
-      },
-      {
-        "matcher": "Agent",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/no-haiku.sh\"",
-            "timeout": 5,
-            "statusMessage": "no-haiku"
-          }
-        ]
-      },
-      {
-        "matcher": "Agent",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/delegate-check.sh\"",
-            "timeout": 5,
-            "statusMessage": "delegate-check"
-          }
-        ]
-      },
-      {
-        "matcher": "Bash",
-        "hooks": [
-          {
-            "type": "command",
             "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/no-broad-agy-kill.sh\"",
             "timeout": 5,
             "statusMessage": "no-broad-agy-kill"
-          }
-        ]
-      },
-      {
-        "matcher": "Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/gh-body-no-scratch.sh\"",
-            "timeout": 10,
-            "statusMessage": "gh-body-no-scratch"
-          }
-        ]
-      },
-      {
-        "matcher": "Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/gh-body-stamp.sh\"",
-            "timeout": 10,
-            "statusMessage": "gh-body-stamp"
-          }
-        ]
-      },
-      {
-        "matcher": "Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/issue-create-nudge.sh\"",
-            "timeout": 5,
-            "statusMessage": "issue-create-nudge"
-          }
-        ]
-      },
-      {
-        "matcher": "AskUserQuestion|EnterPlanMode|Agent",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/outside-view-nudge.sh\"",
-            "timeout": 5,
-            "statusMessage": "outside-view-nudge"
-          }
-        ]
-      },
-      {
-        "matcher": "Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/gh-write-nudge.sh\"",
-            "timeout": 10,
-            "statusMessage": "gh-write-nudge"
           }
         ]
       },
@@ -123,28 +35,6 @@
         ]
       },
       {
-        "matcher": "Edit|Write|NotebookEdit",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/protected-edit-gate.sh\"",
-            "timeout": 5,
-            "statusMessage": "protected-edit-gate"
-          }
-        ]
-      },
-      {
-        "matcher": "Agent",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/agent-prompt-nudge.sh\"",
-            "timeout": 5,
-            "statusMessage": "agent-prompt-nudge"
-          }
-        ]
-      },
-      {
         "matcher": "Bash",
         "hooks": [
           {
@@ -163,111 +53,6 @@
             "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/no-thread-resolve.sh\"",
             "timeout": 10,
             "statusMessage": "no-thread-resolve"
-          }
-        ]
-      }
-    ],
-    "SessionEnd": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/reap-watchers.sh\" end",
-            "timeout": 10,
-            "statusMessage": "reap-watchers"
-          }
-        ]
-      }
-    ],
-    "SessionStart": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/reap-watchers.sh\" start",
-            "timeout": 10,
-            "statusMessage": "reap-watchers"
-          }
-        ]
-      },
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/session-budget.sh\"",
-            "timeout": 10,
-            "statusMessage": "session-budget"
-          }
-        ]
-      },
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/review-debt.sh\"",
-            "timeout": 10,
-            "statusMessage": "review-debt"
-          }
-        ]
-      }
-    ],
-    "PostToolUse": [
-      {
-        "matcher": "Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/pr-created.sh\"",
-            "timeout": 30,
-            "statusMessage": "pr-created"
-          }
-        ]
-      },
-      {
-        "matcher": "Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/draft-posted-nudge.sh\"",
-            "timeout": 10,
-            "statusMessage": "draft-posted-nudge"
-          }
-        ]
-      },
-      {
-        "matcher": "Agent",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/pr-created.sh\"",
-            "timeout": 30,
-            "statusMessage": "pr-created"
-          }
-        ]
-      }
-    ],
-    "StopFailure": [
-      {
-        "matcher": "rate_limit|overloaded",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/limit-log.sh\"",
-            "timeout": 5,
-            "statusMessage": "limit-log"
-          }
-        ]
-      }
-    ],
-    "Notification": [
-      {
-        "matcher": "quota_auto_resume_fired|quota_auto_resume_stale|quota_auto_resume_disabled",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/limit-log.sh\"",
-            "timeout": 5,
-            "statusMessage": "limit-log"
           }
         ]
       }
