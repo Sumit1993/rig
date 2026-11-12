@@ -15,6 +15,7 @@
       "install": "codex-plugin",
       "skills": ["adversary", "autopilot", "codex-desktop", "assayer", "compass", "docs-drift", "farm-out", "no-doze", "babysit-pr", "triage", "tweet"],
       "hooks": ["merge-gate.sh", "no-broad-agy-kill.sh", "no-thread-resolve.sh", "safe-stash.sh", "summon-gate.sh"],
+      "hook_events": {"PreToolUse": {}},
       "agents": [],
       "runtime": ["hooks/lib/gh-command.sh", "hooks/lib/json.sh", "hooks/lib/report-guard.sh", "scripts/rig-meta.sh", "scripts/wake.sh", "data/repo-meta.json"],
       "doctrine": {"mode": "generate", "overlay": "harness/codex.md"}

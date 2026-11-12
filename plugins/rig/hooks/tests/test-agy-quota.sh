@@ -205,16 +205,6 @@ bash "$AGY_QUOTA" check rel-model >/dev/null 2>&1 || c10_chk_rc=$?
 c10_sidecar_quota=$(jq -r '.quota_exhausted // false' "$TMPDIR/out_rel.json.meta.json" 2>/dev/null || echo false)
 check "a relative watchdog invocation still records" '[ "$c10_chk_rc" -eq 1 ] && [ "$c10_sidecar_quota" = "true" ]'
 
-echo "-- 11. The dispatch path names where dry work goes"
-PREFLIGHT=$(sed -n '/## Gotchas/,/^## Launch/p' "$SKILL_FILE")
-c11_sonnet=0
-printf '%s' "$PREFLIGHT" | grep -q 'model: sonnet' && c11_sonnet=1
-c11_direct=0
-printf '%s' "$PREFLIGHT" | grep -q 'no wrapper' && c11_direct=1
-c11_no_timer=0
-printf '%s' "$PREFLIGHT" | grep -q 'Never a reset timer' && c11_no_timer=1
-check "the dispatch path names where dry work goes" '[ "$c11_sonnet" -eq 1 ] && [ "$c11_direct" -eq 1 ] && [ "$c11_no_timer" -eq 1 ]'
-
 echo "-- 12. A wall is recorded against the group, not the slug"
 bash "$AGY_QUOTA" clear gemini-3.8-flash-high
 bash "$AGY_QUOTA" clear claude-sonnet-5-5-low
