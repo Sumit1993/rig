@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.19.1](https://github.com/Sumit1993/rig/compare/rig-v0.19.0...rig-v0.19.1) (2026-11-12)
+
+
+### Bug Fixes
+
+* answer CodeRabbit review on [#213](https://github.com/Sumit1993/rig/issues/213) ([226449d](https://github.com/Sumit1993/rig/commit/226449d8c483c80a92097bafa0edbe8dd845ff67))
+* **babysit-pr:** thread query with resolution state, chat limit basis, routine-skip coverage ([e9837aa](https://github.com/Sumit1993/rig/commit/e9837aaf145eddcf7d96b407913855f2c529259b))
+* **install:** drop a literal \n that broke the settings merge; compass paginates Step 0 ([5676edb](https://github.com/Sumit1993/rig/commit/5676edb5504e4c658e34348cfa297f5c1afb0dc6))
+* **install:** drop the status lines and the hooks that read them; install survives a commented settings.json ([26b589c](https://github.com/Sumit1993/rig/commit/26b589c3b3e9143a6f56dd8d273a7ffe8634dc1d))
+* **tests:** codex keeps its PreToolUse event map; drop the skill-wording quota case ([a4edbbd](https://github.com/Sumit1993/rig/commit/a4edbbd353458beb8a46159100e6894d319235f0))
+
+
+### Code Refactoring
+
+* **hooks:** keep only the gates that stop real harm ([aff480f](https://github.com/Sumit1993/rig/commit/aff480f603d3d63d9b6bc6af7d6fe228b215232d))
+* **install:** drop the leftover-status-line drift checks ([5476f07](https://github.com/Sumit1993/rig/commit/5476f072959f6b21ff2834a7c324f8ba5020a81d))
+* less is more — one babysit-pr skill, five gates, no status lines, a clean install ([f071043](https://github.com/Sumit1993/rig/commit/f0710433b7cf186e63645a7973cf23bba67dc50d))
+* **review:** one short babysit-pr skill replaces four review skills and the watcher ([f922005](https://github.com/Sumit1993/rig/commit/f9220054f9598d25646cd6ffbf381d202606c2d3))
+* **skills:** delete rules that forced ceremony or restated AGENTS.md ([c838a62](https://github.com/Sumit1993/rig/commit/c838a628fe7e8c4423117d9b379f00663ab2966f))
+
 ## [0.19.0](https://github.com/Sumit1993/rig/compare/rig-v0.18.0...rig-v0.19.0) (2026-11-01)
 
 
