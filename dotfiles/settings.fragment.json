@@ -12,10 +12,6 @@
     ],
     "defaultMode": "auto"
   },
-  "statusLine": {
-    "type": "command",
-    "command": "bash ~/.claude/statusline-command.sh"
-  },
   "worktree": { "baseRef": "head" },
   "effortLevel": "high",
   "tui": "fullscreen",
@@ -32,5 +28,6 @@
   "enabledPlugins": {
     "rig@rig": true,
     "mattpocock-skills@mattpocock": true
-  }
+  },
+  "attribution": { "sessionUrl": false }
 }

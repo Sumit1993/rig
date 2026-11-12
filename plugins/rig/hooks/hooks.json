@@ -90,17 +90,6 @@
         ]
       },
       {
-        "matcher": "Agent",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/scoped-cap-gate.sh\"",
-            "timeout": 10,
-            "statusMessage": "scoped-cap-gate"
-          }
-        ]
-      },
-      {
         "matcher": "Bash",
         "hooks": [
           {
@@ -253,16 +242,6 @@
             "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/pr-created.sh\"",
             "timeout": 30,
             "statusMessage": "pr-created"
-          }
-        ]
-      },
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/budget-nudge.sh\"",
-            "timeout": 10,
-            "statusMessage": "budget-nudge"
           }
         ]
       }
