@@ -25,7 +25,7 @@ for pair in codex:"$T/codex" codex-desktop:"$T/desk" agy:"$T/agy" claude-windows
 done
 check "codex hooks are exactly the manifest's" '[ "$(ls "$T/codex/hooks"/*.sh | xargs -n1 basename | sort | tr "\n" " ")" = "$(listed codex hooks)" ]'
 check "codex gets every hooks/lib file (json.sh included)" '[ -f "$T/codex/hooks/lib/json.sh" ] && [ -f "$T/codex/hooks/lib/gh-command.sh" ] && [ -f "$T/codex/hooks/lib/report-guard.sh" ]'
-check "codex gets rig-meta.sh with its registry, and cr-reply.sh" '[ -x "$T/codex/scripts/rig-meta.sh" ] && [ -f "$T/codex/data/repo-meta.json" ] && [ -x "$T/codex/scripts/cr-reply.sh" ]'
+check "codex gets rig-meta.sh with its registry" '[ -x "$T/codex/scripts/rig-meta.sh" ] && [ -f "$T/codex/data/repo-meta.json" ]'
 check "codex hooks.json registers only PreToolUse" 'jq -e "(.hooks | keys) == [\"PreToolUse\"]" "$T/codex/hooks/hooks.json" >/dev/null'
 check "codex matchers are Bash or Agent only (outside-view-nudge mapped)" \
   'jq -e "[.hooks.PreToolUse[].matcher] | all(. == \"Bash\" or . == \"Agent\")" "$T/codex/hooks/hooks.json" >/dev/null'
@@ -47,12 +47,12 @@ variant '.targets.codex.skills += ["no-such-skill"]'
 check "a declared skill that does not exist fails" '! RIG_MANIFEST="$T/m.json" bash -c ". \"$D/build-lib.sh\"; rig_check_manifest" 2>/dev/null'
 variant '.targets.claude.hooks -= ["merge-gate.sh"] | .targets.codex.hooks -= ["merge-gate.sh"] | .unshipped.hooks["merge-gate.sh"] = "test"'
 check "claude hooks must match hooks.json" '! RIG_MANIFEST="$T/m.json" bash -c ". \"$D/build-lib.sh\"; rig_check_manifest" 2>/dev/null'
-variant '.targets.codex.skills -= ["coderabbit-lane"]'
+variant '.targets.codex.skills -= ["babysit-pr"]'
 out=$(RIG_MANIFEST="$T/m.json" bash "$D/build-codex-plugin.sh" "$T/y" codex 2>&1 >/dev/null)
-check "codex without coderabbit-lane fails closure (compass names it)" '[ -n "$out" ] && grep -q "names skill coderabbit-lane" <<<"$out"'
-variant '.targets.codex.runtime -= ["scripts/cr-reply.sh"]'
+check "codex without babysit-pr fails closure (compass names it)" '[ -n "$out" ] && grep -q "names skill babysit-pr" <<<"$out"'
+variant '.targets.codex.runtime -= ["scripts/rig-meta.sh"]'
 out=$(RIG_MANIFEST="$T/m.json" bash "$D/build-codex-plugin.sh" "$T/y" codex 2>&1 >/dev/null)
-check "codex without cr-reply.sh fails closure" 'grep -q "uses scripts/cr-reply.sh" <<<"$out"'
+check "codex without rig-meta.sh fails closure" 'grep -q "uses scripts/rig-meta.sh" <<<"$out"'
 variant '.targets.codex.runtime -= ["hooks/lib/json.sh"]'
 out=$(RIG_MANIFEST="$T/m.json" bash "$D/build-codex-plugin.sh" "$T/y" codex 2>&1 >/dev/null)
 check "codex without json.sh fails closure" 'grep -q "uses hooks/lib/json.sh" <<<"$out"'

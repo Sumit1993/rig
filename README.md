@@ -12,9 +12,7 @@ Plugin `rig`, path-independent via `${CLAUDE_PLUGIN_ROOT}`:
 | `skills/compass` | Where the estate stands and what is next: goals are numbered milestones, `p0` orders inside one, the pick is one command |
 | `skills/no-doze` | Wait on long work without dozing: sentinel first, evidence-keyed loops, batch scripts over agent-per-step |
 | `skills/autopilot` | Hold a long unattended run: OS wake-up first (`scripts/wake.sh`, any harness), session and lanes in their own worktrees, stall rule, green is not evidence, park what needs a human |
-| `skills/pr-babysit` | Watch a PR this session raised: merge contract, seed and arm the reviewer/CI Monitor, route events as pointers, merge or enqueue |
-| `skills/claude-review-lane` | How `claude[bot]` behaves: liveness verdicts, the ways it stays quiet, summon grammar, verify rounds, who resolves a thread |
-| `skills/coderabbit-lane` | How `coderabbitai[bot]` behaves: per-developer counter, hand admission by label, bare triggers, in-thread replies |
+| `skills/babysit-pr` | A PR after it is raised: reviews (CodeRabbit routine, Claude lane, assayer), reading and answering findings, resolving, merging |
 | `skills/assayer` | Review rounds through the assayer runner (Codex by default, OpenCode free): admission, template contract, coverage count, runner limits, round budget, findings as review debt |
 | `skills/farm-out` | Antigravity CLI delegation: preflight probe, launch line, model choice, failure table, kill by PID (`kill-agy.sh`), lane worktrees (`lane-worktree.sh`), the runner's babysit loop |
 | `skills/adversary` | The adversary seat challenges ideas, plans, specs, approaches, implementations and decisions; Sol via Codex by default, a fresh Opus when Codex is unavailable; evidence-backed objections survive rebuttal rounds |
@@ -23,7 +21,6 @@ Plugin `rig`, path-independent via `${CLAUDE_PLUGIN_ROOT}`:
 | `skills/docs-drift` | Four-phase docs-drift playbook plus the illustration standard |
 | `skills/tweet` | Draft tweet options for @Desolatte from the session, voice and dedup from n8n |
 | `skills/no-comments` | Enforce the comment budget on a diff via `agents/comment-sicko`. Vendored from pstack, patched 2026-08-22 |
-| `skills/autofix` | CodeRabbit's autofix skill, patched 2026-07-12 so replies go in-thread |
 | `agents/comment-sicko` | The subagent `no-comments` spawns. Deletes comments, never code |
 | `agents/planner` | The planner seat: specs and rulings on Opus 5.5 at effort high |
 | `agents/fable-planner` | The planner seat on Fable 5.1, used only when the operator allows Fable |
@@ -137,7 +134,6 @@ Skills sourced from someone else live here as real copies, never symlinks. A sym
 Every vendored `SKILL.md` records `upstream` in `metadata`, and a patched one also records `upstream_version`, `upstream_latest_seen`, `patched` and `patch_note`. Checking for updates is manual:
 
 ```bash
-coderabbit skills          # CodeRabbit's autofix; reports its current version
 npx skills                 # the pstack-sourced skills
 ```
 

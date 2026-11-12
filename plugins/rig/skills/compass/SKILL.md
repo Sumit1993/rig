@@ -2,7 +2,7 @@
 name: compass
 description: "Load when a session picks up work cold, is asked \"what's next\" or \"where are we\", must rank a queue, or merges on the operator's word; also for the label and milestone vocabulary."
 metadata:
-  version: "1.1.0"
+  version: "1.2.0"
 ---
 
 # Direction
@@ -25,21 +25,13 @@ Never create, rename or delete a label or a milestone. If the vocabulary lacks s
 
 ## Step 0: review debt
 
-Reviews land hours after a PR is marked ready, long after its session ended (`Sumit1993/rig#150`). Findings on the operator's open PRs in this repo come before any new pick. Debt is per repo: other repos' debt waits for a session there, and none here is reported as none, never widened. In Claude Code the SessionStart hook prints them as `Review debt in <repo>: ...`; without the hook, in any harness:
+Reviews land hours after a PR is marked ready. Before any new pick, list the operator's ready PRs in this repo and clear their findings, PR by PR, base first on a stack (`babysit-pr`):
 
 ```
-repo=$(gh repo view --json nameWithOwner -q .nameWithOwner)
-gh api graphql --paginate -f q="repo:$repo is:pr is:open author:@me -is:draft" \
-  -f query='query($q: String!, $endCursor: String) { search(query: $q, type: ISSUE, first: 100, after: $endCursor) { pageInfo { hasNextPage endCursor } nodes { ... on PullRequest { number title reviewThreads(first: 100) { totalCount nodes { isResolved } } } } } }' \
-  --jq '.data.search.nodes[] | {number, title, total: .reviewThreads.totalCount, open: [.reviewThreads.nodes[] | select(.isResolved | not)] | length} | select(.open > 0 or .total > 100) | "#\(.number)\t\(.open) open of \(.total)\t\(.title)"'
+gh pr list --author @me --state open --json number,title,isDraft --jq '.[] | select(.isDraft | not) | "#\(.number)\t\(.title)"'
 ```
 
-One agent clears the whole list in one pass, PR by PR on each PR's branch:
-
-- Fix what is right, one push per PR, then reply in each thread (`coderabbit-lane` §5, in-thread replies; `claude-review-lane` for `claude[bot]`; `assayer` §5, acting on findings, for `assayer-finding` threads). Never resolve a reviewer's thread: `coderabbit-lane` §6, thread resolution; `claude-review-lane` §6, who resolves a `claude[bot]` thread.
-- A finding that needs the operator's ruling is collected, not asked one at a time. Ask them all in one question at the end.
-- The routine summons new reviews and never merges.
-- A ready PR whose CodeRabbit review on the current head came back clean, with every thread resolved by the reviewer that opened it (the operator, for `assayer-finding` threads posted under their login) and checks green, is listed as ready to merge. Ask the operator once for the whole list and merge each one they grant (`pr-babysit` Phase 3, `MERGE_OK=<pr>`).
+Collect findings that need the operator's ruling and ask them all in one question at the end. List the PRs that pass `babysit-pr`'s merge conditions, ask once for the whole list, and merge each one granted.
 
 ## Step 1: read the repo and report drift
 
