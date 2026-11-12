@@ -29,7 +29,7 @@ Read everything the reviewers posted that is not yet answered, from every review
 
 ```bash
 gh pr view <n> --comments
-gh api --paginate repos/{owner}/{repo}/pulls/<n>/comments --jq '.[] | "\(.id) \(.user.login) \(.path):\(.line // "-") \(.body[0:200])"'
+gh api graphql --paginate -F owner='{owner}' -F repo='{repo}' -F n=<n> -f query='query($owner:String!,$repo:String!,$n:Int!,$endCursor:String){repository(owner:$owner,name:$repo){pullRequest(number:$n){reviewThreads(first:100,after:$endCursor){pageInfo{hasNextPage endCursor} nodes{id isResolved path comments(first:100){nodes{databaseId author{login} body}}}}}}}' --jq '.data.repository.pullRequest.reviewThreads.nodes[] | select(.isResolved | not)'
 gh api --paginate repos/{owner}/{repo}/pulls/<n>/reviews --jq '.[] | "\(.user.login) \(.commit_id[0:7])\n\(.body)"'
 ```
 
@@ -37,7 +37,7 @@ Verify every finding against the source before changing code. Fix real bugs in t
 
 Reply in-thread so the thread gate sees it: `gh api repos/{owner}/{repo}/pulls/<n>/comments/<root-id>/replies -f body='@coderabbitai Fixed in <sha>: <what>.'` A finding outside any thread gets its answer in one PR comment.
 
-CodeRabbit replies are chat with their own limit of about 25 an hour across every PR; reply highest severity first and keep a burst under it. A reply answered with `Rate Limit Exceeded` is unanswered: reply again after the stated wait. Never write the word "resolve" in a reply; CodeRabbit reads it as a command.
+CodeRabbit replies are chat with their own limit of about 25 an hour across every PR (observed on prismalens #1028 to #1030). Reply highest severity first; replies past the limit wait for the next hour. A reply answered with `Rate Limit Exceeded` is unanswered: reply again after the stated wait. Never write the word "resolve" in a reply; CodeRabbit reads it as a command.
 
 ## Resolving threads
 
@@ -52,7 +52,7 @@ The reviewer that opened a thread resolves it; the session never does (`no-threa
 Only on the operator's word for that PR (`MERGE_OK=<pr>`, enforced by `merge-gate`), and only when, on the current head:
 
 - required checks are green (`gh pr checks <n> --required`);
-- each reviewer has posted on this head (Claude's liveness shows a `reviewed <sha>` verdict for the head; CodeRabbit reviewed it, unless the PR is labelled `coderabbit_skip`), and every finding is fixed or declined with a reason;
+- each reviewer has posted on this head (Claude's liveness shows a `reviewed <sha>` verdict for the head; CodeRabbit reviewed it or answered `Review finished`, unless the PR is labelled `coderabbit_skip` or the routine skipped the head as a minor-only re-review), and every finding is fixed or declined with a reason;
 - every thread is resolved by the reviewer that opened it.
 
 Merge with a merge commit whose subject is the PR title: `MERGE_OK=<n> gh pr merge <n> --merge --subject "<title> (#<n>)"`. Where `rig-meta.sh get <repo> merge_queue` is true, enqueue with the `enqueuePullRequest` GraphQL mutation instead, and treat the PR as merged only when `gh pr view <n> --json state` reads `MERGED`. A body closing several issues repeats the keyword: `closes #a, closes #b`. Afterwards remove the worktree and branch.
