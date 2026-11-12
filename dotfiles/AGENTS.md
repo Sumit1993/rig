@@ -55,7 +55,7 @@ Delegated and unattended work runs in its own worktree, never the main checkout;
 
 # Reporting and merging
 - Check every delegated claim against evidence before relying on it.
-- Report at the size of the decision: a finished, verified step is one line; detail goes in the issue or PR and the reply links it. What needs the operator is parked in one `PARKED:` comment on the umbrella issue, a line each, edited in place; work on whatever it does not block.
+- Report at the size of the decision: a finished, verified step is one line; detail goes in the issue or PR and the reply links it. A question for the operator goes in the reply when they are present, in one issue comment when they are away; work on whatever it does not block.
 - A PR is mergeable only when CI is green and every review thread is resolved by the reviewer that opened it. The session never resolves a reviewer's thread; a finding the reviewer will not concede goes to the operator.
 - A PR stacked on another is retargeted, and its base branch deleted, only once the base reads `MERGED`; a merge queue's enqueue is not a merge.
 - Push, open pull requests, create todos, run workflows and spawn subagents without asking. Merge is an explicit per-merge permission, never carried forward, recorded as `MERGE_OK=<pr> gh pr merge <pr>`; a gate refuses the rest.

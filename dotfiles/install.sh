@@ -253,7 +253,8 @@ echo "→ settings.json (deep-merge: fragment overlays existing; permissions.all
 if [ -f "$CLAUDE/settings.json" ]; then
   json_edit "$CLAUDE/settings.json" --slurpfile frag "$HERE/settings.fragment.json" '. as $cur | $frag[0] as $f | ($cur * $f)
     | .permissions.allow = (($cur.permissions.allow // []) + ($f.permissions.allow // []) | unique)
-    | if (.statusLine.command // "") | test("statusline-command[.]sh") then del(.statusLine) else . end' \n    && rm -f "$CLAUDE/statusline-command.sh"
+    | if (.statusLine.command // "") | test("statusline-command[.]sh") then del(.statusLine) else . end' \
+    && rm -f "$CLAUDE/statusline-command.sh"
 else
   cp "$HERE/settings.fragment.json" "$CLAUDE/settings.json"
 fi

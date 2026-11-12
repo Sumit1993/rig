@@ -28,7 +28,10 @@ Never create, rename or delete a label or a milestone. If the vocabulary lacks s
 Reviews land hours after a PR is marked ready. Before any new pick, list the operator's ready PRs in this repo and clear their findings, PR by PR, base first on a stack (`babysit-pr`):
 
 ```
-gh pr list --author @me --state open --limit 500 --json number,title,isDraft --jq '.[] | select(.isDraft | not) | "#\(.number)\t\(.title)"'
+repo=$(gh repo view --json nameWithOwner -q .nameWithOwner)
+gh api graphql --paginate -f q="repo:$repo is:pr is:open author:@me draft:false" \
+  -f query='query($q: String!, $endCursor: String) { search(query: $q, type: ISSUE, first: 100, after: $endCursor) { pageInfo { hasNextPage endCursor } nodes { ... on PullRequest { number title } } } }' \
+  --jq '.data.search.nodes[] | "#\(.number)\t\(.title)"'
 ```
 
 Collect findings that need the operator's ruling and ask them all in one question at the end. List the PRs that pass `babysit-pr`'s merge conditions, ask once for the whole list, and merge each one granted.
