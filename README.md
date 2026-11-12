@@ -30,14 +30,13 @@ Plugin `rig`, path-independent via `${CLAUDE_PLUGIN_ROOT}`:
 | `hooks/pr-created.sh` | PostToolUse(Bash, Agent): a real PR URL injects "pick its watcher now": `/autofix-pr` by default, the pr-babysit Monitor for a held round |
 | `hooks/delegate-check.sh` | PreToolUse(Agent): blocks a Claude subagent on delegable work. Escape: name agy in the prompt |
 | `hooks/no-haiku.sh` | PreToolUse(Agent): blocks Haiku 4.x ids; bare `haiku` (Haiku 5.5) passes |
-| `hooks/scoped-cap-gate.sh` | PreToolUse(Agent): blocks a Fable spawn (by `model`, else the agent's frontmatter) while Fable's weekly cap reads critical; `planner` on Opus passes |
 | `hooks/no-broad-agy-kill.sh` | PreToolUse(Bash): blocks a kill that targets agy by name; kill by PID or slug |
 | `hooks/release-docs-gate.sh` | PreToolUse(Bash): blocks merging a release PR without a docs audit in 14 days. Escape: `DOCS_GATE=skip` |
 | `hooks/reap-watchers.sh` | SessionEnd kills watchers, SessionStart reaps orphans. Seen-state is durable so this is free |
 | `hooks/gh-body-no-scratch.sh` | PreToolUse(Bash): blocks gh issue/pr citing ai-context or /tmp. Escape: `SCRATCH_GATE=skip` |
 | `hooks/gh-body-stamp.sh` | PreToolUse(Bash): blocks gh issue/pr posts whose body carries no operator-stamp marker. Escape: `STAMP_GATE=skip` |
 | `hooks/issue-create-nudge.sh` | PreToolUse(Bash): nudges on third gh issue create this session to fold into an umbrella |
-| `hooks/session-budget.sh` | SessionStart: one line with the 5h and 7d percent from `~/.claude/metrics/usage.jsonl`, agy quota per group, Codex's usage limits, the resume cost on `--resume`, and the cheap-mode policy. The probes run in parallel, each cut at 6 s |
+| `hooks/session-budget.sh` | SessionStart: one line with agy quota per group, Codex's usage limits and the resume cost on `--resume`. The probes run in parallel, each cut at 6 s |
 | `hooks/review-debt.sh` | SessionStart: unresolved review threads on author's non-draft PRs; clear review debt before any new pick |
 | `hooks/limit-log.sh` | StopFailure(rate_limit, overloaded) and Notification(quota_auto_resume_*): one JSON line each in `~/.claude/metrics/limits.jsonl` |
 | `hooks/outside-view-nudge.sh` | PreToolUse(AskUserQuestion, EnterPlanMode, planner or fable-planner spawn): get an outside view first. 1st time, then every 3rd per session |
@@ -53,7 +52,7 @@ Plugin `rig`, path-independent via `${CLAUDE_PLUGIN_ROOT}`:
 
 Each harness's global instructions are generated from the same two pieces, the core and that harness's overlay. Claude Code reads no user-level `AGENTS.md`, so `install.sh` writes `~/.claude/CLAUDE.md` as an `@` import of `AGENTS.md` and `harness/claude.md` from this checkout; machine-local rules go below the marker line. Codex (`~/.codex/AGENTS.md`), agy (`~/.gemini/AGENTS.md`) and the Windows Codex app get a generated file of core plus overlay. agy also keeps `GEMINI.md`, its lane-worker contract. A plugin cannot carry any of this.
 
-Dotfiles, what a plugin cannot carry: `AGENTS.md`, `harness/*.md`, `harnesses.json`, the statusline scripts, `settings.fragment.json` (registers this repo as a marketplace and enables the plugin), `GEMINI.md`, `install.sh`, `install-windows.sh`, the `build-*-plugin.sh` builders and `dedupe.sh`.
+Dotfiles, what a plugin cannot carry: `AGENTS.md`, `harness/*.md`, `harnesses.json`, `settings.fragment.json` (registers this repo as a marketplace and enables the plugin), `GEMINI.md`, `install.sh`, `install-windows.sh`, the `build-*-plugin.sh` builders and `dedupe.sh`.
 
 One source, several harnesses. `dotfiles/harnesses.json` declares what each target gets: `claude` (Claude Code on WSL or native Windows, the whole plugin from the marketplace), `codex` (WSL CLI), `codex-desktop` (the Windows app), `claude-windows` and `agy` (lane-first). Per target it lists skills, hooks, agents, runtime files and the doctrine overlay. The builders read it, and a build fails on an artifact no target names, on a shipped skill that points at a skill the target lacks, and on a missing runtime file. `install.sh --check` reports drift per target, including Codex hooks still waiting for trust in `/hooks`. `dotfiles/tests/test-builders.sh` covers the builders.
 
