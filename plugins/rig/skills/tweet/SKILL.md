@@ -13,7 +13,7 @@ First fetch live context from the X Context Provider n8n workflow (voice spec, r
 curl -sf -m 30 -H "X-Context-Token: $(cat "${X_CONTEXT_TOKEN_FILE:-$HOME/.claude/secrets/x-context-token}")" "https://n8n.sfun.cloud/webhook/x-context-73826577" | jq '{voice, recentSummary, mentionsProductRecently, trendingSummary, historyFreshAt}'
 ```
 
-If the fetch fails, draft anyway and say so.
+If the fetch fails, draft without the voice and dedup checks, and tell the operator they were skipped.
 
 ## 1. Gather the material
 

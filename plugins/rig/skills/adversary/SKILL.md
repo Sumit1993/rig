@@ -64,7 +64,7 @@ Findings are confirmed defects, credible risks or open questions. Each objection
 
 The working agent checks each claim and records it accepted, refuted with evidence, or unresolved. It fixes accepted findings and sends a new packet with the previous validated result, the revised target and its evidence-based response to each objection, through a fresh run with `--previous-result "$PREVIOUS_RESULT"`. The launcher copies the prior ledger into the prompt and rejects a result missing any prior ID. That enforces continuity, not the substance of a claimed fix. IDs are preserved, disproven objections are withdrawn, and fixed is kept apart from merely disputed. The seat tests rebuttals rather than accepting or defending its earlier answer.
 
-The budget: one round plus a rebuttal on the changed target. Stop when no material objection is open.
+The budget: one round plus a rebuttal on the changed target. Stop when no material objection is open; one still open after the rebuttal goes to the operator.
 
 ## 5. Evidence and record
 

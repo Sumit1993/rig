@@ -44,7 +44,7 @@ until [ "$(gh pr view 495 --json mergeStateStatus --jq .mergeStateStatus)" = "CL
 An unresolved review thread pins `mergeStateStatus` at `BLOCKED`, so the posted finding is the event that guarantees this never exits.
 
 - A PR wait keys on `reviewThreads` and comment IDs, never on merge state. Any increase is the event.
-- `BLOCKED` means "CI running" or "reviewer left findings"; query `reviewThreads` to tell which.
+- `BLOCKED` means "CI running" or "reviewer left findings"; `gh pr checks <n>` says whether CI is running, `reviewThreads` whether findings are open.
 
 ## 4. Check before waiting
 
@@ -63,7 +63,7 @@ At expected duration plus 10 minutes of silence, read the logs yourself and salv
 Any `pgrep -f` or `pkill -f` whose pattern appears in your own shell's command line kills your own shell, exit 144.
 
 - Kill by PID. Capture `PID=$!` at launch and keep it. The rest is for a lost PID.
-- The bracket trick (`"issue39[-]rca"`) is not sufficient: the harness runs each shell call inside a wrapper shell, so any other mention of the string in the same call defeats it. Generate the marker at runtime (`SLUG="run-$(date +%s)"`) and give the kill its own call.
+- The bracket trick (`"issue39[-]rca"`) is not sufficient: the harness runs each shell call inside a wrapper shell, so any other mention of the string in the same call defeats it. Generate a marker at runtime (`SLUG="run-$(date +%s)"`), put it in the process's argv at launch, keep it with the PID, and give the kill its own call.
 - `kill -9 "$PID"` preferred. `kill -9 $(pgrep -f "$SLUG")` as fallback.
 - A shared binary's processes are machine-global; `pkill -x <name>` reaches every session on the host.
 - Prove a PID is yours (a captured `$!`, or a `readlink /proc/<pid>/cwd` you recognise) or kill nothing and say so.

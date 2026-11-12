@@ -182,7 +182,7 @@ json_edit() {
   local f=$1; shift
   if ! jq -e . "$f" >/dev/null 2>&1; then
     echo "  WARN: $f is not plain JSON (comments?); left unchanged. Remove the comments and re-run, or edit it by hand." >&2
-    return 0
+    return 1
   fi
   cp "$f" "$f.bak-$(date +%s)"
   jq "$@" "$f" > "$f.tmp" && jq -e . "$f.tmp" >/dev/null && mv "$f.tmp" "$f"
@@ -219,13 +219,10 @@ else
   wanted=$(claude_md_wanted); printf '%s\n' "$wanted" > "$CLAUDE/CLAUDE.md"
 fi
 
-# rig ships no status line: remove the one older installs wrote; settings.json loses its entry below.
-rm -f "$CLAUDE/statusline-command.sh"
-
 AGY="$HOME/.gemini/antigravity-cli"
 if [ -d "$AGY" ]; then
-  rm -f "$AGY/statusline.sh"
-  [ -f "$AGY/settings.json" ] && json_edit "$AGY/settings.json" 'if (.statusLine.command // "") | test("statusline[.]sh") then del(.statusLine) else . end'
+  # rig ships no status line; a script goes only once its settings entry is gone.
+  { [ ! -f "$AGY/settings.json" ] || json_edit "$AGY/settings.json" 'if (.statusLine.command // "") | test("statusline[.]sh") then del(.statusLine) else . end'; } && rm -f "$AGY/statusline.sh"
   # A copy, not a symlink: Git Bash's ln copies on Windows, and --check compares contents either way.
   echo "→ agy GEMINI.md"
   rm -f "$HOME/.gemini/GEMINI.md"; cp "$DOT/$(rig_field agy doctrine.file)" "$HOME/.gemini/GEMINI.md"
@@ -256,7 +253,7 @@ echo "→ settings.json (deep-merge: fragment overlays existing; permissions.all
 if [ -f "$CLAUDE/settings.json" ]; then
   json_edit "$CLAUDE/settings.json" --slurpfile frag "$HERE/settings.fragment.json" '. as $cur | $frag[0] as $f | ($cur * $f)
     | .permissions.allow = (($cur.permissions.allow // []) + ($f.permissions.allow // []) | unique)
-    | if (.statusLine.command // "") | test("statusline-command[.]sh") then del(.statusLine) else . end'
+    | if (.statusLine.command // "") | test("statusline-command[.]sh") then del(.statusLine) else . end' \n    && rm -f "$CLAUDE/statusline-command.sh"
 else
   cp "$HERE/settings.fragment.json" "$CLAUDE/settings.json"
 fi

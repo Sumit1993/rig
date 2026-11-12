@@ -29,7 +29,7 @@ Write a self-contained Markdown packet under `~/ai-context/<repo>/<issue>-<slug>
 
 Pick the surface by need:
 - **Task** (`handoff.py --surface task`) for Windows work with no UI to drive: a Windows build or test run, a file or registry inspection, a Windows-only tool. The thread changes files only inside its task folder and the paths the packet's allowed actions name, so name every path it may write.
-- **In-app browser** (`handoff.py --surface browser`, which mentions `@Browser`) for browser work that needs no real login. The bundled Browser plugin drives its `iab` browser through `agent.browsers`, off the operator's browser profile. Ask for settled reads after a write or navigation.
+- **In-app browser** (`handoff.py --surface browser`, which mentions `@Browser`) for browser work that needs no real login. The bundled Browser plugin drives its `iab` browser through `agent.browsers`, off the operator's browser profile (`docs/tab-mentions-iab.md` in `.codex/plugins/cache/openai-bundled/browser/<version>/`). Ask for settled reads after a write or navigation.
 - **Computer Use** when the work needs a real browser session, or anything outside a browser: native apps, OS dialogs, cross-app tasks. It drives the operator's live desktop, so every app it may touch is a deliberate grant (§4).
 - **A human or Playwright** for any interaction the packet cannot verify through either surface; say so in the report rather than guess.
 
