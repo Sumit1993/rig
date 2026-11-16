@@ -4,7 +4,7 @@
     "claude": {
       "$comment": "Claude Code, on WSL or native Windows (hooks run under Git Bash there). The plugin loads from the GitHub marketplace as a whole directory, so this target lists everything; nothing is built.",
       "install": "marketplace",
-      "skills": ["adversary", "autopilot", "codex-desktop", "assayer", "compass", "docs-drift", "farm-out", "lane", "no-comments", "no-doze", "babysit-pr", "triage", "tweet"],
+      "skills": ["adversary", "autopilot", "codex-desktop", "assayer", "compass", "docs-drift", "farm-out", "hill-climb", "lane", "no-comments", "no-doze", "babysit-pr", "triage", "tweet", "why-first"],
       "hooks": ["merge-gate.sh", "no-broad-agy-kill.sh", "no-thread-resolve.sh", "safe-stash.sh", "summon-gate.sh"],
       "agents": ["agy-runner", "codex-runner", "comment-sicko", "fable-planner", "planner"],
       "runtime": ["hooks/lib/gh-command.sh", "hooks/lib/json.sh", "hooks/lib/report-guard.sh", "scripts/ai-context-sweep.sh", "scripts/lint-skill-docs.sh", "scripts/rig-meta.sh", "scripts/wake.sh", "data/repo-meta.json"],
@@ -13,7 +13,7 @@
     "codex": {
       "$comment": "WSL Codex CLI as an organizer. autopilot crosses: its wake-up is the OS scheduler through scripts/wake.sh. no-comments stays out: it spawns a named Claude subagent.",
       "install": "codex-plugin",
-      "skills": ["adversary", "autopilot", "codex-desktop", "assayer", "compass", "docs-drift", "farm-out", "no-doze", "babysit-pr", "triage", "tweet"],
+      "skills": ["adversary", "autopilot", "codex-desktop", "assayer", "compass", "docs-drift", "farm-out", "hill-climb", "no-doze", "babysit-pr", "triage", "tweet", "why-first"],
       "hooks": ["merge-gate.sh", "no-broad-agy-kill.sh", "no-thread-resolve.sh", "safe-stash.sh", "summon-gate.sh"],
       "hook_events": {"PreToolUse": {}},
       "agents": [],
@@ -32,11 +32,11 @@
     "claude-windows": {
       "$comment": "Windows Claude Code: no agy, so farm-out, lane and agy-runner stay out, and autopilot with them since it routes lanes through farm-out; no hooks, being bash scripts that read WSL paths.",
       "install": "claude-directory-marketplace",
-      "skills": ["adversary", "codex-desktop", "assayer", "compass", "docs-drift", "no-comments", "no-doze", "babysit-pr", "triage", "tweet"],
+      "skills": ["adversary", "codex-desktop", "assayer", "compass", "docs-drift", "no-comments", "no-doze", "babysit-pr", "triage", "tweet", "why-first"],
       "hooks": [],
       "agents": ["codex-runner", "comment-sicko", "fable-planner", "planner"],
       "runtime": ["scripts/rig-meta.sh", "data/repo-meta.json"],
-      "allow_refs": {"no-doze": {"autopilot": "the scheduled-tick aside; the skill says what to do without it", "farm-out": "a pointer to a worked kill example; the rule stands without it"}},
+      "allow_refs": {"why-first": {"farm-out": "a plug-in point for agy work orders; the research rules stand without it", "hill-climb": "a plug-in point; a climb runs where farm-out does"}, "no-doze": {"autopilot": "the scheduled-tick aside; the skill says what to do without it", "farm-out": "a pointer to a worked kill example; the rule stands without it"}},
       "doctrine": {"mode": "none"}
     },
     "agy": {

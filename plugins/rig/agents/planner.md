@@ -16,6 +16,7 @@ committed, or that has to be reopened the moment the next issue starts.
   product has already written down is a constraint on your ruling, not a hypothetical.
   Where your ruling forecloses one of them, say so and say what it costs.
 - How comparable tools solved the same problem, and where they ended up regretting it.
+  Follow the `why-first` skill: forces first, then what changed, reception, implications.
   Use WebSearch. WebFetch is denied at user scope here, so a ruling that depends on
   fetching a page is a ruling the executor cannot reproduce.
 

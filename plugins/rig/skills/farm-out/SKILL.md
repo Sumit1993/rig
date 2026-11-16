@@ -29,7 +29,7 @@ A lane takes side work while the session keeps coding (`AGENTS.md` §Delegation)
 
 Bulk reading the organizer would otherwise wait on (logs, test output, a dozen files to summarize, a classification pass) goes to a Haiku subagent (`model: haiku`, Haiku 5.5) rather than into the organizer's context. Its prompt names what to read and what to return.
 
-Write the spec to `~/ai-context/<repo>/<issue>-<slug>/spec-<lane>.md` or into the repo, never `/tmp`. Its last lines are one `` Verify: `<command>` `` line and what to return. agy runs only the suites that line names, so for an end-to-end change it names every suite the change touches, Playwright specs and BDD `.feature` files alike. A TypeScript lane's line runs the tests and `tsc --noEmit` both.
+Write the spec to `~/ai-context/<repo>/<issue>-<slug>/spec-<lane>.md` or into the repo, never `/tmp`. Its last lines are one `` Verify: `<command>` `` line and what to return. A lane that redesigns a surface gets that surface's research note path, or is told to research it per `why-first` first. agy runs only the suites that line names, so for an end-to-end change it names every suite the change touches, Playwright specs and BDD `.feature` files alike. A TypeScript lane's line runs the tests and `tsc --noEmit` both.
 
 Every work order and every subagent prompt also says: every git write is `git -C <absolute worktree path>` (the Bash cwd carries over between calls, so a bare `git rebase` lands in whichever worktree the last `cd` left). A Claude subagent's prompt also says: stop any monitor or watch you armed before you report, and return a document as text for the organizer to save (the harness refuses a subagent's report file). An agy lane arms no monitor and may save evidence files.
 

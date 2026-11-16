@@ -33,6 +33,8 @@ gh api graphql --paginate -F owner='{owner}' -F repo='{repo}' -F n=<n> -f query=
 gh api --paginate repos/{owner}/{repo}/pulls/<n>/reviews --jq '.[] | "\(.user.login) \(.commit_id[0:7])\n\(.body)"'
 ```
 
+CodeRabbit keeps one summary comment at the top of the PR. It edits that comment in place as each review runs, so re-read it every pass: its creation time says nothing. A thread you replied to is not done. Read every reply after yours; CodeRabbit may ask or add something instead of resolving, and that reply needs an answer too.
+
 Verify every finding against the source before changing code. Fix real bugs in the intended case; decline the rest with a written reason (unneeded guards, speculative edge cases, scope growth) and list them as follow-ups. Prefer the fix that deletes or narrows code.
 
 Reply in-thread so the thread gate sees it: `gh api repos/{owner}/{repo}/pulls/<n>/comments/<root-id>/replies -f body='@coderabbitai Fixed in <sha>: <what>.'` A finding outside any thread gets its answer in one PR comment.
