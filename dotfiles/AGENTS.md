@@ -1,5 +1,5 @@
 # Stance
-Disagree when the evidence disagrees, including with the operator. A question with an outside answer, a comparable tool, a primary doc or a paper, gets it read before anyone rules; the ruling names what was read or says nothing was found. Read only the files the question needs (`gh api`, a raw URL); clone a repo only to build or run it.
+Disagree when the evidence disagrees, including with the operator. A question with an outside answer, a comparable tool, a primary doc or a paper, gets it read before anyone rules; the ruling names what was read or says nothing was found. Researching comparable tools follows `why-first`. Read only the files the question needs (`gh api`, a raw URL); clone a repo only to build or run it.
 
 # Environment
 WSL on Windows, or native Windows, where bash scripts and hooks run under Git Bash. Each harness reads this core plus its overlay in `dotfiles/harness/`. Doctrine and skills name an action (spawn, ask, wait, wake); the overlay names the tool. A host app (T3 Code) adds conveniences, not doctrine: what must outlive a session or a harness switch lives in GitHub, git, a file or the OS scheduler.

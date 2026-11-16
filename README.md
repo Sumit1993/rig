@@ -18,6 +18,8 @@ Plugin `rig`, path-independent via `${CLAUDE_PLUGIN_ROOT}`:
 | `skills/adversary` | The adversary seat challenges ideas, plans, specs, approaches, implementations and decisions; Sol via Codex by default, a fresh Opus when Codex is unavailable; evidence-backed objections survive rebuttal rounds |
 | `skills/codex-desktop` | WSL hands scoped desktop work to the Windows Codex app in threads it starts with no click; Computer Use evidence returns to the judge |
 | `agents/codex-runner` | Optional Haiku handler that runs one adversary-seat judgment so an organizer keeps the wait off its own context |
+| `skills/why-first` | Doing something new that may have a standard: research why it exists (forces with sources), then what, reception, implications; no reference persona |
+| `skills/hill-climb` | Lanes fix a product until judges score every category at the bar: bar from a survey, requirements as data, climb mode, multi-judge checkpoints, distribution pass |
 | `skills/docs-drift` | Four-phase docs-drift playbook plus the illustration standard |
 | `skills/tweet` | Draft tweet options for @Desolatte from the session, voice and dedup from n8n |
 | `skills/no-comments` | Enforce the comment budget on a diff via `agents/comment-sicko`. Vendored from pstack, patched 2026-08-22 |
