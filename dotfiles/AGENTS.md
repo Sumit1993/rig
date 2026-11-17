@@ -29,6 +29,7 @@ The overlay says how to reach each seat. Only the operator changes a seat's effo
 - Planner / judge: Opus 5.5 at `high`; Fable 5.2 only when the operator allows.
 - Adversary: GPT-6.1 Sol via Codex at `high`, its subagents allowed; load `adversary`.
 - Reader: Haiku 5.5. Side lane: agy.
+- Council: GPT Sol and a fresh Opus 5.5 through the adversary launcher, with agy's Gemini as an unscored jester; load `council`.
 
 # Models
 | Model | Afford | Intel | Taste | Effort | Use for |
@@ -45,7 +46,7 @@ Pick the tier by the task's shape: Haiku reads one thing, Sonnet relates many, O
 - Never ask a Claude model to show its reasoning in the reply; it declines as `reasoning_extraction`. Ask for evidence: "mark anything you couldn't confirm, and say where you looked". Sonnet, Haiku (thinking on) and agy-Gemini need explicit verification steps.
 
 # Reviewers
-Reviews run async: the hourly CodeRabbit routine (`scripts/coderabbit-routine/` in Sumit1993/rig) reviews one ready PR per hour across every repo, skips `coderabbit_skip`, and never merges. Codex reviews (`assayer`) only when the operator runs them, on any repo. A draft is never summoned: open drafts, push freely, mark ready once. Findings wait as review debt for the next session in that repo, cleared before any new pick. Every review loop has a round budget and fights scope creep (`adversary` §4, the budget). Procedure: `compass`, `babysit-pr`, `assayer`. Every comment an agent posts on the operator's behalf says so in its first line, except a bare bot command such as `@coderabbitai review`.
+Reviews run async: the hourly CodeRabbit routine (`scripts/coderabbit-routine/` in Sumit1993/rig) reviews one ready PR per hour across every repo, skips `coderabbit_skip`, and never merges. Codex reviews (`assayer`) only when the operator runs them, on any repo. A draft is never reviewed: open drafts, push freely, mark ready once. The routine covers PRs nobody is watching; a session summons CodeRabbit on its own ready PR whenever it needs a review. Findings wait as review debt for the next session in that repo, cleared before any new pick. Every review loop has a round budget and fights scope creep (`adversary` §4, the budget). Procedure: `compass`, `babysit-pr`, `assayer`. Every comment an agent posts on the operator's behalf says so in its first line, except a bare bot command such as `@coderabbitai review`.
 
 # Delegation
 agy runs beside the session, never in front of it: tests for code that exists, running suites and returning only the failures, log and CI triage, evidence collection, rebases, bulk reading, per-item repetition. If the session would stop and wait on the answer, it does the work itself or hands reading to the reader seat. Load `farm-out` first. A work order names the files, the command that must pass and what to return. Rulings (security, design surface, product semantics) go to the planner seat, reused inside the prompt-cache hour. Adversarial scrutiny goes to the adversary seat, also when review is the next blocking step; the working agent runs those rounds itself. Unresolved material disagreements go to the operator.
@@ -58,4 +59,4 @@ Delegated and unattended work runs in its own worktree, never the main checkout;
 - Report at the size of the decision: a finished, verified step is one line; detail goes in the issue or PR and the reply links it. A question for the operator goes in the reply when they are present, in one issue comment when they are away; work on whatever it does not block.
 - A PR is mergeable only when CI is green and every review thread is resolved by the reviewer that opened it. The session never resolves a reviewer's thread; a finding the reviewer will not concede goes to the operator.
 - A PR stacked on another is retargeted, and its base branch deleted, only once the base reads `MERGED`; a merge queue's enqueue is not a merge.
-- Push, open pull requests, create todos, run workflows and spawn subagents without asking. Merge is an explicit per-merge permission, never carried forward, recorded as `MERGE_OK=<pr> gh pr merge <pr>`; a gate refuses the rest.
+- Push, open pull requests, create todos, run workflows and spawn subagents without asking. Merge when the operator asks or under `full-send`, through `babysit-pr`'s merge gate; `full-stop` never merges.

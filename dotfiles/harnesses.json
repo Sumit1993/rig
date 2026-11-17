@@ -4,8 +4,8 @@
     "claude": {
       "$comment": "Claude Code, on WSL or native Windows (hooks run under Git Bash there). The plugin loads from the GitHub marketplace as a whole directory, so this target lists everything; nothing is built.",
       "install": "marketplace",
-      "skills": ["adversary", "autopilot", "codex-desktop", "assayer", "compass", "docs-drift", "farm-out", "hill-climb", "lane", "no-comments", "no-doze", "babysit-pr", "triage", "tweet", "why-first"],
-      "hooks": ["merge-gate.sh", "no-broad-agy-kill.sh", "no-thread-resolve.sh", "safe-stash.sh", "summon-gate.sh"],
+      "skills": ["adversary", "autopilot", "codex-desktop", "assayer", "compass", "council", "docs-drift", "farm-out", "full-send", "full-stop", "hill-climb", "lane", "no-comments", "no-doze", "babysit-pr", "triage", "tweet", "why-first"],
+      "hooks": ["no-broad-agy-kill.sh", "no-thread-resolve.sh", "safe-stash.sh"],
       "agents": ["agy-runner", "codex-runner", "comment-sicko", "fable-planner", "planner"],
       "runtime": ["hooks/lib/gh-command.sh", "hooks/lib/json.sh", "hooks/lib/report-guard.sh", "scripts/ai-context-sweep.sh", "scripts/lint-skill-docs.sh", "scripts/rig-meta.sh", "scripts/wake.sh", "data/repo-meta.json"],
       "doctrine": {"mode": "import", "overlay": "harness/claude.md"}
@@ -13,8 +13,8 @@
     "codex": {
       "$comment": "WSL Codex CLI as an organizer. autopilot crosses: its wake-up is the OS scheduler through scripts/wake.sh. no-comments stays out: it spawns a named Claude subagent.",
       "install": "codex-plugin",
-      "skills": ["adversary", "autopilot", "codex-desktop", "assayer", "compass", "docs-drift", "farm-out", "hill-climb", "no-doze", "babysit-pr", "triage", "tweet", "why-first"],
-      "hooks": ["merge-gate.sh", "no-broad-agy-kill.sh", "no-thread-resolve.sh", "safe-stash.sh", "summon-gate.sh"],
+      "skills": ["adversary", "autopilot", "codex-desktop", "assayer", "compass", "council", "docs-drift", "farm-out", "full-send", "full-stop", "hill-climb", "no-doze", "babysit-pr", "triage", "tweet", "why-first"],
+      "hooks": ["no-broad-agy-kill.sh", "no-thread-resolve.sh", "safe-stash.sh"],
       "hook_events": {"PreToolUse": {}},
       "agents": [],
       "runtime": ["hooks/lib/gh-command.sh", "hooks/lib/json.sh", "hooks/lib/report-guard.sh", "scripts/rig-meta.sh", "scripts/wake.sh", "data/repo-meta.json"],
@@ -36,7 +36,7 @@
       "hooks": [],
       "agents": ["codex-runner", "comment-sicko", "fable-planner", "planner"],
       "runtime": ["scripts/rig-meta.sh", "data/repo-meta.json"],
-      "allow_refs": {"why-first": {"farm-out": "a plug-in point for agy work orders; the research rules stand without it", "hill-climb": "a plug-in point; a climb runs where farm-out does"}, "no-doze": {"autopilot": "the scheduled-tick aside; the skill says what to do without it", "farm-out": "a pointer to a worked kill example; the rule stands without it"}},
+      "allow_refs": {"babysit-pr": {"full-send": "the unattended merge grant; without it a merge waits for the operator"}, "why-first": {"farm-out": "a plug-in point for agy work orders; the research rules stand without it", "hill-climb": "a plug-in point; a climb runs where farm-out does"}, "no-doze": {"autopilot": "the scheduled-tick aside; the skill says what to do without it", "farm-out": "a pointer to a worked kill example; the rule stands without it"}},
       "doctrine": {"mode": "none"}
     },
     "agy": {

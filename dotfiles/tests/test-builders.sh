@@ -45,7 +45,7 @@ variant '(.targets |= with_entries(.value.skills -= ["tweet"])) | .unshipped.ski
 check "the same skill under unshipped passes" 'RIG_MANIFEST="$T/m.json" bash -c ". \"$D/build-lib.sh\"; rig_check_manifest" 2>/dev/null'
 variant '.targets.codex.skills += ["no-such-skill"]'
 check "a declared skill that does not exist fails" '! RIG_MANIFEST="$T/m.json" bash -c ". \"$D/build-lib.sh\"; rig_check_manifest" 2>/dev/null'
-variant '.targets.claude.hooks -= ["merge-gate.sh"] | .targets.codex.hooks -= ["merge-gate.sh"] | .unshipped.hooks["merge-gate.sh"] = "test"'
+variant '.targets.claude.hooks -= ["safe-stash.sh"] | .targets.codex.hooks -= ["safe-stash.sh"] | .unshipped.hooks["safe-stash.sh"] = "test"'
 check "claude hooks must match hooks.json" '! RIG_MANIFEST="$T/m.json" bash -c ". \"$D/build-lib.sh\"; rig_check_manifest" 2>/dev/null'
 variant '.targets.codex.skills -= ["babysit-pr"]'
 out=$(RIG_MANIFEST="$T/m.json" bash "$D/build-codex-plugin.sh" "$T/y" codex 2>&1 >/dev/null)
@@ -67,8 +67,8 @@ printf '#!/bin/bash\necho "chore(main): release 1.2.0"\n' > "$T/bin/gh"; chmod +
 payload() { jq -n --arg cwd "$T/repo" --arg cmd "$1" '{session_id: "s", transcript_path: null, cwd: $cwd,
   hook_event_name: "PreToolUse", model: "gpt-6.1-sol", turn_id: "t", tool_name: "Bash", tool_use_id: "c", tool_input: {command: $cmd}}'; }
 run_built() { payload "$2" | HOME="$T/home" PATH="$T/bin:$PATH" CLAUDE_PLUGIN_ROOT="$T/codex" "$T/codex/hooks/$1" >/dev/null 2>&1; echo $?; }
-check "built merge-gate blocks a merge with no MERGE_OK" '[ "$(run_built merge-gate.sh "gh pr merge 7 --merge")" = 2 ]'
-check "built merge-gate passes MERGE_OK naming the PR" '[ "$(run_built merge-gate.sh "MERGE_OK=7 gh pr merge 7 --merge")" = 0 ]'
+check "built safe-stash blocks a bare git stash" '[ "$(run_built safe-stash.sh "git stash")" = 2 ]'
+check "built safe-stash passes a named stash push" '[ "$(run_built safe-stash.sh "git stash push -u -m wip")" = 0 ]'
 
 if command -v agy >/dev/null 2>&1; then
   out=$(HOME="$T/home" timeout 30 agy plugin validate "$T/agy" 2>&1)

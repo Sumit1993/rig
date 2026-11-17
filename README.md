@@ -12,6 +12,9 @@ Plugin `rig`, path-independent via `${CLAUDE_PLUGIN_ROOT}`:
 | `skills/compass` | Where the estate stands and what is next: goals are numbered milestones, `p0` orders inside one, the pick is one command |
 | `skills/no-doze` | Wait on long work without dozing: sentinel first, evidence-keyed loops, batch scripts over agent-per-step |
 | `skills/autopilot` | Hold a long unattended run: OS wake-up first (`scripts/wake.sh`, any harness), session and lanes in their own worktrees, stall rule, green is not evidence, park what needs a human |
+| `skills/full-send` | "full send": prove, challenge, file, babysit and merge a PR with nobody watching |
+| `skills/full-stop` | "full stop": the full-send work, stopping with the PR ready for the operator to merge |
+| `skills/council` | "council": GPT Sol and a fresh Opus judge in parallel rounds, agy's Gemini as an unscored jester; verdicts land in the PR body |
 | `skills/babysit-pr` | A PR after it is raised: reviews (CodeRabbit routine, Claude lane, assayer), reading and answering findings, resolving, merging |
 | `skills/assayer` | Review rounds through the assayer runner (Codex by default, OpenCode free): admission, template contract, coverage count, runner limits, round budget, findings as review debt |
 | `skills/farm-out` | Antigravity CLI delegation: preflight probe, launch line, model choice, failure table, kill by PID (`kill-agy.sh`), lane worktrees (`lane-worktree.sh`), the runner's babysit loop |
@@ -26,7 +29,7 @@ Plugin `rig`, path-independent via `${CLAUDE_PLUGIN_ROOT}`:
 | `agents/comment-sicko` | The subagent `no-comments` spawns. Deletes comments, never code |
 | `agents/planner` | The planner seat: specs and rulings on Opus 5.5 at effort high |
 | `agents/fable-planner` | The planner seat on Fable 5.2, used only when the operator allows Fable |
-The rig plugin ships only the gates that stop real harm: `merge-gate` (no merge without `MERGE_OK`), `summon-gate` (no CodeRabbit summon without `CR_SUMMON_OK`), `no-thread-resolve`, `safe-stash` and `no-broad-agy-kill`.
+The rig plugin ships only the gates that stop real harm: `no-thread-resolve`, `safe-stash` and `no-broad-agy-kill`.
 
 `dotfiles/AGENTS.md` loads on every turn in every project, so it carries routing and rules only. Procedure lives in a skill that loads on demand. It is harness-neutral: it names seats (organizer, planner, adversary, reader, side lane) and capabilities, and `dotfiles/harness/{claude,codex,codex-desktop,agy}.md` say how each harness reaches them and which gates it enforces.
 
@@ -45,7 +48,6 @@ Hooks that block or rewrite tool calls report their firing to `mage observe`. Th
 | Hook file | Guard id |
 |---|---|
 | `plugins/rig/hooks/no-broad-agy-kill.sh` | `rig/guard/no-broad-agy-kill` |
-| `plugins/rig/hooks/merge-gate.sh` | `rig/guard/merge-gate` |
 | `plugins/rig/hooks/safe-stash.sh` | `rig/guard/safe-stash` |
 | `plugins/rig/hooks/no-thread-resolve.sh` | `rig/guard/no-thread-resolve` |
 
