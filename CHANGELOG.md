@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.21.0](https://github.com/Sumit1993/rig/compare/rig-v0.20.0...rig-v0.21.0) (2026-11-17)
+
+
+### Features
+
+* full-send, full-stop and council skills; drop the merge and summon gates ([ac1f28d](https://github.com/Sumit1993/rig/commit/ac1f28d82c7d73530cac1fd2b4b8d45efb7a3fe9))
+* full-send, full-stop and council skills; drop the merge and summon gates ([7bd640b](https://github.com/Sumit1993/rig/commit/7bd640b85dfd7ae1246eab14d8e261a97df493e3))
+* prove-it skill and one routing rule for reaching other models ([5e5537d](https://github.com/Sumit1993/rig/commit/5e5537d7f6cf45660d648e14854a40e7d9a6cd46))
+
+
+### Documentation
+
+* the adversary breaks proposals of every kind, not just code ([74d04fa](https://github.com/Sumit1993/rig/commit/74d04fae0ad6213ad922606ac992f9a7d7781985))
+
 ## [0.20.0](https://github.com/Sumit1993/rig/compare/rig-v0.19.1...rig-v0.20.0) (2026-11-16)
 
 
