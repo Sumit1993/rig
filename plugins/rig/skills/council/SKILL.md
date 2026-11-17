@@ -1,13 +1,13 @@
 ---
 name: council
-description: "Load when the operator says \"council\": review or feedback from judges on different providers, looped until none holds a material objection."
+description: "Load when the operator says \"council\": judges on different providers try to break an idea, plan, decision or implementation, in rounds until none holds a material objection."
 metadata:
   version: "1.0.0"
 ---
 
 # Council
 
-Before calling the council, answer open PR comments, fix known issues and run the relevant checks: the council judges the current implementation, not one with fixes still owed. When the operator wants the implementation discarded for new ideas, skip fixes to code being replaced.
+The council judges whatever the operator puts to it: an idea, a plan, a decision, an implementation. When it is code, first answer open PR comments, fix known issues and run the relevant checks: the council judges the current implementation, not one with fixes still owed. When the operator wants the implementation discarded for new ideas, skip fixes to code being replaced.
 
 ## Members
 
@@ -32,7 +32,7 @@ Fix what you accept, then run the next round on the changed target. The budget i
 When the work ends in a PR, put the results in its description, before the closing generated-with line, by editing the body, never in a comment:
 
 ```markdown
-## Council review
+## Council
 
 Rounds: 2
 
