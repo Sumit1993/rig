@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.20.0](https://github.com/Sumit1993/rig/compare/rig-v0.19.1...rig-v0.20.0) (2026-11-16)
+
+
+### Features
+
+* why-first and hill-climb skills; babysit-pr reads CodeRabbit's edited summary and follow-ups ([7489fb2](https://github.com/Sumit1993/rig/commit/7489fb295d26b4ed7953db044ff549dfa2d05af9))
+* why-first and hill-climb skills; babysit-pr reads CodeRabbit's edited summary and follow-ups ([e6a7c3e](https://github.com/Sumit1993/rig/commit/e6a7c3e25e84337b7756a4e3886ecee1f6515dcd))
+
 ## [0.19.1](https://github.com/Sumit1993/rig/compare/rig-v0.19.0...rig-v0.19.1) (2026-11-12)
 
 
