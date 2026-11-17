@@ -1,6 +1,6 @@
 ---
 name: fable-planner
-description: The planner seat held by Fable 5.1. Use only when the operator has allowed Fable for the planner seat; otherwise spawn `planner` (Opus 5.5, effort high). Same job - a spec, an architecture ruling, or adjudication between conflicting reviews on a judgment-heavy ticket. Not for execution, dispatch, or anything bounded.
+description: The planner seat held by Fable 5.2. Use only when the operator has allowed Fable for the planner seat; otherwise spawn `planner` (Opus 5.5, effort high). Same job - a spec, an architecture ruling, or adjudication between conflicting reviews on a judgment-heavy ticket. Not for execution, dispatch, or anything bounded.
 model: fable
 effort: high
 ---

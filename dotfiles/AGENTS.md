@@ -26,14 +26,14 @@ An issue carries the decision, its Done when, the exact commands and the excerpt
 # Seats
 The overlay says how to reach each seat. Only the operator changes a seat's effort.
 - Organizer: the harness the operator talks to; agy is mostly a lane.
-- Planner / judge: Opus 5.5 at `high`; Fable 5.1 only when the operator allows.
+- Planner / judge: Opus 5.5 at `high`; Fable 5.2 only when the operator allows.
 - Adversary: GPT-6.1 Sol via Codex at `high`, its subagents allowed; load `adversary`.
 - Reader: Haiku 5.5. Side lane: agy.
 
 # Models
 | Model | Afford | Intel | Taste | Effort | Use for |
 | :--- | :-: | :-: | :-: | :-: | :--- |
-| Fable 5.1 | 2 | 9 | 9 | high | Planner seat when allowed: judgement calls, plan-hard problems, taste-critical output |
+| Fable 5.2 | 2 | 9 | 9 | high | Planner seat when allowed: judgement calls, plan-hard problems, taste-critical output |
 | Opus 5.5 (1M) | 4 | 9 | 8 | session | Session, planner seat, new lanes at `medium`. `low` for mechanical edits across files, `high` to verify or when medium stalls |
 | Gemini 3.8 Flash | 6 | 8 | 5 | in slug | Side work via agy: tests, checks, triage, evidence |
 | GPT-6.1 Sol | — | — | — | high | Adversary seat. CLI default is `low`; tool output capped at 10k tokens |

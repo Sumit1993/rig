@@ -25,7 +25,7 @@ Plugin `rig`, path-independent via `${CLAUDE_PLUGIN_ROOT}`:
 | `skills/no-comments` | Enforce the comment budget on a diff via `agents/comment-sicko`. Vendored from pstack, patched 2026-08-22 |
 | `agents/comment-sicko` | The subagent `no-comments` spawns. Deletes comments, never code |
 | `agents/planner` | The planner seat: specs and rulings on Opus 5.5 at effort high |
-| `agents/fable-planner` | The planner seat on Fable 5.1, used only when the operator allows Fable |
+| `agents/fable-planner` | The planner seat on Fable 5.2, used only when the operator allows Fable |
 The rig plugin ships only the gates that stop real harm: `merge-gate` (no merge without `MERGE_OK`), `summon-gate` (no CodeRabbit summon without `CR_SUMMON_OK`), `no-thread-resolve`, `safe-stash` and `no-broad-agy-kill`.
 
 `dotfiles/AGENTS.md` loads on every turn in every project, so it carries routing and rules only. Procedure lives in a skill that loads on demand. It is harness-neutral: it names seats (organizer, planner, adversary, reader, side lane) and capabilities, and `dotfiles/harness/{claude,codex,codex-desktop,agy}.md` say how each harness reaches them and which gates it enforces.
