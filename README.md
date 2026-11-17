@@ -14,6 +14,7 @@ Plugin `rig`, path-independent via `${CLAUDE_PLUGIN_ROOT}`:
 | `skills/autopilot` | Hold a long unattended run: OS wake-up first (`scripts/wake.sh`, any harness), session and lanes in their own worktrees, stall rule, green is not evidence, park what needs a human |
 | `skills/full-send` | "full send": prove, challenge, file, babysit and merge a PR with nobody watching |
 | `skills/full-stop` | "full stop": the full-send work, stopping with the PR ready for the operator to merge |
+| `skills/prove-it` | Observed evidence before "done": reproduce first, prove it where the user touches it, never buy green, report each proof |
 | `skills/council` | "council": GPT Sol and a fresh Opus judge in parallel rounds, agy's Gemini as an unscored jester; verdicts land in the PR body |
 | `skills/babysit-pr` | A PR after it is raised: reviews (CodeRabbit routine, Claude lane, assayer), reading and answering findings, resolving, merging |
 | `skills/assayer` | Review rounds through the assayer runner (Codex by default, OpenCode free): admission, template contract, coverage count, runner limits, round budget, findings as review debt |

@@ -24,7 +24,7 @@ An issue carries the decision, its Done when, the exact commands and the excerpt
 - A change that can be run, built or type-checked is reported done only with the output of a real check that exercises it. If none can run here, say which one and why.
 
 # Seats
-The overlay says how to reach each seat. Only the operator changes a seat's effort.
+A seat names a model, not a route. Inside a host that runs models itself (T3 Code, OpenCode, Traycer, prismalens; its delegation tools give it away), reach every seat through the host's own delegation. In a bare harness (Claude Code, Codex, agy), use the CLI routes the overlay names. A model the route cannot reach is reported, never silently swapped. Only the operator changes a seat's effort.
 - Organizer: the harness the operator talks to; agy is mostly a lane.
 - Planner / judge: Opus 5.5 at `high`; Fable 5.2 only when the operator allows.
 - Adversary: GPT-6.1 Sol via Codex at `high`, its subagents allowed; load `adversary`.

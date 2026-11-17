@@ -33,14 +33,7 @@ Hold the turn from step 1 to step 7: a turn that ends while checks or bots are p
 
 ## Proof
 
-Evidence you observed in this session: command output, a reproduction, a screenshot. The most direct the change allows:
-
-- reproduce the failure, apply the fix, watch the same reproduction pass;
-- run what the repo's CI runs;
-- add one focused test that fails without the fix, where the behaviour has none and the repo has a test setup;
-- for UI and runtime behaviour, run the app and look. Green mocked tests do not prove the experience works.
-
-No way to prove a change means no confidence: ask.
+Follow `prove-it`, and run what the repo's CI runs. No way to prove a change means no confidence: ask.
 
 ## Merge gate
 

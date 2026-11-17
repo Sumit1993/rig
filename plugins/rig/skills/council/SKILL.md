@@ -11,7 +11,7 @@ Before calling the council, answer open PR comments, fix known issues and run th
 
 ## Members
 
-Unless the operator names others, the council is:
+Unless the operator names others, the council is the three below, each reached the way `AGENTS.md` §Seats says: the host's delegation inside a host app, the routes here in a bare harness.
 
 - **GPT Sol**, the adversary seat: `run-review.py` with the default holder (`adversary` §3, running a round).
 - **Opus 5.5**, a fresh process: the same launcher with `--holder claude`, same packet, its own run directory.
