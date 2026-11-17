@@ -16,7 +16,7 @@ Mechanics are `babysit-pr`, merging. Specific to unattended:
 
 - Merge only when CI is green and every review thread resolved by the reviewer that opened it. A thread the session or a lane resolved does not count.
 - Never arm auto-merge. Reviewers cannot block a merge, so it fires the moment CI goes green, before the reviewer has finished, and `required_review_thread_resolution` has nothing left to block on.
-- A session that cannot merge with the operator present does not merge at all. Take the PR to green, mark it ready, leave it; the routine gets it reviewed and the operator merges it through `compass`. A PR that needs the operator's sign-off (§10, park for sign-off) gets the `needs-operator` label.
+- A session merges only when the operator asks or under `full-send`. Take the PR to green, mark it ready, leave it; the routine gets it reviewed and the operator merges it through `compass`. A PR that needs the operator's sign-off (§10, park for sign-off) gets the `needs-operator` label.
 - With a standing grant on a classic repo: one at a time, checking the gate after each. Every merge puts the other open PRs behind the base, auto-merge never updates a branch in that state, and nothing tells you. Go and look. Rebase the PRs you are parking at the end of the drain, not the start.
 
 ## 9. Never bypass a ruleset or a gate

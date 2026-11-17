@@ -10,4 +10,4 @@ How Claude Code does what `AGENTS.md` names.
 - Planner seat: Agent `planner` (Opus 5.5, `high`); `fable-planner` only when the operator allows Fable. Reuse it with SendMessage inside the prompt-cache hour.
 - Adversary seat: the launcher in the `adversary` skill, run with Bash.
 - Reader seat: Agent with `model: haiku`.
-- Gates: the rig plugin's hooks. `merge-gate` refuses a merge without `MERGE_OK`, `summon-gate` refuses a CodeRabbit review summon without `CR_SUMMON_OK`, `safe-stash` refuses a bare or unnamed `git stash` and `stash pop`, `no-thread-resolve` refuses a GraphQL thread resolve, and `no-broad-agy-kill` refuses a kill that targets agy by name.
+- Gates: the rig plugin's hooks. `safe-stash` refuses a bare or unnamed `git stash` and `stash pop`, `no-thread-resolve` refuses a GraphQL thread resolve, and `no-broad-agy-kill` refuses a kill that targets agy by name.

@@ -57,7 +57,7 @@ Architecture, security, product semantics and any dilemma where two rules point 
 Read `references/gates-and-merging.md` before touching a gate or a ruleset, merging anything, or parking a PR. The short form:
 
 - A broken gate: ask whether it should exist, and prefer a setting to a workflow (§7, flip the setting).
-- Never arm auto-merge. A session that cannot merge with the operator present takes the PR to green and leaves it (§8, merging).
+- Never arm auto-merge. A session merges only when the operator asks or under `full-send`; otherwise it takes the PR to green and leaves it (§8, merging).
 - Never bypass a gate (`--admin`, `--no-verify`, skip flags). Escalate (§9, never bypass).
 - Work that changes what the operator sees or owns goes to green and stops; comment on a diverged PR instead of closing it (§10, park for sign-off).
 

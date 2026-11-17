@@ -17,28 +17,6 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/merge-gate.sh\"",
-            "timeout": 10,
-            "statusMessage": "merge-gate"
-          }
-        ]
-      },
-      {
-        "matcher": "Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/summon-gate.sh\"",
-            "timeout": 10,
-            "statusMessage": "summon-gate"
-          }
-        ]
-      },
-      {
-        "matcher": "Bash",
-        "hooks": [
-          {
-            "type": "command",
             "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/safe-stash.sh\"",
             "timeout": 5,
             "statusMessage": "safe-stash"
