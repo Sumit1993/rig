@@ -13,7 +13,7 @@ Review bots are helpful, not always right. A PR is done when its findings are an
 
 Keep the PR a draft while commits are still coming, then mark it ready once. Reviews arrive on their own schedule:
 
-- **CodeRabbit** reviews a ready PR when summoned: `gh pr comment <pr> --body '@coderabbitai review'`. Summon your own PR once CodeRabbit has not reviewed its head and you are done pushing; CodeRabbit gives one review per developer per hour across every repo, so a summon spends the slot the routine would use. CodeRabbit answers every summon with `Action performed` or `Action not completed: <reason>`; read the answer to the last summon first, and on a refusal fix the reason (a moved head, too many files) before summoning again. It reviews at most 100 files, counted after the base branch's `path_filters` in `.coderabbit.yaml`. Over that, filter out files whose review is something else (fakes, proof harnesses, generated output) in a PR to the base branch first, then merge the base into this PR (prismalens #1196 took #1185 from 109 files to 95); otherwise split the PR. Post the trigger alone; anything else in the body is read as chat. The hourly routine (`scripts/coderabbit-routine/` in Sumit1993/rig) summons one PR per hour for PRs nobody is watching, never a draft or a PR labelled `coderabbit_skip`.
+- **CodeRabbit** reviews a ready PR when summoned: `gh pr comment <pr> --body '@coderabbitai review'`. Summon your own PR when CodeRabbit has not reviewed its head and you are done pushing; CodeRabbit gives one review per developer per hour across every repo, so a summon spends the slot the routine would use. If it answered the last summon `Action not completed`, fix that reason first. Its 100-file limit counts files after the base branch's `path_filters`. Post the trigger alone; anything else in the body is read as chat. The hourly routine (`scripts/coderabbit-routine/` in Sumit1993/rig) summons one PR per hour for PRs nobody is watching, never a draft or a PR labelled `coderabbit_skip`.
 - **Claude** (`claude[bot]`) runs where `<skill-dir>/../../scripts/rig-meta.sh get <repo> claude_lane` says so. `@claude review` re-checks open threads or reviews incrementally, `@claude full review` starts over. Its `claude-review-liveness` comment says what the last run did and on which `sha=`; `references/claude-verdicts.md` decodes it.
 - **Codex** (`assayer`) runs only when the operator runs it.
 
@@ -25,10 +25,10 @@ In T3 Code, handle what is already there, then `watch_pull_request` and end the 
 
 ## Reviews
 
-Read every comment and reply posted since your last reply (all of them on a first pass), from every review: review threads, review bodies (outside-diff, nitpick and additional comments sit there, with no thread) and PR comments. CodeRabbit splits a large review into several PR comments ("part 1/4" and so on), each up to about 57k characters, longer than one tool output. List the comments first, then read each by id; save one longer than an output to a file and read it in parts.
+Read every comment and reply since your last one, from every review: review threads, review bodies (outside-diff, nitpick and additional comments sit there, with no thread) and PR comments. A large CodeRabbit review spills into PR comments longer than one tool output: list them, then read each by id.
 
 ```bash
-gh api --paginate repos/{owner}/{repo}/issues/<n>/comments --jq '.[] | "\(.id) \(.user.login) \(.created_at) \(.body|length)"'
+gh api --paginate repos/{owner}/{repo}/issues/<n>/comments --jq '.[] | "\(.id) \(.user.login) \(.body|length)"'
 gh api repos/{owner}/{repo}/issues/comments/<id> --jq .body > <file>
 gh api graphql --paginate -F owner='{owner}' -F repo='{repo}' -F n=<n> -f query='query($owner:String!,$repo:String!,$n:Int!,$endCursor:String){repository(owner:$owner,name:$repo){pullRequest(number:$n){reviewThreads(first:100,after:$endCursor){pageInfo{hasNextPage endCursor} nodes{id isResolved path comments(first:100){nodes{databaseId author{login} body}}}}}}}' --jq '.data.repository.pullRequest.reviewThreads.nodes[] | select(.isResolved | not)'
 gh api --paginate repos/{owner}/{repo}/pulls/<n>/reviews --jq '.[] | "\(.user.login) \(.commit_id[0:7])\n\(.body)"'
@@ -38,9 +38,7 @@ CodeRabbit keeps one summary comment at the top of the PR. It edits that comment
 
 Verify every finding against the source before changing code. Fix real bugs in the intended case; decline the rest with a written reason (unneeded guards, speculative edge cases, scope growth) and list them as follow-ups. Prefer the fix that deletes or narrows code.
 
-Answer every finding where its reviewer reads it, and start every reply to CodeRabbit with `@coderabbitai`. In a thread: `gh api repos/{owner}/{repo}/pulls/<n>/comments/<root-id>/replies -f body='@coderabbitai Fixed in <sha>: <what>.'` A decline names why that finding is wrong or out of scope, so CodeRabbit can accept it or push back. A finding outside any thread gets its answer in a PR comment that starts with `@coderabbitai` and quotes the finding's file and lines.
-
-Keep PRs small enough that CodeRabbit posts its findings inline: findings in threads are gated by the repo's required thread resolution, findings in review bodies and PR comments are not.
+Start every reply to CodeRabbit with `@coderabbitai`, in its thread: `gh api repos/{owner}/{repo}/pulls/<n>/comments/<root-id>/replies -f body='@coderabbitai Fixed in <sha>: <what>.'` A decline says why, so CodeRabbit can accept it or push back. A finding outside any thread gets its answer in one PR comment.
 
 CodeRabbit replies are chat with their own limit of about 25 an hour across every PR (observed on prismalens #1028 to #1030). Reply highest severity first; replies past the limit wait for the next hour. A reply answered with `Rate Limit Exceeded` is unanswered: reply again after the stated wait. Never write the word "resolve" in a reply; CodeRabbit reads it as a command.
 
@@ -48,7 +46,7 @@ CodeRabbit replies are chat with their own limit of about 25 an hour across ever
 
 The reviewer that opened a thread resolves it; the session never does (`no-thread-resolve` refuses the GraphQL mutation).
 
-- CodeRabbit checks a reply and closes the thread, or answers in-thread and leaves it open. A thread it left open with no action after your reply gets one nudge in that thread: `@coderabbitai please look at this again: close the thread if the fix holds, or say what is still needed.` An answer that asks for more gets one, like any finding.
+- CodeRabbit closes a thread once your reply satisfies it. A thread it leaves open without answering gets one nudge: `@coderabbitai please look again: close this thread if the fix holds, or say what is still needed.`
 - Claude re-judges open threads when a non-bot replies; a `fixed` verdict resolves the thread.
 - A declined or deferred finding is resolved by the operator after the reason is posted in-thread.
 
