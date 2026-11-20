@@ -15,7 +15,7 @@ import time
 from jsonschema import Draft202012Validator
 from jsonschema.exceptions import ValidationError
 
-DEFAULT_MODEL = "gpt-6.1-sol"
+DEFAULT_MODEL = "gpt-6.2-sol"
 CLAUDE_MODEL = "opus"
 CLAUDE_TOOLS = "Read,Grep,Glob,WebSearch,WebFetch"
 EFFORTS = ("high", "xhigh", "max")
@@ -390,7 +390,7 @@ def main():
     parser.add_argument("--holder", choices=["codex", "claude"], default="codex",
                         help="Seat holder: codex (default) or claude when Codex is unavailable")
     parser.add_argument("--model", default=os.environ.get("RIG_CODEX_MODEL", DEFAULT_MODEL),
-                        help="Codex model name; defaults to RIG_CODEX_MODEL or gpt-6.1-sol")
+                        help="Codex model name; defaults to RIG_CODEX_MODEL or gpt-6.2-sol")
     parser.add_argument("--effort", choices=EFFORTS, default=os.environ.get("RIG_ADVERSARY_EFFORT", "high"),
                         help="Operator override only; defaults to RIG_ADVERSARY_EFFORT or high")
     parser.add_argument("--timeout", type=float, default=2400)

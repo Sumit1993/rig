@@ -9,5 +9,6 @@ How Claude Code does what `AGENTS.md` names.
 - Worktrees live under `.claude/worktrees/`: `EnterWorktree` for this session, `isolation: "worktree"` for a subagent, `lane-worktree.sh add <repo> .claude/worktrees/agy-<task> <branch>` (farm-out) for an agy lane, which copies the `.worktreeinclude` files. A repo whose lanes build needs one.
 - Planner seat: Agent `planner` (Opus 5.5, `high`); `fable-planner` only when the operator allows Fable. Reuse it with SendMessage inside the prompt-cache hour.
 - Adversary seat: the launcher in the `adversary` skill, run with Bash.
+- Sol lane: `codex exec -m gpt-6.2-sol -c model_reasoning_effort=<effort> --sandbox workspace-write -C <worktree> - < <spec>`, with Bash `run_in_background`, in a worktree set up as for an agy lane.
 - Reader seat: Agent with `model: haiku`.
 - Gates: the rig plugin's hooks. `safe-stash` refuses a bare or unnamed `git stash` and `stash pop`, `no-thread-resolve` refuses a GraphQL thread resolve, and `no-broad-agy-kill` refuses a kill that targets agy by name.
