@@ -1,7 +1,7 @@
 {
   "permissions": {
     "allow": ["Bash(agy *)"],
-    "deny": ["WebFetch"],
+    "deny": [],
     "defaultMode": "auto"
   },
   "worktree": { "baseRef": "head" },

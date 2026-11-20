@@ -42,6 +42,5 @@ Launch it yourself, one background job per lane (Claude Code: Bash `run_in_backg
 - One lane per item, run in parallel, each with its own branch and its own narrow test command. A run costs about 5 s per step, one step at a time, and every step resends the whole context. A ten-item lane took 400 steps and 40 minutes; ten one-item lanes each take a few minutes. Verification still runs once at the umbrella, after the item branches are merged into it.
 - Reuse one planner inside the prompt-cache hour with SendMessage.
 - A running agy process takes no message: a print run is one turn, and even `--input-format stream-json` holds a message until the turn ends (agy 1.1.15 changelog). Send its follow-up as the resume prompt. A running Claude subagent takes `SendMessage` at its next tool round; name the source (the operator's words, an issue, a log path) or a well-briefed lane refuses it as unsourced.
-- A spec pointing outside the lane's project root says to read it with Bash or Read; context-mode refuses those paths.
 - The prompt goes in the file, not the subagent's prompt. Do not brief the runner on how to run agy: path in, verified report out.
 - In Workflows, where `subagent_type` is unavailable: `agent(pathOnlyPrompt, {model: 'sonnet', effort: 'medium', label: 'antigravity-gemini-3.8:<task>'})`, and the prompt says to load `farm-out` and `no-doze` first.
