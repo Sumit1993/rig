@@ -18,6 +18,7 @@ An issue carries the decision, its Done when, the exact commands and the excerpt
 - Where a vendored skill disagrees with this file on where a record lives, this file wins.
 
 # Code
+- Read, edit and write files with the harness's file tools; the shell runs commands.
 - Simple wins. Use good libraries, never handroll. TypeScript: no `any` unless unavoidable or told to.
 - Match the repo's stack. Greenfield: Next.js + Postgres. Scripts: Google Apps Script.
 - Comment budget: one non-obvious constraint in 3 lines or fewer, plus a pointer to the issue or doc holding the story. It overrides matching the surrounding density. Same rule in every spec handed to a delegate.
