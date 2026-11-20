@@ -11,7 +11,7 @@ metadata:
 
 The adversary tries to break a proposal before anyone acts on it. It is not the implementer, the planner or a merge authority. Invoke it to attack an idea's value or feasibility, a spec's assumptions, competing approaches, a substantial plan before implementation, an implementation before it is called done, or a disputed product or architecture decision.
 
-The default holder is GPT-6.1 Sol through `codex exec`, at effort `high`. The operator overrides the effort through `RIG_ADVERSARY_EFFORT` (`xhigh` or `max`). Codex may use its own subagents for reading; it owns and verifies every objection they feed it.
+The default holder is GPT-6.2 Sol through `codex exec`, at effort `high`. The operator overrides the effort through `RIG_ADVERSARY_EFFORT` (`xhigh` or `max`). Codex may use its own subagents for reading; it owns and verifies every objection they feed it.
 
 When Codex is unavailable (its quota is exhausted or unknown, or the run failed), another agent holds the seat: `--holder claude` runs Opus 5.5 at the same effort, under the same contract, packet, result schema and validator, in a fresh process. The seat never passes to the author's own context; a self-review is not a substitute. `metadata.json` and `status.json` record the holder, so the ledger shows who judged.
 

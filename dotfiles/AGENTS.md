@@ -2,7 +2,7 @@
 Disagree when the evidence disagrees, including with the operator. A question with an outside answer, a comparable tool, a primary doc or a paper, gets it read before anyone rules; the ruling names what was read or says nothing was found. Researching comparable tools follows `why-first`. Read only the files the question needs (`gh api`, a raw URL); clone a repo only to build or run it.
 
 # Environment
-WSL on Windows, or native Windows, where bash scripts and hooks run under Git Bash. Each harness reads this core plus its overlay in `dotfiles/harness/`. Doctrine and skills name an action (spawn, ask, wait, wake); the overlay names the tool. A host app (T3 Code) adds conveniences, not doctrine: what must outlive a session or a harness switch lives in GitHub, git, a file or the OS scheduler.
+WSL on Windows, or native Windows, where bash scripts and hooks run under Git Bash. Each harness reads this core plus its overlay in `dotfiles/harness/` and the host overlays in `dotfiles/host/`. Doctrine and skills name an action (spawn, ask, wait, wake); the overlays name the tool. A host overlay applies only inside its host and wins over the harness overlay. What must outlive a session or a harness switch lives in GitHub, git, a file or the OS scheduler.
 
 `~/ai-context/<repo>/<issue>-<slug>/` holds only what a later process reads by path: a plan or resume state, a spec or packet handed to a lane. `state/` and `agy-*` belong to tools. Never `/tmp` for anything a later turn reads. Not a mailbox: agents talk in messages, the operator reads replies, research lands as the answer. Nothing posted may depend on it; a draft is deleted once posted.
 
@@ -18,16 +18,17 @@ An issue carries the decision, its Done when, the exact commands and the excerpt
 - Where a vendored skill disagrees with this file on where a record lives, this file wins.
 
 # Code
+- Read, edit and write files with the harness's file tools; the shell runs commands.
 - Simple wins. Use good libraries, never handroll. TypeScript: no `any` unless unavoidable or told to.
 - Match the repo's stack. Greenfield: Next.js + Postgres. Scripts: Google Apps Script.
 - Comment budget: one non-obvious constraint in 3 lines or fewer, plus a pointer to the issue or doc holding the story. It overrides matching the surrounding density. Same rule in every spec handed to a delegate.
 - A change that can be run, built or type-checked is reported done only with the output of a real check that exercises it. If none can run here, say which one and why.
 
 # Seats
-A seat names a model, not a route. Inside a host that runs models itself (T3 Code, OpenCode, Traycer, prismalens; its delegation tools give it away), reach every seat through the host's own delegation. In a bare harness (Claude Code, Codex, agy), use the CLI routes the overlay names. A model the route cannot reach is reported, never silently swapped. Only the operator changes a seat's effort.
+A seat names a model, not a route. Inside a host that runs models itself (T3 Code, OpenCode, Traycer, prismalens; its delegation tools give it away), reach every seat through the host's own delegation, per its overlay. In a bare harness (Claude Code, Codex, agy), use the CLI routes the overlay names. A model the route cannot reach is reported, never silently swapped. Only the operator changes a seat's effort.
 - Organizer: the harness the operator talks to; agy is mostly a lane.
 - Planner / judge: Opus 5.5 at `high`; Fable 5.2 only when the operator allows.
-- Adversary: GPT-6.1 Sol via Codex at `high`, its subagents allowed; load `adversary`. It tries to break ideas, plans, specs, approaches and decisions as much as code. It is not a code reviewer; PR review belongs to §Reviewers.
+- Adversary: GPT-6.2 Sol via Codex at `high`, its subagents allowed; load `adversary`. It tries to break ideas, plans, specs, approaches and decisions as much as code. It is not a code reviewer; PR review belongs to §Reviewers.
 - Reader: Haiku 5.5. Side lane: agy.
 - Council: GPT Sol and a fresh Opus 5.5 through the adversary launcher, with agy's Gemini as an unscored jester; load `council`.
 
@@ -37,11 +38,11 @@ A seat names a model, not a route. Inside a host that runs models itself (T3 Cod
 | Fable 5.2 | 2 | 9 | 9 | high | Planner seat when allowed: judgement calls, plan-hard problems, taste-critical output |
 | Opus 5.5 (1M) | 4 | 9 | 8 | session | Session, planner seat, new lanes at `medium`. `low` for mechanical edits across files, `high` to verify or when medium stalls |
 | Gemini 3.8 Flash | 6 | 8 | 5 | in slug | Side work via agy: tests, checks, triage, evidence |
-| GPT-6.1 Sol | — | — | — | high | Adversary seat. CLI default is `low`; tool output capped at 10k tokens |
+| GPT-6.2 Sol | — | — | — | high | Building, debugging, planning; the adversary seat. CLI default is `low`; tool output capped at 10k tokens |
 | Sonnet 5.5 | 7 | 7 | 7 | medium | Relating many items: issue and PR queue review, cross-issue mapping, PR comment fixes (`high`). Lookups, logs, well-scoped drafts |
 | Haiku 5.5 | 9 | — | — | medium | Reading one thing at a time: file summaries, search, classification, small checked tasks; never coordinating, unattended runs or merge-readiness |
 
-Pick the tier by the task's shape: Haiku reads one thing, Sonnet relates many, Opus builds or rules. Gemini only through agy, where `farm-out` owns model choice. Scores are defaults; override freely. Sub-par output is redone on a smarter model unasked.
+Pick the tier by the task's shape: Haiku reads one thing, Sonnet relates many, Opus or Sol builds or rules. Gemini only through agy, where `farm-out` owns model choice. Scores are defaults; override freely. Sub-par output is redone on a smarter model unasked.
 - Every dispatch names its effort. Lower effort before downgrading a model (`#121 - Name an effort level on every dispatch surface, not just one Workflow line`). A coordinator that only routes work runs at `low`.
 - Never ask a Claude model to show its reasoning in the reply; it declines as `reasoning_extraction`. Ask for evidence: "mark anything you couldn't confirm, and say where you looked". Sonnet, Haiku (thinking on) and agy-Gemini need explicit verification steps.
 

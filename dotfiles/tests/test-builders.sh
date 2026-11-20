@@ -70,6 +70,15 @@ run_built() { payload "$2" | HOME="$T/home" PATH="$T/bin:$PATH" CLAUDE_PLUGIN_RO
 check "built safe-stash blocks a bare git stash" '[ "$(run_built safe-stash.sh "git stash")" = 2 ]'
 check "built safe-stash passes a named stash push" '[ "$(run_built safe-stash.sh "git stash push -u -m wip")" = 0 ]'
 
+# --- doctrine: the core, then each overlay in order
+rig_doctrine codex "$D" > "$T/doc.md"
+check "codex doctrine carries the core, then the codex and t3 overlays"   '[ "$(grep -nE "^# (Stance|Harness: Codex|Host: T3 Code)" "$T/doc.md" | cut -d: -f2- | tr "
+" "|")" = "# Stance|# Harness: Codex CLI (WSL)|# Host: T3 Code|" ]'
+check "claude imports the t3 overlay" '[ "$(rig_overlays claude | tr "
+" " ")" = "harness/claude.md host/t3.md " ]'
+check "a single-string overlay still reads" '[ "$(rig_overlays agy)" = "harness/agy.md" ]'
+check "a missing overlay fails the doctrine" 'variant ".targets.codex.doctrine.overlay += [\"host/none.md\"]"; ! RIG_MANIFEST="$T/m.json" rig_doctrine codex "$D" >/dev/null'
+
 if command -v agy >/dev/null 2>&1; then
   out=$(HOME="$T/home" timeout 30 agy plugin validate "$T/agy" 2>&1)
   check "agy plugin validate passes" 'grep -qE "\[ok\]|Validation passed" <<<"$out" && ! grep -qi "error" <<<"$out"'

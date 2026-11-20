@@ -148,7 +148,7 @@ emit({'type':'result','subtype':'success','is_error':False,'structured_output':o
         self.assertTrue((self.out / "result.json").exists())
         self.assertFalse((self.out / "candidate.json").exists())
         meta = json.loads((self.out / "metadata.json").read_text())
-        self.assertEqual(meta["model"], "gpt-6.1-sol")
+        self.assertEqual(meta["model"], "gpt-6.2-sol")
         self.assertEqual(meta["effort"], "high")
         self.assertEqual(meta["target"]["status"], "")
         self.assertEqual((self.out / "packet.md").read_text(), self.packet.read_text())

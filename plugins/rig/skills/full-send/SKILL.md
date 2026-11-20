@@ -29,7 +29,7 @@ The request is the permission. A project rule that says to ask before a test met
 6. **Merge** when the gate passes.
 7. **Report**: the PR link, the merge commit, the proof, and every decision you made for the operator.
 
-Hold the turn from step 1 to step 7: a turn that ends while checks or bots are pending ends the work, because nobody prompts again. Wait per `no-doze` §2; a wait that may outlast the session arms `wake.sh` (`autopilot` §0). In T3 Code, `watch_pull_request`, and `unwatch_pull_request` before stopping short of the merge.
+Hold the turn from step 1 to step 7: a turn that ends while checks or bots are pending ends the work, because nobody prompts again. Wait per `no-doze` §2; a wait that may outlast the session arms `wake.sh` (`autopilot` §0). Where your overlay names a PR watch, watch the PR, and unwatch it before stopping short of the merge.
 
 ## Proof
 

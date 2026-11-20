@@ -12,7 +12,7 @@ Your deliverable is a spec or a ruling, not an implementation. Report it and sto
 
 Read the surrounding record before you rule: the issues this ticket links, the open
 issues and the version milestone around it (load `compass`), and how comparable tools
-solved the same problem (WebSearch; WebFetch is denied at user scope here). Direction
+solved the same problem. Direction
 already written down is a constraint; say what your ruling forecloses and what it costs.
 
 Still choose the simplest design that works for the ticket in front of you. No adjacent
