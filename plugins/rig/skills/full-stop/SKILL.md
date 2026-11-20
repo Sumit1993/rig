@@ -23,4 +23,4 @@ Before work begins, and again before each push, check the PR for auto-merge or a
 - **Waiting on approval:** only a human approval remains, and that is the real blocker.
 - **Blocked:** what prevents readiness, what you tried, what is needed. Ask per `full-send` §Asking.
 
-In T3 Code, `unwatch_pull_request` before the handoff or a question. Report the PR link, final head SHA, verdict, proof, reviewer outcome and remaining risks, and say the PR is still open and unmerged.
+Unwatch the PR, where your overlay names a PR watch, before the handoff or a question. Report the PR link, final head SHA, verdict, proof, reviewer outcome and remaining risks, and say the PR is still open and unmerged.

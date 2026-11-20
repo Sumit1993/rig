@@ -21,7 +21,7 @@ Batch fixes into one push: every push on a ready PR can spend a review on a comm
 
 ## Waiting
 
-In T3 Code, handle what is already there, then `watch_pull_request` and end the turn. Elsewhere, wait on CI with `gh pr checks <n> --required --watch`; a review that lands later is picked up at the next session start (`compass` Step 0). Never poll with model turns, never wait on `mergeStateStatus`, and say nothing when an event needs no action.
+Handle what is already there, then watch the PR if your overlay names a PR watch and end the turn. Otherwise wait on CI with `gh pr checks <n> --required --watch`; a review that lands later is picked up at the next session start (`compass` Step 0). Never poll with model turns, never wait on `mergeStateStatus`, and say nothing when an event needs no action.
 
 ## Reviews
 

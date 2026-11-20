@@ -40,7 +40,7 @@ case "$(uname -s)" in
 esac
 claude_header() {
   printf '@%s\n' "$(native_path "$DOT/AGENTS.md")"
-  printf '@%s\n' "$(native_path "$DOT/$(rig_field claude doctrine.overlay)")"
+  for o in $(rig_overlays claude); do printf '@%s\n' "$(native_path "$DOT/$o")"; done
   printf '\n%s\n' "$MARKER"
 }
 # The operator's lines after the machine-local marker survive every rewrite.
@@ -90,7 +90,7 @@ check() {
   doctrine_check() { # <target> <dest>
     if [ -L "$2" ]; then flag "$2 is a symlink; install.sh generates it now"
     elif [ ! -f "$2" ]; then flag "$2 missing"
-    elif ! cmp -s <(rig_doctrine "$1" "$DOT") "$2"; then flag "$2 differs from AGENTS.md + $(rig_field "$1" doctrine.overlay); re-run install.sh"
+    elif ! cmp -s <(rig_doctrine "$1" "$DOT") "$2"; then flag "$2 differs from AGENTS.md + $(rig_overlay_names "$1"); re-run install.sh"
     else echo "  doctrine: $2 current"; fi
   }
 
@@ -107,7 +107,7 @@ check() {
     flag "rig@rig is not in $CLAUDE/plugins/installed_plugins.json"
   fi
   if [ -f "$CLAUDE/CLAUDE.md" ] && cmp -s <(claude_md_wanted) "$CLAUDE/CLAUDE.md"; then echo "  doctrine: CLAUDE.md imports current"
-  else flag "$CLAUDE/CLAUDE.md does not import AGENTS.md and $(rig_field claude doctrine.overlay) from $DOT"; fi
+  else flag "$CLAUDE/CLAUDE.md does not import AGENTS.md and $(rig_overlay_names claude) from $DOT"; fi
 
   if command -v codex >/dev/null 2>&1; then
     echo "codex (WSL Codex CLI)"
@@ -193,7 +193,7 @@ if [ "${1:-}" = "--check" ]; then
 fi
 
 # ---------------------------------------------------------------------------------------------- install
-for f in AGENTS.md $(for t in $(rig_targets); do rig_field "$t" doctrine.overlay; done | sort -u); do
+for f in AGENTS.md $(for t in $(rig_targets); do rig_overlays "$t"; done | sort -u); do
   if [ ! -f "$DOT/$f" ]; then
     echo "  ERROR: no $f at $DOT, the main checkout is behind this branch." >&2
     echo "  Merge first, then re-run; an import of a missing file breaks every session." >&2
@@ -202,7 +202,7 @@ for f in AGENTS.md $(for t in $(rig_targets); do rig_field "$t" doctrine.overlay
 done
 mkdir -p "$CLAUDE"
 
-echo "→ CLAUDE.md (imports AGENTS.md + $(rig_field claude doctrine.overlay))"
+echo "→ CLAUDE.md (imports AGENTS.md + $(rig_overlay_names claude))"
 if [ -f "$CLAUDE/CLAUDE.md" ] && cmp -s <(claude_md_wanted) "$CLAUDE/CLAUDE.md"; then
   echo "  imports current, machine-local lines untouched"
 else
@@ -226,7 +226,7 @@ if [ -d "$AGY" ]; then
   # A copy, not a symlink: Git Bash's ln copies on Windows, and --check compares contents either way.
   echo "→ agy GEMINI.md"
   rm -f "$HOME/.gemini/GEMINI.md"; cp "$DOT/$(rig_field agy doctrine.file)" "$HOME/.gemini/GEMINI.md"
-  echo "→ agy AGENTS.md (AGENTS.md + $(rig_field agy doctrine.overlay))"
+  echo "→ agy AGENTS.md (AGENTS.md + $(rig_overlay_names agy))"
   rig_write_doctrine "$HOME/.gemini/AGENTS.md" agy "$DOT"
   if command -v agy >/dev/null 2>&1; then
     echo "→ agy plugin (harnesses.json target agy)"

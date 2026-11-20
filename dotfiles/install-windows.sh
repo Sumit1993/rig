@@ -39,7 +39,7 @@ elif [ -n "$codex_win" ] || [ -d "$WIN_HOME/.codex" ]; then
     "$codex_win" plugin marketplace add "$(winpath "$wb")" >/dev/null 2>&1 || echo "  WARN: Windows codex marketplace add failed" >&2
     "$codex_win" plugin add rig@rig-local >/dev/null 2>&1 || echo "  WARN: Windows codex plugin add failed" >&2
   fi
-  echo "→ Windows codex AGENTS.md (AGENTS.md + $(rig_field codex-desktop doctrine.overlay))"
+  echo "→ Windows codex AGENTS.md (AGENTS.md + $(rig_overlay_names codex-desktop))"
   rig_write_doctrine "$WIN_HOME/.codex/AGENTS.md" codex-desktop "$DOT"
 fi
 

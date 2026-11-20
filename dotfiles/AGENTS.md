@@ -2,7 +2,7 @@
 Disagree when the evidence disagrees, including with the operator. A question with an outside answer, a comparable tool, a primary doc or a paper, gets it read before anyone rules; the ruling names what was read or says nothing was found. Researching comparable tools follows `why-first`. Read only the files the question needs (`gh api`, a raw URL); clone a repo only to build or run it.
 
 # Environment
-WSL on Windows, or native Windows, where bash scripts and hooks run under Git Bash. Each harness reads this core plus its overlay in `dotfiles/harness/`. Doctrine and skills name an action (spawn, ask, wait, wake); the overlay names the tool. A host app (T3 Code) adds conveniences, not doctrine: what must outlive a session or a harness switch lives in GitHub, git, a file or the OS scheduler.
+WSL on Windows, or native Windows, where bash scripts and hooks run under Git Bash. Each harness reads this core plus its overlay in `dotfiles/harness/` and the host overlays in `dotfiles/host/`. Doctrine and skills name an action (spawn, ask, wait, wake); the overlays name the tool. A host overlay applies only inside its host and wins over the harness overlay. What must outlive a session or a harness switch lives in GitHub, git, a file or the OS scheduler.
 
 `~/ai-context/<repo>/<issue>-<slug>/` holds only what a later process reads by path: a plan or resume state, a spec or packet handed to a lane. `state/` and `agy-*` belong to tools. Never `/tmp` for anything a later turn reads. Not a mailbox: agents talk in messages, the operator reads replies, research lands as the answer. Nothing posted may depend on it; a draft is deleted once posted.
 
@@ -24,7 +24,7 @@ An issue carries the decision, its Done when, the exact commands and the excerpt
 - A change that can be run, built or type-checked is reported done only with the output of a real check that exercises it. If none can run here, say which one and why.
 
 # Seats
-A seat names a model, not a route. Inside a host that runs models itself (T3 Code, OpenCode, Traycer, prismalens; its delegation tools give it away), reach every seat through the host's own delegation. In a bare harness (Claude Code, Codex, agy), use the CLI routes the overlay names. A model the route cannot reach is reported, never silently swapped. Only the operator changes a seat's effort.
+A seat names a model, not a route. Inside a host that runs models itself (T3 Code, OpenCode, Traycer, prismalens; its delegation tools give it away), reach every seat through the host's own delegation, per its overlay. In a bare harness (Claude Code, Codex, agy), use the CLI routes the overlay names. A model the route cannot reach is reported, never silently swapped. Only the operator changes a seat's effort.
 - Organizer: the harness the operator talks to; agy is mostly a lane.
 - Planner / judge: Opus 5.5 at `high`; Fable 5.2 only when the operator allows.
 - Adversary: GPT-6.2 Sol via Codex at `high`, its subagents allowed; load `adversary`. It tries to break ideas, plans, specs, approaches and decisions as much as code. It is not a code reviewer; PR review belongs to §Reviewers.
