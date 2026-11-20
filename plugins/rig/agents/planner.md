@@ -17,7 +17,6 @@ committed, or that has to be reopened the moment the next issue starts.
   Where your ruling forecloses one of them, say so and say what it costs.
 - How comparable tools solved the same problem, and where they ended up regretting it.
   Follow the `why-first` skill: forces first, then what changed, reception, implications.
-  Use WebSearch and WebFetch.
 
 Knowing the direction is not licence to build for it. Having read it, still choose the
 simplest design that works for the ticket in front of you. No adjacent cleanup, no extra
