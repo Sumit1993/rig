@@ -1,5 +1,193 @@
 # Changelog
 
+## [0.22.0](https://github.com/Sumit1993/rig/compare/rig-v0.21.0...rig-v0.22.0) (2026-11-20)
+
+
+### ⚠ BREAKING CHANGES
+
+* **rig:** installs need the marketplace re-added as Sumit1993/rig and rig@rig enabled in place of rig@agent-rig.
+* **rig:** the kit: skill prefix is now rig:, and kit@claude-kit is now rig@agent-rig.
+
+### Features
+
+* **coderabbit-routine:** every run posts its summary to Slack, not only failures ([585b399](https://github.com/Sumit1993/rig/commit/585b399d281c1696e5c01dbd3bdf8b070c510532))
+* **coderabbit-routine:** every run posts its summary to Slack; one bad PR no longer drops its repo ([463585c](https://github.com/Sumit1993/rig/commit/463585c19a46477d77b081a68e2b2fa941bde58d))
+* **coderabbit-routine:** every run posts its summary to Slack; one bad PR no longer drops its repo ([#166](https://github.com/Sumit1993/rig/issues/166)) ([463585c](https://github.com/Sumit1993/rig/commit/463585c19a46477d77b081a68e2b2fa941bde58d))
+* **coderabbit-routine:** no 20-minute head-age wait; draft state is the hold ([e9a6424](https://github.com/Sumit1993/rig/commit/e9a642413d917cf5c87f7bba875b915923fedb41))
+* **coderabbit-routine:** one bad PR no longer drops its repo; failures alert Slack ([9f8392c](https://github.com/Sumit1993/rig/commit/9f8392c95aae2927b20cbc997d3558299af5a9e9))
+* **coderabbit-routine:** Slack summary reads as sections, one PR per line with its title ([258474f](https://github.com/Sumit1993/rig/commit/258474f5b1c6fc319f89b2ac22c1e91be7d44914))
+* **coderabbit-routine:** Slack summary reads as sections, one PR per line with its title ([35bf007](https://github.com/Sumit1993/rig/commit/35bf007a25550a4673f1ab0968c599119712a2f3))
+* **coderabbit-routine:** the summon marker carries slot_opens_at, and the digest decides the budget slot ([1df26ad](https://github.com/Sumit1993/rig/commit/1df26ad9245f9bb7252ad1f7c7c7151e5818d17d))
+* **coderabbit-routine:** the summon marker carries slot_opens_at, and the digest decides the budget slot ([87fd91e](https://github.com/Sumit1993/rig/commit/87fd91e8de2d0c1f28f63c2619582c2b2df6a4d5))
+* **coderabbit-routine:** the summon marker carries slot_opens_at, and the digest decides the budget slot ([#182](https://github.com/Sumit1993/rig/issues/182)) ([1df26ad](https://github.com/Sumit1993/rig/commit/1df26ad9245f9bb7252ad1f7c7c7151e5818d17d))
+* **codex-desktop:** start Codex desktop threads with no click and queue work to them ([#179](https://github.com/Sumit1993/rig/issues/179)) ([23eb103](https://github.com/Sumit1993/rig/commit/23eb10362b95f5b76488ac0be78d9d14b62d730b))
+* **codex-desktop:** threads can ask the dispatching Claude session; rig installs on the Windows side ([#180](https://github.com/Sumit1993/rig/issues/180)) ([8351bff](https://github.com/Sumit1993/rig/commit/8351bffe2da509db69f01866732928a45bb6070c))
+* **codex-judge:** Codex usage limits are checked before a judgment and shown at session start ([d30e963](https://github.com/Sumit1993/rig/commit/d30e96380fce3ed4169a8351337a3dd561b750a4))
+* **codex:** adversarial judge and Windows desktop handoff ([#175](https://github.com/Sumit1993/rig/issues/175)) ([d0d4218](https://github.com/Sumit1993/rig/commit/d0d4218947bfdafdf786ddfa99445d0bcc51c26f))
+* **doctrine:** host overlays; T3 Code's tools move out of skills into host/t3.md ([fda7323](https://github.com/Sumit1993/rig/commit/fda7323abc45b91c36ec7492f9ecc7514f65a568))
+* **farm-out:** agy lanes run the agy way and cost no Claude tokens while they work ([#168](https://github.com/Sumit1993/rig/issues/168)) ([9968bd5](https://github.com/Sumit1993/rig/commit/9968bd5f2be5e68023b6b8207794d56949399524))
+* **farm-out:** lanes set up, stop and tear down cleanly on agy 1.4 and native Windows ([1ce7fe2](https://github.com/Sumit1993/rig/commit/1ce7fe215949b93766cff3f29cb90efa634c058b))
+* full-send, full-stop and council skills; drop the merge and summon gates ([ac1f28d](https://github.com/Sumit1993/rig/commit/ac1f28d82c7d73530cac1fd2b4b8d45efb7a3fe9))
+* full-send, full-stop and council skills; drop the merge and summon gates ([7bd640b](https://github.com/Sumit1993/rig/commit/7bd640b85dfd7ae1246eab14d8e261a97df493e3))
+* harness-neutral doctrine, OS wake-up in autopilot, review round budget, assayer skill ([5748bcd](https://github.com/Sumit1993/rig/commit/5748bcd6da378e4d1d23985854204a7c07be01fd))
+* **hooks:** add safe-stash PreToolUse hook for git stash commands ([f351ec1](https://github.com/Sumit1993/rig/commit/f351ec176ebdc2c7716944742e1d687b29f976f8))
+* **hooks:** no-thread-resolve, the session never resolves a reviewer's thread ([f2238a4](https://github.com/Sumit1993/rig/commit/f2238a46422f4835c6a6c88c2ca70020651d89f2))
+* **hooks:** safe-stash and no-thread-resolve enforce two doctrine lines ([ffc5e14](https://github.com/Sumit1993/rig/commit/ffc5e14cd5e312da015319e95737fd687900e7e3))
+* overnight runs wake from the OS for any harness, and rig says less about harnesses ([bfdaafd](https://github.com/Sumit1993/rig/commit/bfdaafd172246d39606e6a600f691f034fe6bcda))
+* prove-it skill and one routing rule for reaching other models ([5e5537d](https://github.com/Sumit1993/rig/commit/5e5537d7f6cf45660d648e14854a40e7d9a6cd46))
+* **r2-sync:** back up Codex and Windows-side transcripts; resumed sessions no longer fail the run ([#178](https://github.com/Sumit1993/rig/issues/178)) ([13a271e](https://github.com/Sumit1993/rig/commit/13a271ed1c55a9336eee5372f8cfeafc769433aa))
+* **review-lanes:** the routine skips a coderabbit_skip PR, and a bare resolve passes summon-gate ([509ec83](https://github.com/Sumit1993/rig/commit/509ec834463c49f19cacf17763f950087f61a3bd)), closes [#189](https://github.com/Sumit1993/rig/issues/189)
+* reviews run async through the hourly queue; review debt first; agy takes side work and the organizer seat goes ([#152](https://github.com/Sumit1993/rig/issues/152)) ([8041a9e](https://github.com/Sumit1993/rig/commit/8041a9e993d53f335e1d00e8ab69d75cafdfeda2))
+* **rig:** DuckDB queries replace the miners; agy-quota live; Codex CLI as third harness ([#140](https://github.com/Sumit1993/rig/issues/140)) ([716a010](https://github.com/Sumit1993/rig/commit/716a0101aae51c229bba619e16c0c1ae4955a0e4))
+* **rig:** effort per agent, named section citations, and five doctrine gaps from the issue sweep ([#156](https://github.com/Sumit1993/rig/issues/156)) ([1fa8fe1](https://github.com/Sumit1993/rig/commit/1fa8fe10d2e9ffcd79c7db0f725d0cfdd7c1e84c))
+* **rig:** load less, say it once: rightsized for Claude 5.5-generation models ([#158](https://github.com/Sumit1993/rig/issues/158)) ([fa08c98](https://github.com/Sumit1993/rig/commit/fa08c98574e42efa3b6f4c5f0de983455a43ccb7))
+* **rig:** rename claude-kit to agent-rig and the kit plugin to rig ([#138](https://github.com/Sumit1993/rig/issues/138)) ([cf7aabe](https://github.com/Sumit1993/rig/commit/cf7aabe71ad0e4c17f18d7848476bd578ff1bfa6))
+* **rig:** the record split: issues hold decisions, ai-context holds the run; six hooks and record hygiene checks ([#142](https://github.com/Sumit1993/rig/issues/142)) ([6e8c483](https://github.com/Sumit1993/rig/commit/6e8c483b30b775a8c08a06a506795599dcc08a96))
+* seats instead of fixed models, and rig installs per harness ([c057429](https://github.com/Sumit1993/rig/commit/c05742946fde9ed84b15ee4dba73e277d42f664e))
+* seats instead of fixed models, and rig installs per harness ([e631830](https://github.com/Sumit1993/rig/commit/e6318301f285e5423c81b6b9a61cbbbca18926d0))
+* seats instead of fixed models, and rig installs per harness ([#183](https://github.com/Sumit1993/rig/issues/183)) ([c057429](https://github.com/Sumit1993/rig/commit/c05742946fde9ed84b15ee4dba73e277d42f664e))
+* skill descriptions say when to load, long skills nest a sub-case in references/ ([9ebf0f9](https://github.com/Sumit1993/rig/commit/9ebf0f95f71c95430f865856dbba2be349f6b60c))
+* **skills:** behavior v0.2, check existing coverage first and layer forms ([a2cca21](https://github.com/Sumit1993/rig/commit/a2cca212fc09947190d69b3dbe7f777b64bac758))
+* **skills:** behavior, from a wish to a landed, tested behavior ([a1860dd](https://github.com/Sumit1993/rig/commit/a1860ddaff6c33452ab86e1a00039e57f9029fea))
+* wake.sh arms an OS wake-up any harness can resume; agy watchdog reaps on native Windows ([02b1cb0](https://github.com/Sumit1993/rig/commit/02b1cb0a4c0aafbeea4fb368797e75657315a310))
+* why-first and hill-climb skills; babysit-pr reads CodeRabbit's edited summary and follow-ups ([7489fb2](https://github.com/Sumit1993/rig/commit/7489fb295d26b4ed7953db044ff549dfa2d05af9))
+* why-first and hill-climb skills; babysit-pr reads CodeRabbit's edited summary and follow-ups ([e6a7c3e](https://github.com/Sumit1993/rig/commit/e6a7c3e25e84337b7756a4e3886ecee1f6515dcd))
+
+
+### Bug Fixes
+
+* answer CodeRabbit review on [#213](https://github.com/Sumit1993/rig/issues/213) ([226449d](https://github.com/Sumit1993/rig/commit/226449d8c483c80a92097bafa0edbe8dd845ff67))
+* **babysit-pr,adversary:** Sol 6.2 as a full lane, @-reply every CodeRabbit finding, read overflow comments by id ([557a861](https://github.com/Sumit1993/rig/commit/557a861c2b2c67b1235c45c996205480beccd599))
+* **babysit-pr:** summon only an unreviewed final head, read the last summon's answer, count files after path_filters ([f0d8468](https://github.com/Sumit1993/rig/commit/f0d84685667d7c3a3570e0fa04541c20a6532dbe))
+* **babysit-pr:** thread query with resolution state, chat limit basis, routine-skip coverage ([e9837aa](https://github.com/Sumit1993/rig/commit/e9837aaf145eddcf7d96b407913855f2c529259b))
+* **coderabbit-routine:** a closed PR's routine summon still holds the slot ([7b28b4e](https://github.com/Sumit1993/rig/commit/7b28b4e8a66fea3f0fe8c9eb973dc3d5a055acb1))
+* **coderabbit-routine:** a malformed PR or digest degrades to an error line; a failed Slack post still prints the summary ([3446a30](https://github.com/Sumit1993/rig/commit/3446a3029b1399d64e1b6bbff4899ec24d8a1065))
+* **coderabbit-routine:** a Review finished reply to a summon after head counts as reviewing head ([de2a2e0](https://github.com/Sumit1993/rig/commit/de2a2e0f050dec3b639fbcdeb7c6104ae498e0ca))
+* **coderabbit-routine:** a Review finished reply to a summon after head counts as reviewing head ([4b5c6a3](https://github.com/Sumit1993/rig/commit/4b5c6a3a3567b39dfe7b7b4914e440b592ce7e03))
+* **coderabbit-routine:** docs-only PRs rank last instead of never, so prismalens.io gets reviewed ([#159](https://github.com/Sumit1993/rig/issues/159)) ([#173](https://github.com/Sumit1993/rig/issues/173)) ([3abcbb0](https://github.com/Sumit1993/rig/commit/3abcbb05f2a6d9aaef8e5288e6697cb8dbbdaadd))
+* **coderabbit-routine:** pagination keeps the repos/ path the cloud proxy accepts ([#162](https://github.com/Sumit1993/rig/issues/162)) ([fdfead8](https://github.com/Sumit1993/rig/commit/fdfead81f9e1eddd1c4da1368504b84ea64e7087))
+* **coderabbit-routine:** pair each summon with its own invocation reply before counting Review finished on head ([315e351](https://github.com/Sumit1993/rig/commit/315e3516c16180e8f8f3b5a86be426cffc5ea929))
+* **coderabbit-routine:** the digest sleeps out a slot that opens within 8 minutes, then reads again ([5fd4369](https://github.com/Sumit1993/rig/commit/5fd4369b21a0b28cb22e76fce2d0dfac508951fe))
+* **coderabbit-routine:** the model skips re-reviews of fixes CodeRabbit already confirmed in-thread ([#154](https://github.com/Sumit1993/rig/issues/154)) ([7a14cf4](https://github.com/Sumit1993/rig/commit/7a14cf4441579605ee4ce12a3327c63570d16dea)), closes [#153](https://github.com/Sumit1993/rig/issues/153)
+* **coderabbit-routine:** the slot stamp counts from the post, and a run sleeps out a slot that opens within 8 minutes ([20ccbf1](https://github.com/Sumit1993/rig/commit/20ccbf13be840e7da1d3dcdf3e7d2fca7b1c0889))
+* **coderabbit-routine:** the slot stamp counts from the post, and a run sleeps out a slot that opens within 8 minutes ([#191](https://github.com/Sumit1993/rig/issues/191)) ([20ccbf1](https://github.com/Sumit1993/rig/commit/20ccbf13be840e7da1d3dcdf3e7d2fca7b1c0889))
+* **coderabbit-routine:** the slot stamp counts from the post, and act.py waits out a slot that opens within 5 minutes ([b9b3260](https://github.com/Sumit1993/rig/commit/b9b326060f0b2831d95b9c4cd02be97943aecfd8))
+* **farm-out:** agy lanes per item, foreground suites, timeout is not success; merge commits everywhere ([b5f98ef](https://github.com/Sumit1993/rig/commit/b5f98efd660f9c819bbe62d482677a4c2fd6788a))
+* **hooks:** ANSI-C decoder keeps the backslash on escapes bash keeps; watchdog grep error is not success; cite agy and release-please claims ([4c8753d](https://github.com/Sumit1993/rig/commit/4c8753d7a3ed778571ef74e979b7f1776da8ec15))
+* **hooks:** every hook carries its script name, and install --check reads the highest plugin version ([506fb63](https://github.com/Sumit1993/rig/commit/506fb6305d7d46ebc68555dab05eccde3ab8b8dd))
+* **hooks:** every hook carries its script name, and install --check reads the highest plugin version ([795e390](https://github.com/Sumit1993/rig/commit/795e390007928d092c688e7c1730055203e8a69e))
+* **hooks:** every hook carries its script name, and install --check reads the highest plugin version ([#190](https://github.com/Sumit1993/rig/issues/190)) ([506fb63](https://github.com/Sumit1993/rig/commit/506fb6305d7d46ebc68555dab05eccde3ab8b8dd))
+* **hooks:** gh_scan sees a gh call after do, then, else, elif, ! and a brace ([64f87b1](https://github.com/Sumit1993/rig/commit/64f87b1ab0b737ef50ee236aa10bfe66572411b7))
+* **hooks:** merge-gate checks every merge in a command; a brace counts only as a brace group ([47c7549](https://github.com/Sumit1993/rig/commit/47c75499e6285813583575e21b115292fc48f064))
+* **hooks:** merge-gate checks every merge, including one after do, then, else, ! or a brace ([9acae6c](https://github.com/Sumit1993/rig/commit/9acae6c26c955c5fc90f5115cdb0e02f40374431))
+* **hooks:** merge-gate reads every merge call in one pass and takes each token from its own call ([a4c271c](https://github.com/Sumit1993/rig/commit/a4c271c069d883afcd55ca54cbda26c6a5169e7b))
+* **hooks:** merge-gate sees a merge after if, while or until, and blocks when perl is missing ([824a7cc](https://github.com/Sumit1993/rig/commit/824a7cca5b0bedc6eb0107cc5ae05ed3f7faedd6))
+* **hooks:** no-thread-resolve and safe-stash fail closed without perl; tests isolate PATH and HOME ([ddc6940](https://github.com/Sumit1993/rig/commit/ddc6940a8f26f376adf50da7a5972436b933718e))
+* **hooks:** no-thread-resolve fails closed on any gh api graphql call naming the mutation; skill corrects the Codex apply_patch matcher ([57027cb](https://github.com/Sumit1993/rig/commit/57027cb65df988d49ba7a4790e2638b25bd1f1eb))
+* **hooks:** no-thread-resolve reads the gh api graphql call, not prose that names it ([e21e0a3](https://github.com/Sumit1993/rig/commit/e21e0a3ab73fb82e101e36ecc5f52364ab344e80))
+* **hooks:** safe-stash catches git -C &lt;path&gt; stash and git -c k=v stash ([4217c21](https://github.com/Sumit1993/rig/commit/4217c21ee0e55cfbc62add4ca8b1a940797a9977))
+* **hooks:** safe-stash reads git global options; no-thread-resolve catches heredoc, variable and env-wrapped mutations ([7550ad8](https://github.com/Sumit1993/rig/commit/7550ad83ba5a115bfe4061228173274793b3562e))
+* **hooks:** stamp gate reads $'...' bodies; pr-created stops flagging cited titles and stacked PRs ([2572c0f](https://github.com/Sumit1993/rig/commit/2572c0f8deb5cbc708b65ca30b366d6e68b31b44))
+* **hooks:** stamp gate reads $'...' bodies; pr-created stops flagging cited titles and stacked PRs ([f617ff4](https://github.com/Sumit1993/rig/commit/f617ff41c1b0b491e1dfff5b57d82822fe14f833))
+* **hooks:** stamp gate reads $'...' bodies; pr-created stops flagging cited titles and stacked PRs ([#165](https://github.com/Sumit1993/rig/issues/165)) ([2572c0f](https://github.com/Sumit1993/rig/commit/2572c0f8deb5cbc708b65ca30b366d6e68b31b44))
+* **install:** drop a literal \n that broke the settings merge; compass paginates Step 0 ([5676edb](https://github.com/Sumit1993/rig/commit/5676edb5504e4c658e34348cfa297f5c1afb0dc6))
+* **install:** drop the status lines and the hooks that read them; install survives a commented settings.json ([26b589c](https://github.com/Sumit1993/rig/commit/26b589c3b3e9143a6f56dd8d273a7ffe8634dc1d))
+* **install:** quote agy's statusline script path on Windows ([7ed0e4d](https://github.com/Sumit1993/rig/commit/7ed0e4d6d3bd0b6682f4e250cfa8fe0e444785b6))
+* **install:** run agy's statusline through bash on Windows ([2742160](https://github.com/Sumit1993/rig/commit/2742160b15301cc9bdae4ce6c1082c28367a893b))
+* **install:** run agy's statusline through bash on Windows ([e5f0545](https://github.com/Sumit1993/rig/commit/e5f05456ef76a831d4c9f1437078812737192114))
+* **pr-babysit:** drop the date marker the doc lint rejects ([7f66e6d](https://github.com/Sumit1993/rig/commit/7f66e6d37ddf1685a54db4f4e9b42bb8b221ed37))
+* **rig:** hook gates read the posted body; hooks.json keys; review-lane docs from gh-workflows [#173](https://github.com/Sumit1993/rig/issues/173) ([#137](https://github.com/Sumit1993/rig/issues/137)) ([f732ce9](https://github.com/Sumit1993/rig/commit/f732ce909de05180b602b651dde5c456acd95392)), closes [#136](https://github.com/Sumit1993/rig/issues/136)
+* **rig:** pause marker survives replies; verdicts are prefixes; fable-planner reads the record first ([#144](https://github.com/Sumit1993/rig/issues/144)) ([fe212da](https://github.com/Sumit1993/rig/commit/fe212da17e94abeab90c87377babf02c58cdfa19))
+* **rig:** review debt is per repo, the watchdog signature is written down, no bare stash in a lane, summon gate keys on the handle ([#161](https://github.com/Sumit1993/rig/issues/161)) ([d460e3e](https://github.com/Sumit1993/rig/commit/d460e3e1bcadfbc2773e85235719bf86870db621)), closes [#160](https://github.com/Sumit1993/rig/issues/160)
+* **skills:** behavior, a setting that covers part of a behavior still lands ([bf8d051](https://github.com/Sumit1993/rig/commit/bf8d051b6edbb7ef1d3444fbd6e83cfdc338dad5))
+* Sol 6.2 as a full lane, host overlays, babysit-pr reads every CodeRabbit comment and @-replies ([9f964d6](https://github.com/Sumit1993/rig/commit/9f964d6336a28f67a5f98c4d7d5d463f962ba8fa))
+* **statusline:** the status line no longer blanks on renders whose trace row is unchanged ([#184](https://github.com/Sumit1993/rig/issues/184)) ([6394054](https://github.com/Sumit1993/rig/commit/6394054419340e3f700fdf69de30e5e5ce5237cb))
+* **tests:** codex keeps its PreToolUse event map; drop the skill-wording quota case ([a4edbbd](https://github.com/Sumit1993/rig/commit/a4edbbd353458beb8a46159100e6894d319235f0))
+* **windows:** adversary and codex-desktop skills run on native Windows ([5ae3b86](https://github.com/Sumit1993/rig/commit/5ae3b861e25daa2c9cfe0f0f9149d83606837fdf))
+* **windows:** adversary and codex-desktop skills run on native Windows ([acf04ec](https://github.com/Sumit1993/rig/commit/acf04ec4cb4bbb83f9c86767ee998ad91a808be0))
+* **windows:** path checks hold without cygpath, and UNC body files resolve ([752a6e6](https://github.com/Sumit1993/rig/commit/752a6e620c7062b1b9b8697c82a92273d5d11af4))
+* **windows:** rig installs and its hooks run on native Windows under Git Bash ([b9d8ed6](https://github.com/Sumit1993/rig/commit/b9d8ed6a881d8586b3f3609eebab19e8fd7e54f2))
+* **windows:** rig installs and its hooks run on native Windows under Git Bash ([609e4ac](https://github.com/Sumit1993/rig/commit/609e4ac87f52d01516ee6c31bcf921c0586a80be))
+
+
+### Documentation
+
+* **agents:** pick the model tier by the task's shape ([17f7736](https://github.com/Sumit1993/rig/commit/17f7736d0a39055914393bf1e1d0f8a8cb520c01))
+* **agents:** pick the model tier by the task's shape ([2a05e53](https://github.com/Sumit1993/rig/commit/2a05e53a0a966c79ffe22ed7b3112c9181353c08))
+* **claude-review-lane:** admission modes and the two admission labels (gh-workflows[#194](https://github.com/Sumit1993/rig/issues/194)) ([#147](https://github.com/Sumit1993/rig/issues/147)) ([125f64a](https://github.com/Sumit1993/rig/commit/125f64a0b6349baccc68b1cdef41c83d883a3e01))
+* **codex-desktop:** the keep-it-in-WSL rule applies to WSL machines only ([23ebd2d](https://github.com/Sumit1993/rig/commit/23ebd2d7f5d722054167b68d4431dac759953395))
+* **farm-out:** monitor and text-return lines are for Claude subagents; agy adds worktrees with git; autopilot points at farm-out ([dc5088c](https://github.com/Sumit1993/rig/commit/dc5088ca63cbd7c75b7bf224aeba05e45b3fba46))
+* name the new blocking hooks in the gates list; thread resolves go through the UI ([5351210](https://github.com/Sumit1993/rig/commit/5351210a44194efce3c504e5776a54ceb31495b0))
+* point at Fable 5.2 and the plugin's wake.sh path ([75d94cf](https://github.com/Sumit1993/rig/commit/75d94cfde988a8b8ad9cd5f57a481cd551671ffc))
+* point at Fable 5.2 and the plugin's wake.sh path ([c47dea1](https://github.com/Sumit1993/rig/commit/c47dea13ad7ab8743e01c45dde2a89d93592b55c))
+* **pr-babysit:** a classic merge passes the PR title as its subject, so the merge commit is conventional too ([f99d5a7](https://github.com/Sumit1993/rig/commit/f99d5a7885a06bb4937693b5ad4d016692774d29))
+* **readme:** behavior skill, safe-stash and no-thread-resolve; list the skill for Claude and Codex ([30b11dd](https://github.com/Sumit1993/rig/commit/30b11dd0fd7dd8d08c5146c98afb51f8d25940f3))
+* **review-lanes:** Codex has a lane skill, and the skip label and verified-but-open resolve are written down ([3a3350c](https://github.com/Sumit1993/rig/commit/3a3350c14bf488ffac5b689c7e6aaaee324430a9)), closes [#189](https://github.com/Sumit1993/rig/issues/189)
+* **review-lanes:** Codex threads are the operator's to resolve under the merge rule; compass cites claude-review-lane §6 ([42bfb46](https://github.com/Sumit1993/rig/commit/42bfb46c869d87e5f7099cdef5e66255777b976d))
+* stacked PRs wait for MERGED; agy lanes run one suite at a time and e2e Verify names every suite ([18a1e6f](https://github.com/Sumit1993/rig/commit/18a1e6f53789829a58cd1dd96ad34f3de6a941ed))
+* the adversary breaks proposals of every kind, not just code ([74d04fa](https://github.com/Sumit1993/rig/commit/74d04fae0ad6213ad922606ac992f9a7d7781985))
+
+
+### Code Refactoring
+
+* drop the behavior skill; safe-stash and no-thread-resolve stand alone ([014c2d5](https://github.com/Sumit1993/rig/commit/014c2d57938aa1ba647d42af1e53c36b3530c7fa))
+* **hooks:** keep only the gates that stop real harm ([aff480f](https://github.com/Sumit1993/rig/commit/aff480f603d3d63d9b6bc6af7d6fe228b215232d))
+* **install:** drop the leftover-status-line drift checks ([5476f07](https://github.com/Sumit1993/rig/commit/5476f072959f6b21ff2834a7c324f8ba5020a81d))
+* less is more — one babysit-pr skill, five gates, no status lines, a clean install ([f071043](https://github.com/Sumit1993/rig/commit/f0710433b7cf186e63645a7973cf23bba67dc50d))
+* **review:** one short babysit-pr skill replaces four review skills and the watcher ([f922005](https://github.com/Sumit1993/rig/commit/f9220054f9598d25646cd6ffbf381d202606c2d3))
+* **skills:** delete rules that forced ceremony or restated AGENTS.md ([c838a62](https://github.com/Sumit1993/rig/commit/c838a628fe7e8c4423117d9b379f00663ab2966f))
+* trim the Sol and CodeRabbit prose to one point per sentence ([ec997b6](https://github.com/Sumit1993/rig/commit/ec997b6e69f03f2cf19878162a37d576536d35bb))
+
+
+### Tests
+
+* **adversary:** compare cwd paths resolved, so 8.3 short names match ([bfdce08](https://github.com/Sumit1993/rig/commit/bfdce08dd083bb2f4ee214f10aff30decfdf1357))
+* **hooks:** merge-gate drops the contrived bypass cases; gh_scan drops unused count mode ([21644ae](https://github.com/Sumit1993/rig/commit/21644ae7eece5e4b7767401df06e509ed83409ac))
+
+
+### Continuous Integration
+
+* add Dependabot for github-actions, with an auto-merge caller ([#146](https://github.com/Sumit1993/rig/issues/146)) ([67f7ae3](https://github.com/Sumit1993/rig/commit/67f7ae328090d0386b3a50b700a751fc0afd3ec9))
+* bump actions/checkout from 4 to 7 ([#148](https://github.com/Sumit1993/rig/issues/148)) ([c21fdf9](https://github.com/Sumit1993/rig/commit/c21fdf9986ba99443657364ce0d60044132d4be0))
+* bump actions/setup-python from 6 to 7 ([cec958d](https://github.com/Sumit1993/rig/commit/cec958ded4136d5cd8700841d2a50854a3e1f65d))
+* bump actions/setup-python from 6 to 7 ([20d2238](https://github.com/Sumit1993/rig/commit/20d2238bad79aebaf282ea273f067593f7d9c1d6))
+* bump actions/setup-python from 6 to 7 ([#176](https://github.com/Sumit1993/rig/issues/176)) ([cec958d](https://github.com/Sumit1993/rig/commit/cec958ded4136d5cd8700841d2a50854a3e1f65d))
+* hooks and skill-script tests run on windows-latest; builder test reads agy's new validate output ([903b8a7](https://github.com/Sumit1993/rig/commit/903b8a7b48b749f2812fec702a265ad972fb5e66))
+
+
+### Miscellaneous Chores
+
+* **agents:** drop the tool names the tool definitions already carry ([0e6fe91](https://github.com/Sumit1993/rig/commit/0e6fe9197ffdfcb84570ec303ecc3e77b3a71af5))
+* **coderabbit-routine:** drop a stray test stub committed by mistake ([8524fde](https://github.com/Sumit1993/rig/commit/8524fdefc6eb9a051da701499c2df6c09306ebee))
+* **master:** release rig 0.11.0 ([#139](https://github.com/Sumit1993/rig/issues/139)) ([29b4862](https://github.com/Sumit1993/rig/commit/29b486258ff91882970226e04af158c864a7c513))
+* **master:** release rig 0.12.0 ([#149](https://github.com/Sumit1993/rig/issues/149)) ([c6cb72a](https://github.com/Sumit1993/rig/commit/c6cb72af2e18dd8d50ef466180813e219c78ade0))
+* **master:** release rig 0.13.0 ([#155](https://github.com/Sumit1993/rig/issues/155)) ([f426475](https://github.com/Sumit1993/rig/commit/f426475c245ae24956bc166537f225ba1217a82c))
+* **master:** release rig 0.14.0 ([bd7a795](https://github.com/Sumit1993/rig/commit/bd7a795a1ec47d3bc2074e04c860c08cba36691a))
+* **master:** release rig 0.14.0 ([872ab0e](https://github.com/Sumit1993/rig/commit/872ab0e879132001547c7dcff7f848b003791287))
+* **master:** release rig 0.15.0 ([a40da58](https://github.com/Sumit1993/rig/commit/a40da58b53ff7964640025c87710c8a0b57d3621))
+* **master:** release rig 0.15.0 ([ff3d162](https://github.com/Sumit1993/rig/commit/ff3d162b05b950adbf647252d03f512bc8c1c8c0))
+* **master:** release rig 0.16.0 ([#181](https://github.com/Sumit1993/rig/issues/181)) ([0c062f0](https://github.com/Sumit1993/rig/commit/0c062f09a7444ea12cc48a8ea6df3bc022acb4e5))
+* **master:** release rig 0.17.0 ([b029676](https://github.com/Sumit1993/rig/commit/b029676240f6e3909b746e0b9c173fb86c204b6e))
+* **master:** release rig 0.17.0 ([a80acbc](https://github.com/Sumit1993/rig/commit/a80acbce2ca089c43a9bed69006bc5318d215115))
+* **master:** release rig 0.17.0 ([#188](https://github.com/Sumit1993/rig/issues/188)) ([b029676](https://github.com/Sumit1993/rig/commit/b029676240f6e3909b746e0b9c173fb86c204b6e))
+* **master:** release rig 0.17.1 ([0f27e72](https://github.com/Sumit1993/rig/commit/0f27e72cd3f541dd903daeded46067019825e036))
+* **master:** release rig 0.17.1 ([6d604f3](https://github.com/Sumit1993/rig/commit/6d604f375090d2083cc9f43ff82a206b42576d51))
+* **master:** release rig 0.17.2 ([591ec72](https://github.com/Sumit1993/rig/commit/591ec7216bf3ca7aad4aea24b52cef845dde074f))
+* **master:** release rig 0.17.2 ([3295319](https://github.com/Sumit1993/rig/commit/32953191bb8e90516db14dcddebcd904ca7c3773))
+* **master:** release rig 0.18.0 ([2c90a7d](https://github.com/Sumit1993/rig/commit/2c90a7db9a00f25f8e205adacc3bec408979657b))
+* **master:** release rig 0.18.0 ([cd295a5](https://github.com/Sumit1993/rig/commit/cd295a5e67cec7237a31e5a0d0fcc9847d8bf960))
+* **master:** release rig 0.19.0 ([e010641](https://github.com/Sumit1993/rig/commit/e010641d4037d15d3f21c2b13012bd507a8cb2c9))
+* **master:** release rig 0.19.0 ([95ea45b](https://github.com/Sumit1993/rig/commit/95ea45b55c74e0f08e0e491273ba085eeb120e2f))
+* **master:** release rig 0.19.1 ([05691c1](https://github.com/Sumit1993/rig/commit/05691c173ae4f46e930eb720965d836405b79d0e))
+* **master:** release rig 0.19.1 ([d0b6fd1](https://github.com/Sumit1993/rig/commit/d0b6fd1b6d028d38a506af04715a5f0adabd4087))
+* **master:** release rig 0.20.0 ([bcc5242](https://github.com/Sumit1993/rig/commit/bcc5242d5a6ddf71f543bc50dd3b359ee8af8235))
+* **master:** release rig 0.20.0 ([4032d9b](https://github.com/Sumit1993/rig/commit/4032d9b6519717bb269c6178b884c2417c2cdbe6))
+* **master:** release rig 0.20.0 ([c3a534b](https://github.com/Sumit1993/rig/commit/c3a534b70f937851a37e9d6d9304902b6473afee))
+* **master:** release rig 0.21.0 ([a246c8f](https://github.com/Sumit1993/rig/commit/a246c8f1470a166e5068ef43baf65b0361441447))
+* **rig:** drop the ai-context write nudge; SendMessage ban covers only agy lanes ([c154d7c](https://github.com/Sumit1993/rig/commit/c154d7c723590ab388c9a218a781977d4a267a18))
+* **settings:** allow WebFetch again; drop the context-mode notes ([4d32d31](https://github.com/Sumit1993/rig/commit/4d32d3182299e7e0be80dfd6f34c9b99b8d80778))
+* **settings:** drop the dev-server denies; doctrine: files through the harness's file tools ([8c22fce](https://github.com/Sumit1993/rig/commit/8c22fced542959de3e5dd78d5f4fff6bc7527a15))
+
 ## [0.21.0](https://github.com/Sumit1993/rig/compare/rig-v0.20.0...rig-v0.21.0) (2026-11-17)
 
 
