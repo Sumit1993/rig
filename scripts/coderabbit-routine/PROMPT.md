@@ -1,6 +1,6 @@
 # CodeRabbit routine
 
-Each hourly run asks CodeRabbit to review at most one of the operator's pull requests. CodeRabbit gives the operator one review per hour across every repo. The routine never merges: merging belongs to a local session, when the operator asks for it (`compass`). The rules came over from the Actions queue that was removed in prismalens/gh-workflows#217. That queue matched CodeRabbit's wording in code (prismalens/gh-workflows#216), so here the model reads CodeRabbit's replies instead.
+Each run asks CodeRabbit to review at most one of the operator's pull requests. The cloud routine runs hourly, and a session's PR watcher runs the same steps whenever a head settles. CodeRabbit gives the operator one review per hour across every repo, and both read the same summon markers. The routine never merges: merging belongs to a local session, when the operator asks for it (`compass`). The rules came over from the Actions queue that was removed in prismalens/gh-workflows#217. That queue matched CodeRabbit's wording in code (prismalens/gh-workflows#216), so here the model reads CodeRabbit's replies instead.
 
 Never edit code, push, merge, sleep or wait. Post nothing except the single summon described below and the Slack summary.
 
@@ -17,7 +17,7 @@ The scripts are fixed in a local session, never in this run.
 
 ## 1. Read the digest
 
-Run `python3 digest.py > /tmp/digest.json` from this directory, with the Bash timeout set to 600000: when the slot opens within 8 minutes, the digest sleeps until it does and then reads everything again (`waited_s` says how long). It lists every open pull request in the six repos. Pull requests marked `excluded` (Dependabot, release-please, other authors, drafts, the `coderabbit_skip` label) are never summoned. `act.py` also refuses a PR that gained the label after the digest ran; it posts nothing, so summon the next candidate instead and name the refused one in the report.
+Run `python3 digest.py > /tmp/digest.json` from this directory, with the Bash timeout set to 600000: when the slot opens within 8 minutes, the digest sleeps until it does and then reads everything again (`waited_s` says how long). It lists every open pull request in the six repos. Pull requests marked `excluded` (Dependabot, release-please, other authors, the `coderabbit_skip` label) are never summoned. `act.py` also refuses a PR whose head moved or that gained the label after the digest ran, and any digest over 15 minutes old; it posts nothing, so summon the next candidate or read the digest again, and name the refused one in the report.
 
 ## 2. Budget
 
@@ -38,7 +38,7 @@ A candidate is a **re-review** if CodeRabbit reviewed an earlier commit. It qual
 
 A re-review also has to buy something, but fixes are not free of new defects: on one 13-PR stack, re-reviews of fixes CodeRabbit had already confirmed in-thread raised about 28 new findings, 8 of them Major (Sumit1993/rig#212). So a re-review is summoned for fix commits too. The one skip bounds the loop on nits (prismalens/gh-workflows#222): skip a PR when every thread the last review opened is Minor or a nitpick (the `finding` text names the severity) and the commits since only answer those threads. When unsure, including when the digest's thread list may be cut short, summon. Name each skipped PR and its reason in the report.
 
-Pick re-reviews first, ordered by the oldest `head_committed_at`. Then pick new ones, ordered by the oldest `created_at`. A `docs_only` candidate goes after every other candidate, in the same order, so prose takes the slot only when no code waits. Summon the pick with `python3 act.py <repo> <n> '@coderabbitai review'`. `act.py` adds the hidden `summoned-by` marker, stamped with `slot_opens_at`; the digest reads it back as `last_summon.state`. Never post `full review`: it spends the same slot to re-read commits that were already reviewed.
+Pick re-reviews first, ordered by the oldest `head_committed_at`. Then pick new ones, ordered by the oldest `created_at`. A `docs_only` candidate goes after every other candidate, in the same order, so prose takes the slot only when no code waits. A `draft` candidate goes after every ready one, in the same order. Summon the pick with `python3 act.py <repo> <n> '@coderabbitai review'`. `act.py` adds the hidden `summoned-by` marker, stamped with `slot_opens_at`; the digest reads it back as `last_summon.state`. Never post `full review`: it spends the same slot to re-read commits that were already reviewed.
 
 ## 4. Post the summary, then report
 

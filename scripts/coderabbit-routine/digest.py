@@ -152,8 +152,6 @@ def pr_facts(repo, pr):
         excluded = "release-please"
     elif author != OPERATOR:
         excluded = f"author {author}"
-    elif pr["draft"]:
-        excluded = "draft"
     if excluded:
         return {"repo": repo, "number": n, "excluded": excluded}
 
@@ -204,6 +202,7 @@ def pr_facts(repo, pr):
         "head": head,
         "head_committed_at": head_at,
         "head_age_min": age_min(head_at),
+        "draft": pr["draft"],
         # Ranks last, never excluded: prismalens.io's product is docs, and docs/ holds its site code (#159).
         "stacked_on": full["base"]["ref"] if full["base"]["ref"] != full["base"]["repo"]["default_branch"] else None,
         "docs_only": bool(files) and full["changed_files"] <= 100 and all(f.endswith((".md", ".mdx")) for f in files),

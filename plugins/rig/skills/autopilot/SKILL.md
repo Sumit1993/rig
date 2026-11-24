@@ -1,6 +1,6 @@
 ---
 name: autopilot
-description: "Load before any run that outlasts the operator's attention: unattended, overnight, autonomous, \"keep going while I'm away\", a scheduled or cron-driven loop, or several lanes at once."
+description: "Load before any run that outlasts the operator's attention: unattended, overnight, autonomous, \"keep going while I'm away\", or a scheduled or cron-driven loop."
 metadata:
   version: "5.0.0"
 ---
