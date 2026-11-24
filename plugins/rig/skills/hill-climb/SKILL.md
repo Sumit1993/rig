@@ -53,7 +53,7 @@ Each score has a "vs reference: behind / at par / ahead" column. 8.5 needs at pa
 
 The default merge is the median of the judges, plus a fix-list entry for each flaw below the bar that is backed by a screenshot. The default stop is every category at the bar on two checkpoints in a row.
 
-**Distribute once the bar is met.** Cut the integration branch into PRs by surface, each under 100 files. Write the tests now, starting with the CI cases owed, then hand each PR to `babysit-pr`.
+**Distribute once the bar is met.** Cut the integration branch into PRs by surface, each within CodeRabbit's file limit (`babysit-pr`). Write the tests now, starting with the CI cases owed, then hand each PR to `babysit-pr`.
 
 **Failures to design out:**
 - Check a lane's real state before reporting it. A lane can end its turn mid-suite or die while it is still listed as running.

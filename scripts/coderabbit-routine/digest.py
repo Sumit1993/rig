@@ -8,6 +8,7 @@ import json
 import re
 import os
 import sys
+import tempfile
 import time
 import urllib.error
 import urllib.parse
@@ -35,7 +36,8 @@ SLOT_MIN = 57
 # from the digest missed prismalens#814 by 24 s. The digest sleeps out a slot this close (Sumit1993/rig#159).
 STAMP_S = 3625
 WAIT_MAX_S = 480
-DIGEST_PATH = "/tmp/digest.json"
+# Git Bash maps /tmp to the Windows temp dir, which is where Python looks too.
+DIGEST_PATH = os.path.join(tempfile.gettempdir(), "digest.json")
 
 
 def marker(**state):
@@ -152,8 +154,6 @@ def pr_facts(repo, pr):
         excluded = "release-please"
     elif author != OPERATOR:
         excluded = f"author {author}"
-    elif pr["draft"]:
-        excluded = "draft"
     if excluded:
         return {"repo": repo, "number": n, "excluded": excluded}
 
@@ -204,9 +204,10 @@ def pr_facts(repo, pr):
         "head": head,
         "head_committed_at": head_at,
         "head_age_min": age_min(head_at),
+        "draft": pr["draft"],
         # Ranks last, never excluded: prismalens.io's product is docs, and docs/ holds its site code (#159).
         "stacked_on": full["base"]["ref"] if full["base"]["ref"] != full["base"]["repo"]["default_branch"] else None,
-        "docs_only": bool(files) and full["changed_files"] <= 100 and all(f.endswith((".md", ".mdx")) for f in files),
+        "docs_only": bool(files) and all(f.endswith((".md", ".mdx")) for f in files),
         "coderabbit_reviewed_head": finished_on_head or any(r["commit_id"] == head for r in reviews),
         "coderabbit_last_review_at": reviews[-1]["submitted_at"] if reviews else None,
         "coderabbit_reviews": [

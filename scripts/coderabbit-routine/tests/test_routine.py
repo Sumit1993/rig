@@ -1,6 +1,8 @@
-"""coderabbit_skip keeps a PR out of the routine's summons, in the digest and again in act.py (#189)."""
+"""coderabbit_skip keeps a PR out of the routine's summons, in the digest and again in act.py (#189); act.py rechecks the head and the digest's age before posting."""
 import os
+import json
 import sys
+import tempfile
 import unittest
 from datetime import datetime, timedelta, timezone
 from unittest import mock
@@ -76,21 +78,38 @@ class DigestStack(unittest.TestCase):
         self.assertEqual(facts([], base="feat/base")["stacked_on"], "feat/base")
 
 
-class ActRereadsLabels(unittest.TestCase):
-    def run_act(self, labels, posted):
+class ActRechecksBeforePosting(unittest.TestCase):
+    def run_act(self, labels, posted, head=HEAD, digest_age=1, write_digest=True):
         argv = ["act.py", REPO, "7", "@coderabbitai review"]
-        with mock.patch.object(act, "DIGEST_PATH", os.path.join(os.path.dirname(__file__), "no-digest.json")), \
-                mock.patch.object(act, "gh", lambda path, paginate=False: [{"name": n} for n in labels]), \
-                mock.patch.object(act, "request", posted), mock.patch.object(sys, "argv", argv):
-            act.main()
+        with tempfile.TemporaryDirectory() as d:
+            path = os.path.join(d, "digest.json")
+            if write_digest:
+                with open(path, "w") as f:
+                    json.dump({"now": iso(digest_age), "slot_opens_at": None,
+                               "repos": {REPO: {"pull_requests": [{"number": 7, "head": HEAD}]}}}, f)
+            live = {"head": {"sha": head}, "labels": [{"name": n} for n in labels]}
+            with mock.patch.object(act, "DIGEST_PATH", path),                     mock.patch.object(act, "gh", lambda path, paginate=False: live),                     mock.patch.object(act, "request", posted), mock.patch.object(sys, "argv", argv):
+                act.main()
+
+    def refused(self, needle, **kw):
+        posted = mock.Mock()
+        with self.assertRaises(SystemExit) as e:
+            self.run_act(kw.pop("labels", []), posted, **kw)
+        self.assertIn(needle, str(e.exception.code))
+        posted.assert_not_called()
 
     def test_label_added_after_the_digest_stops_the_summon(self):
         self.assertNotIn("excluded", facts([]))
-        posted = mock.Mock()
-        with self.assertRaises(SystemExit) as e:
-            self.run_act([digest.SKIP_LABEL], posted)
-        self.assertIn("coderabbit_skip", str(e.exception.code))
-        posted.assert_not_called()
+        self.refused("coderabbit_skip", labels=[digest.SKIP_LABEL])
+
+    def test_head_moved_since_the_digest_stops_the_summon(self):
+        self.refused("head moved", head=OLD)
+
+    def test_stale_digest_stops_the_summon(self):
+        self.refused("older than", digest_age=act.FRESH_MIN + 5)
+
+    def test_missing_digest_stops_the_summon(self):
+        self.refused("no readable digest", write_digest=False)
 
     def test_unlabelled_pr_is_summoned_with_the_marker(self):
         posted = mock.Mock(return_value=({"html_url": "u"}, ""))
@@ -98,6 +117,14 @@ class ActRereadsLabels(unittest.TestCase):
         url, payload = posted.call_args.args
         self.assertTrue(url.endswith(f"repos/{REPO}/issues/7/comments"))
         self.assertIn(digest.MARKER, payload["body"])
+
+
+class DigestDrafts(unittest.TestCase):
+    def test_draft_is_a_candidate_marked_draft(self):
+        with mock.patch.object(digest, "gh", fake_gh([])):
+            f = digest.pr_facts(REPO, dict(listed([]), draft=True))
+        self.assertNotIn("excluded", f)
+        self.assertTrue(f["draft"])
 
 
 if __name__ == "__main__":

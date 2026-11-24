@@ -1,6 +1,6 @@
 # CodeRabbit routine
 
-Each hourly run asks CodeRabbit to review at most one of the operator's pull requests. CodeRabbit gives the operator one review per hour across every repo. The routine never merges: merging belongs to a local session, when the operator asks for it (`compass`). The rules came over from the Actions queue that was removed in prismalens/gh-workflows#217. That queue matched CodeRabbit's wording in code (prismalens/gh-workflows#216), so here the model reads CodeRabbit's replies instead.
+Each run asks CodeRabbit to review at most one of the operator's pull requests. The cloud routine runs hourly, and a session's PR watcher runs the same steps whenever a head settles. CodeRabbit gives the operator one review per hour across every repo, and both read the same summon markers. The routine never merges: merging belongs to a local session, when the operator asks for it (`compass`). The rules came over from the Actions queue that was removed in prismalens/gh-workflows#217. That queue matched CodeRabbit's wording in code (prismalens/gh-workflows#216), so here the model reads CodeRabbit's replies instead.
 
 Never edit code, push, merge, sleep or wait. Post nothing except the single summon described below and the Slack summary.
 
@@ -17,7 +17,7 @@ The scripts are fixed in a local session, never in this run.
 
 ## 1. Read the digest
 
-Run `python3 digest.py > /tmp/digest.json` from this directory, with the Bash timeout set to 600000: when the slot opens within 8 minutes, the digest sleeps until it does and then reads everything again (`waited_s` says how long). It lists every open pull request in the six repos. Pull requests marked `excluded` (Dependabot, release-please, other authors, drafts, the `coderabbit_skip` label) are never summoned. `act.py` also refuses a PR that gained the label after the digest ran; it posts nothing, so summon the next candidate instead and name the refused one in the report.
+Run `python3 digest.py > /tmp/digest.json` from this directory, with the Bash timeout set to 600000: when the slot opens within 8 minutes, the digest sleeps until it does and then reads everything again (`waited_s` says how long). It lists every open pull request in the six repos. Pull requests marked `excluded` (Dependabot, release-please, other authors, the `coderabbit_skip` label) are never summoned. `act.py` also refuses a PR whose head moved or that gained the label after the digest ran, and any digest over 15 minutes old; it posts nothing, so summon the next candidate or read the digest again, and name the refused one in the report.
 
 ## 2. Budget
 
@@ -32,13 +32,14 @@ A pull request is a candidate when all of these hold:
 
 - `coderabbit_reviewed_head` is false. It is true once CodeRabbit posts a review of `head`, or answers a summon posted after `head` with "Review finished" and no review, as it does when the new commits give it nothing to add.
 - `stacked_on` is null. A PR whose base is another branch than the default waits for that base to merge and the PR to be retargeted; every merge below it would move its head.
+- CodeRabbit did not answer a summon on this head with `Action not completed` (too many files, for one): a refusal repeats until the head changes.
 - No summon is pending. A summon is pending when `last_summon.after_head` is true and `first_coderabbit_reply_after_summon` is null, or is anything other than a rate-limit notice or a misparse ("initiate chat"). Every reply to a summon ends with the note that CodeRabbit "does not re-review already reviewed commits". That note is boilerplate, not a refusal.
 
 A candidate is a **re-review** if CodeRabbit reviewed an earlier commit. It qualifies only when `coderabbit_threads_without_operator_reply` is 0; otherwise its fixes are still pending. Any other candidate is **new**.
 
 A re-review also has to buy something, but fixes are not free of new defects: on one 13-PR stack, re-reviews of fixes CodeRabbit had already confirmed in-thread raised about 28 new findings, 8 of them Major (Sumit1993/rig#212). So a re-review is summoned for fix commits too. The one skip bounds the loop on nits (prismalens/gh-workflows#222): skip a PR when every thread the last review opened is Minor or a nitpick (the `finding` text names the severity) and the commits since only answer those threads. When unsure, including when the digest's thread list may be cut short, summon. Name each skipped PR and its reason in the report.
 
-Pick re-reviews first, ordered by the oldest `head_committed_at`. Then pick new ones, ordered by the oldest `created_at`. A `docs_only` candidate goes after every other candidate, in the same order, so prose takes the slot only when no code waits. Summon the pick with `python3 act.py <repo> <n> '@coderabbitai review'`. `act.py` adds the hidden `summoned-by` marker, stamped with `slot_opens_at`; the digest reads it back as `last_summon.state`. Never post `full review`: it spends the same slot to re-read commits that were already reviewed.
+Pick re-reviews first, ordered by the oldest `head_committed_at`. Then pick new ones, ordered by the oldest `created_at`. A `docs_only` candidate goes after every other candidate, in the same order, so prose takes the slot only when no code waits. A `draft` candidate goes after every ready one, in the same order. Summon the pick with `python3 act.py <repo> <n> '@coderabbitai review'`. `act.py` adds the hidden `summoned-by` marker, stamped with `slot_opens_at`; the digest reads it back as `last_summon.state`. Never post `full review`: it spends the same slot to re-read commits that were already reviewed.
 
 ## 4. Post the summary, then report
 

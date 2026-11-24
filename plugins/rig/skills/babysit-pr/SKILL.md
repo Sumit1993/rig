@@ -13,7 +13,7 @@ Review bots are helpful, not always right. A PR is done when its findings are an
 
 Keep the PR a draft while commits are still coming, then mark it ready once. Reviews arrive on their own schedule:
 
-- **CodeRabbit** reviews a ready PR when summoned: `gh pr comment <pr> --body '@coderabbitai review'`. Summon your own PR when CodeRabbit has not reviewed its head and you are done pushing; CodeRabbit gives one review per developer per hour across every repo, so a summon spends the slot the routine would use. If it answered the last summon `Action not completed`, fix that reason first. Its 100-file limit counts files after the base branch's `path_filters`. Post the trigger alone; anything else in the body is read as chat. The hourly routine (`scripts/coderabbit-routine/` in Sumit1993/rig) summons one PR per hour for PRs nobody is watching, never a draft or a PR labelled `coderabbit_skip`.
+- **CodeRabbit** reviews a PR when summoned: `gh pr comment <pr> --body '@coderabbitai review'`. Summon your own PR when CodeRabbit has not reviewed its head and you are done pushing; CodeRabbit gives one review per developer per hour across every repo, so a summon spends the slot the routine would use. If it answered the last summon `Action not completed`, fix that reason first. Its 100-file limit counts files after the base branch's `path_filters`. Post the trigger alone; anything else in the body is read as chat. The routine (`scripts/coderabbit-routine/` in Sumit1993/rig) summons one PR per hour, drafts after ready PRs, never a PR labelled `coderabbit_skip`.
 - **Claude** (`claude[bot]`) runs where `<skill-dir>/../../scripts/rig-meta.sh get <repo> claude_lane` says so. `@claude review` re-checks open threads or reviews incrementally, `@claude full review` starts over. Its `claude-review-liveness` comment says what the last run did and on which `sha=`; `references/claude-verdicts.md` decodes it.
 - **Codex** (`assayer`) runs only when the operator runs it.
 
@@ -55,7 +55,7 @@ The reviewer that opened a thread resolves it; the session never does (`no-threa
 When the operator asks, or under `full-send`, and only when, on the current head:
 
 - required checks are green (`gh pr checks <n> --required`);
-- each reviewer has posted on this head (Claude's liveness shows a `reviewed <sha>` verdict for the head; CodeRabbit reviewed it or answered `Review finished`, unless the PR is labelled `coderabbit_skip` or the routine skipped the head as a minor-only re-review), and every finding is fixed or declined with a reason;
+- each reviewer has posted on this head (Claude's liveness shows a `reviewed <sha>` verdict for the head; CodeRabbit reviewed it or answered `Review finished`, unless the PR is labelled `coderabbit_skip` or every commit since its last review is trivial or fixes a Minor or nitpick finding), and every finding is fixed or declined with a reason;
 - every thread is resolved by the reviewer that opened it.
 
 Merge with a merge commit whose subject is the PR title: `gh pr merge <n> --merge --subject "<title> (#<n>)"`. Where `rig-meta.sh get <repo> merge_queue` is true, enqueue with the `enqueuePullRequest` GraphQL mutation instead, and treat the PR as merged only when `gh pr view <n> --json state` reads `MERGED`. A body closing several issues repeats the keyword: `closes #a, closes #b`. Afterwards remove the worktree and branch.
