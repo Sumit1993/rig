@@ -1,5 +1,27 @@
 # Changelog
 
+## [0.23.0](https://github.com/Sumit1993/rig/compare/rig-v0.22.0...rig-v0.23.0) (2026-11-24)
+
+
+### Features
+
+* PR watcher and idle compaction on T3; CodeRabbit routine summons drafts last and rechecks the head; rig-skill ([001ca50](https://github.com/Sumit1993/rig/commit/001ca50447affeb0913e6e70cedcc41d2f056cb5))
+
+
+### Bug Fixes
+
+* **coderabbit-routine:** act.py finds the digest under Git Bash's /tmp on Windows ([da13e9f](https://github.com/Sumit1993/rig/commit/da13e9fe43d59706b5c1b5d25a7344d854a2d8b1))
+* count CodeRabbit's file limit after path_filters; watcher wakes on a merge conflict; rig-skill on claude-windows ([b5cf302](https://github.com/Sumit1993/rig/commit/b5cf3022c4b654a025ce32c7a3971f37d7766f82))
+
+
+### Documentation
+
+* **babysit-pr:** merge without a CodeRabbit re-review when the new commits are trivial or fix Minor findings ([da1b77a](https://github.com/Sumit1993/rig/commit/da1b77ab7c869be289d5f9141e96a6226afcf86e))
+* free worktree paths; T3 PR watcher and idle compaction; CodeRabbit covers drafts; rig-skill ([a55da09](https://github.com/Sumit1993/rig/commit/a55da0910dc88d62cb8fa8b6edb592c302104d02))
+* **overlays:** worktree paths are the harness's or host's choice, not .claude/worktrees ([0181e2d](https://github.com/Sumit1993/rig/commit/0181e2d650dd6b374dc807d0e0f1e0dc8deba7ff))
+* **t3:** drop the spawn and seats lines; T3 Code's prompt and AGENTS.md carry them ([6429c16](https://github.com/Sumit1993/rig/commit/6429c1618d7fe2aa66c292039d6cf2c73e6b9ac9))
+* **t3:** follow up with a warm subagent by message, not a new delegate_task ([c6ab91b](https://github.com/Sumit1993/rig/commit/c6ab91b23618bbcf9509417400192f7b4d9f8108))
+
 ## [0.22.0](https://github.com/Sumit1993/rig/compare/rig-v0.21.0...rig-v0.22.0) (2026-11-20)
 
 
