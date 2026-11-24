@@ -32,7 +32,7 @@
     "claude-windows": {
       "$comment": "Windows Claude Code: no agy, so farm-out, lane and agy-runner stay out, and autopilot with them since it routes lanes through farm-out; no hooks, being bash scripts that read WSL paths.",
       "install": "claude-directory-marketplace",
-      "skills": ["adversary", "codex-desktop", "assayer", "compass", "docs-drift", "no-comments", "no-doze", "babysit-pr", "prove-it", "triage", "tweet", "why-first"],
+      "skills": ["adversary", "codex-desktop", "assayer", "compass", "docs-drift", "no-comments", "no-doze", "babysit-pr", "prove-it", "rig-skill", "triage", "tweet", "why-first"],
       "hooks": [],
       "agents": ["codex-runner", "comment-sicko", "fable-planner", "planner"],
       "runtime": ["scripts/rig-meta.sh", "data/repo-meta.json"],

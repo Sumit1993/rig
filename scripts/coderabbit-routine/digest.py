@@ -207,7 +207,7 @@ def pr_facts(repo, pr):
         "draft": pr["draft"],
         # Ranks last, never excluded: prismalens.io's product is docs, and docs/ holds its site code (#159).
         "stacked_on": full["base"]["ref"] if full["base"]["ref"] != full["base"]["repo"]["default_branch"] else None,
-        "docs_only": bool(files) and full["changed_files"] <= 100 and all(f.endswith((".md", ".mdx")) for f in files),
+        "docs_only": bool(files) and all(f.endswith((".md", ".mdx")) for f in files),
         "coderabbit_reviewed_head": finished_on_head or any(r["commit_id"] == head for r in reviews),
         "coderabbit_last_review_at": reviews[-1]["submitted_at"] if reviews else None,
         "coderabbit_reviews": [
