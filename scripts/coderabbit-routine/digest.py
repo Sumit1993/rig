@@ -8,6 +8,7 @@ import json
 import re
 import os
 import sys
+import tempfile
 import time
 import urllib.error
 import urllib.parse
@@ -35,7 +36,8 @@ SLOT_MIN = 57
 # from the digest missed prismalens#814 by 24 s. The digest sleeps out a slot this close (Sumit1993/rig#159).
 STAMP_S = 3625
 WAIT_MAX_S = 480
-DIGEST_PATH = "/tmp/digest.json"
+# Git Bash maps /tmp to the Windows temp dir, which is where Python looks too.
+DIGEST_PATH = os.path.join(tempfile.gettempdir(), "digest.json")
 
 
 def marker(**state):
