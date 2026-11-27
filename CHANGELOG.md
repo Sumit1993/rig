@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.23.1](https://github.com/Sumit1993/rig/compare/rig-v0.23.0...rig-v0.23.1) (2026-11-27)
+
+
+### Bug Fixes
+
+* **coderabbit-routine:** commits a base merge brings in never read as new work ([#231](https://github.com/Sumit1993/rig/issues/231)) ([2531acf](https://github.com/Sumit1993/rig/commit/2531acf991f0de21fd55b6e82908d513b73dd04b)), closes [#228](https://github.com/Sumit1993/rig/issues/228)
+* **coderabbit-routine:** skip re-review of fix-only commits at any severity ([#229](https://github.com/Sumit1993/rig/issues/229)) ([942a221](https://github.com/Sumit1993/rig/commit/942a2218e87c5019801c2e5952f3ec112fcd2bf9))
+
 ## [0.23.0](https://github.com/Sumit1993/rig/compare/rig-v0.22.0...rig-v0.23.0) (2026-11-24)
 
 
