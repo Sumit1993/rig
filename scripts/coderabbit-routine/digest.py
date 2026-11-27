@@ -130,13 +130,17 @@ def coderabbit_threads(repo, n):
     return threads
 
 
-def since_review(repo, reviewed, head):
+def since_review(repo, reviewed, head, base, pr_files):
     if not reviewed or reviewed == head:
         return None
     cmp = gh(f"repos/{repo}/compare/{reviewed}...{head}")
+    # A merge of the base brings its commits in; they are the base's, not new work to review here.
+    own = {c["sha"] for c in gh(f"repos/{repo}/compare/{base}...{head}")["commits"]}
+    ours = [c for c in cmp["commits"] if c["sha"] in own]
     return {
-        "commits": [{"sha": c["sha"][:7], "headline": c["commit"]["message"].splitlines()[0]} for c in cmp["commits"]],
-        "files": [f"{f['filename']} +{f['additions']} -{f['deletions']}" for f in cmp["files"][:20]],
+        "commits": [{"sha": c["sha"][:7], "headline": c["commit"]["message"].splitlines()[0]} for c in ours],
+        "from_base": len(cmp["commits"]) - len(ours),
+        "files": [f"{f['filename']} +{f['additions']} -{f['deletions']}" for f in cmp["files"] if f["filename"] in pr_files][:20],
     }
 
 
@@ -228,7 +232,7 @@ def pr_facts(repo, pr):
         "first_coderabbit_reply_after_summon": reply and {"at": reply["created_at"], "excerpt": excerpt(reply["body"])},
         "coderabbit_threads_without_operator_reply": sum(1 for t in threads if not t["operator_reply"]),
         "coderabbit_threads": threads[-6:],
-        "since_coderabbit_review": since_review(repo, reviews[-1]["commit_id"] if reviews else None, head),
+        "since_coderabbit_review": since_review(repo, reviews[-1]["commit_id"] if reviews else None, head, full["base"]["ref"], set(files)),
     }
     # Read in full, not returned early: a labelled PR's past review or summon still holds the slot in build() (#189).
     if skip_labelled(full.get("labels")):

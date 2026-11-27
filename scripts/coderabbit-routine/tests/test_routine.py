@@ -12,7 +12,7 @@ import act  # noqa: E402
 import digest  # noqa: E402
 
 REPO = "o/r"
-OLD, HEAD = "a" * 40, "b" * 40
+OLD, HEAD, BASE_COMMIT = "a" * 40, "b" * 40, "c" * 40
 
 
 def iso(minutes_ago):
@@ -31,7 +31,11 @@ def fake_gh(labels, reviewed_at=None, base="main"):
         f"repos/{REPO}/pulls/7/reviews?per_page=100": reviews,
         f"repos/{REPO}/issues/7/comments?per_page=100": [],
         f"repos/{REPO}/pulls/7/comments?per_page=100": [],
-        f"repos/{REPO}/compare/{OLD}...{HEAD}": {"commits": [{"sha": HEAD, "commit": {"message": "feat: more"}}], "files": []},
+        f"repos/{REPO}/compare/{OLD}...{HEAD}": {
+            "commits": [{"sha": BASE_COMMIT, "commit": {"message": "feat(base): landed on main"}}, {"sha": HEAD, "commit": {"message": "Merge main into feat/x"}}],
+            "files": [{"filename": "src/x.py", "additions": 1, "deletions": 0}, {"filename": "src/main_only.py", "additions": 9, "deletions": 0}],
+        },
+        f"repos/{REPO}/compare/{base}...{HEAD}": {"commits": [{"sha": HEAD, "commit": {"message": "Merge main into feat/x"}}]},
     }
     return lambda path, paginate=False: routes[path]
 
@@ -66,6 +70,16 @@ class DigestSkipLabel(unittest.TestCase):
         with mock.patch.object(digest, "REPOS", [REPO]), mock.patch.object(digest, "gh", fake_gh([digest.SKIP_LABEL], iso(10))):
             _, d = digest.build()
         self.assertFalse(d["slot_open"])
+
+
+class DigestSinceReview(unittest.TestCase):
+    """Commits a base merge brings in are the base's work, so they never read as new behaviour on the PR."""
+
+    def test_base_commits_are_counted_apart_and_their_files_dropped(self):
+        since = facts([], reviewed_at=iso(10))["since_coderabbit_review"]
+        self.assertEqual(since["commits"], [{"sha": HEAD[:7], "headline": "Merge main into feat/x"}])
+        self.assertEqual(since["from_base"], 1)
+        self.assertEqual(since["files"], ["src/x.py +1 -0"])
 
 
 class DigestStack(unittest.TestCase):
